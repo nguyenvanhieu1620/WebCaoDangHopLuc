@@ -12,6 +12,10 @@ drizzle/*.db
 drizzle/*.db-journal
 .env
 
+# File upload thật qua admin (public/uploads/) — dữ liệu runtime, không commit
+public/uploads/*
+!public/uploads/.gitkeep
+
 # File tham khảo thiết kế tạm thời, không thuộc source code Next.js
 *.dc.html
 Cao đẳng Y Dược Hợp Lực website design*.zip

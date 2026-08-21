@@ -28,6 +28,18 @@ export const adminUsers = sqliteTable("admin_users", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/** Danh mục bài viết (Tuyển sinh, Sự kiện...) — admin tự thêm/xoá không giới hạn. */
+export const categories = sqliteTable("categories", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Bài viết — tin tức, thông báo, sự kiện hiển thị ở /tin-tuc. */
 export const posts = sqliteTable("posts", {
   id: text("id")
@@ -39,6 +51,8 @@ export const posts = sqliteTable("posts", {
   content: text("content").notNull(),
   /** "draft" (bản nháp) | "published" (đã đăng) */
   status: text("status").notNull().default("draft"),
+  categoryId: text("category_id"),
+  coverImageUrl: text("cover_image_url"),
   publishedAt: text("published_at"),
   createdAt: text("created_at")
     .notNull()
@@ -116,16 +130,16 @@ export const siteSettings = sqliteTable("site_settings", {
 /** Nội dung chữ ở Trang chủ (Hero, chỉ số, điểm mạnh, quy trình, CTA) — luôn chỉ có đúng 1 dòng (id "main"). */
 export const homepageContent = sqliteTable("homepage_content", {
   id: text("id").primaryKey().default("main"),
+  heroImageUrl: text("hero_image_url"),
   heroBadge: text("hero_badge").notNull(),
   heroTitleLine1: text("hero_title_line1").notNull(),
   heroTitleLine2: text("hero_title_line2").notNull(),
   heroDescription: text("hero_description").notNull(),
-  heroImageCardLabel: text("hero_image_card_label").notNull(),
-  heroImageCardTitle: text("hero_image_card_title").notNull(),
-  /** VD "4.8" — số điểm đánh giá lớn hiển thị cạnh sao. */
-  heroRatingValue: text("hero_rating_value").notNull(),
-  /** VD "Đánh giá từ 1.240 phụ huynh & sinh viên" — dòng chú thích bên dưới điểm. */
-  heroRatingText: text("hero_rating_text").notNull(),
+  /** 2 badge số liệu nổi trên ảnh Hero, VD "12+"/"Năm đào tạo" và "96%"/"Có việc làm". */
+  heroBadge1Value: text("hero_badge1_value").notNull(),
+  heroBadge1Label: text("hero_badge1_label").notNull(),
+  heroBadge2Value: text("hero_badge2_value").notNull(),
+  heroBadge2Label: text("hero_badge2_label").notNull(),
   /** JSON.stringify của mảng 4 {value,label}. */
   statsJson: text("stats_json").notNull(),
   /** JSON.stringify của mảng 3 {title,desc}. */
@@ -135,6 +149,60 @@ export const homepageContent = sqliteTable("homepage_content", {
   ctaTitle: text("cta_title").notNull(),
   ctaDescription: text("cta_description").notNull(),
   updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Đối tác hiển thị ở dải logo/tên Trang chủ — sortOrder do admin tự nhập để sắp vị trí. */
+export const partners = sqliteTable("partners", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Ảnh trong khối "Thư viện" dạng bento ở Trang chủ. */
+export const galleryItems = sqliteTable("gallery_items", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  imageUrl: text("image_url").notNull(),
+  caption: text("caption").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Đội ngũ giảng viên hiển thị ở Trang chủ. */
+export const faculty = sqliteTable("faculty", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  photoUrl: text("photo_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Đánh giá/cảm nhận của cựu sinh viên hiển thị ở Trang chủ. */
+export const testimonials = sqliteTable("testimonials", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  quote: text("quote").notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  avatarUrl: text("avatar_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
 });
@@ -167,3 +235,8 @@ export type Program = typeof programs.$inferSelect;
 export type NewProgram = typeof programs.$inferInsert;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type HomepageContentRow = typeof homepageContent.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type Partner = typeof partners.$inferSelect;
+export type GalleryItem = typeof galleryItems.$inferSelect;
+export type Faculty = typeof faculty.$inferSelect;
+export type Testimonial = typeof testimonials.$inferSelect;

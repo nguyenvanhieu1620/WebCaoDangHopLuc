@@ -6,14 +6,15 @@ export type FeatureItem = { title: string; desc: string };
 export type StepItem = { title: string; desc: string };
 
 export type HomepageContent = {
+  heroImageUrl: string | null;
   heroBadge: string;
   heroTitleLine1: string;
   heroTitleLine2: string;
   heroDescription: string;
-  heroImageCardLabel: string;
-  heroImageCardTitle: string;
-  heroRatingValue: string;
-  heroRatingText: string;
+  heroBadge1Value: string;
+  heroBadge1Label: string;
+  heroBadge2Value: string;
+  heroBadge2Label: string;
   stats: StatItem[];
   features: FeatureItem[];
   steps: StepItem[];
@@ -36,14 +37,15 @@ export async function getHomepageContent(): Promise<HomepageContent> {
     );
   }
   return {
+    heroImageUrl: row.heroImageUrl,
     heroBadge: row.heroBadge,
     heroTitleLine1: row.heroTitleLine1,
     heroTitleLine2: row.heroTitleLine2,
     heroDescription: row.heroDescription,
-    heroImageCardLabel: row.heroImageCardLabel,
-    heroImageCardTitle: row.heroImageCardTitle,
-    heroRatingValue: row.heroRatingValue,
-    heroRatingText: row.heroRatingText,
+    heroBadge1Value: row.heroBadge1Value,
+    heroBadge1Label: row.heroBadge1Label,
+    heroBadge2Value: row.heroBadge2Value,
+    heroBadge2Label: row.heroBadge2Label,
     stats: JSON.parse(row.statsJson) as StatItem[],
     features: JSON.parse(row.featuresJson) as FeatureItem[],
     steps: JSON.parse(row.stepsJson) as StepItem[],

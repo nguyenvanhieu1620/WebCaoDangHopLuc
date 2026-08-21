@@ -52,6 +52,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { key: "posts", label: "Bài viết", href: "/admin/bai-viet" },
       { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao" },
+      { key: "partners", label: "Đối tác", href: "/admin/doi-tac" },
+      { key: "faculty", label: "Đội ngũ giảng viên", href: "/admin/giang-vien" },
+      { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia" },
+      { key: "gallery", label: "Thư viện ảnh Trang chủ", href: "/admin/thu-vien-trang-chu" },
       { key: "media", label: "Thư viện media", href: "/admin/media" },
       { key: "pages", label: "Trang tĩnh", href: "/admin/trang-tinh" },
     ],

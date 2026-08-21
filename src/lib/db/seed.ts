@@ -8,6 +8,10 @@ import {
   programs,
   siteSettings,
   homepageContent,
+  categories,
+  partners,
+  faculty,
+  testimonials,
 } from "./schema";
 
 /**
@@ -177,60 +181,116 @@ async function main() {
   if (!existingHomepage) {
     await db.insert(homepageContent).values({
       id: "main",
+      heroImageUrl: null,
       heroBadge: "Tuyển sinh 2026",
-      heroTitleLine1: "Học nghề chữa lành,",
-      heroTitleLine2: "làm nghề tử tế.",
+      heroTitleLine1: "Kiến tạo nhân lực",
+      heroTitleLine2: "y dược tận tâm & giỏi nghề",
       heroDescription:
-        "Đào tạo Điều dưỡng, Dược sĩ, Xét nghiệm và Y sĩ đa khoa theo chuẩn thực hành lâm sàng — cùng hơn 40 bệnh viện, nhà thuốc đối tác đồng hành từ năm nhất.",
-      heroImageCardLabel: "Cơ sở thực hành",
-      heroImageCardTitle: "Phòng lab chuẩn lâm sàng ngay trong khuôn viên trường",
-      heroRatingValue: "4.8",
-      heroRatingText: "Đánh giá từ 1.240 phụ huynh & sinh viên",
+        "Trường Cao đẳng Y Dược Hợp Lực đào tạo Điều dưỡng, Dược, Xét nghiệm cùng nhiều ngành y tế khác, gắn chặt lý thuyết với thực hành lâm sàng tại các bệnh viện đối tác.",
+      heroBadge1Value: "12+",
+      heroBadge1Label: "Năm đào tạo",
+      heroBadge2Value: "96%",
+      heroBadge2Label: "Có việc làm",
       statsJson: JSON.stringify([
-        { value: "19+", label: "Năm kinh nghiệm đào tạo" },
-        { value: "6", label: "Ngành đào tạo chính quy" },
-        { value: "40+", label: "Bệnh viện & nhà thuốc đối tác" },
-        { value: "92%", label: "Sinh viên có việc làm đúng ngành" },
+        { value: "12+", label: "Năm kinh nghiệm đào tạo" },
+        { value: "8.500+", label: "Sinh viên đã tốt nghiệp" },
+        { value: "96%", label: "Sinh viên có việc làm" },
+        { value: "40+", label: "Đối tác bệnh viện" },
       ]),
       featuresJson: JSON.stringify([
         {
-          title: "Thực hành lâm sàng thật",
-          desc: "Thực tập tại bệnh viện, nhà thuốc đối tác ngay từ học kỳ 2, không chỉ mô phỏng trên lớp.",
+          title: "Thực hành lâm sàng sớm",
+          desc: "Sinh viên thực tập tại bệnh viện đối tác ngay từ năm nhất, tiếp cận môi trường làm việc thực tế.",
         },
         {
-          title: "Giảng viên là người trong nghề",
-          desc: "Đội ngũ giảng dạy là bác sĩ, dược sĩ, điều dưỡng trưởng đang làm việc tại các cơ sở y tế lớn.",
+          title: "Giảng viên chuyên môn cao",
+          desc: "Đội ngũ bác sĩ, dược sĩ giàu kinh nghiệm trực tiếp giảng dạy và hướng dẫn thực hành.",
         },
         {
-          title: "Cam kết đầu ra việc làm",
-          desc: "Kết nối trực tiếp sinh viên năm cuối với nhà tuyển dụng qua ngày hội việc làm định kỳ mỗi năm.",
+          title: "Cam kết việc làm",
+          desc: "Giới thiệu việc làm sau tốt nghiệp tại hệ thống bệnh viện, phòng khám đối tác trên toàn quốc.",
         },
       ]),
       stepsJson: JSON.stringify([
-        {
-          title: "Đăng ký trực tuyến",
-          desc: "Điền form xét tuyển trên website, chọn ngành và đợt học mong muốn.",
-        },
-        {
-          title: "Nộp hồ sơ",
-          desc: "Tải ảnh học bạ/bằng tốt nghiệp — hệ thống xác nhận đã nhận trong 24 giờ.",
-        },
-        {
-          title: "Nhận kết quả",
-          desc: "Tra cứu kết quả xét tuyển trực tiếp trên website bằng số CCCD.",
-        },
-        {
-          title: "Nhập học",
-          desc: "Xác nhận nhập học, đóng học phí kỳ đầu và nhận lịch học chính thức.",
-        },
+        { title: "Nộp hồ sơ", desc: "Đăng ký online hoặc nộp trực tiếp tại trường" },
+        { title: "Xét tuyển học bạ", desc: "Xét theo kết quả học tập THPT" },
+        { title: "Nhận kết quả", desc: "Tra cứu kết quả xét tuyển online" },
+        { title: "Nhập học", desc: "Hoàn tất thủ tục và nhập học" },
       ]),
-      ctaTitle: "Còn phân vân chọn ngành? Đăng ký để được tư vấn miễn phí.",
+      ctaTitle: "Sẵn sàng cho hành trình y dược của bạn?",
       ctaDescription:
-        "Đội ngũ tư vấn tuyển sinh phản hồi trong vòng 24 giờ qua điện thoại hoặc Zalo.",
+        "Nộp hồ sơ xét tuyển ngay hôm nay — đội ngũ tư vấn sẵn sàng hỗ trợ 24/7.",
     });
     console.log("✓ Tạo nội dung Trang chủ mặc định");
   } else {
     console.log("• Đã có nội dung Trang chủ, bỏ qua.");
+  }
+
+  // Danh mục bài viết mặc định
+  const existingCategories = await db.query.categories.findMany();
+  if (existingCategories.length === 0) {
+    await db.insert(categories).values([
+      { name: "Tuyển sinh", slug: "tuyen-sinh" },
+      { name: "Sự kiện", slug: "su-kien" },
+      { name: "Hợp tác", slug: "hop-tac" },
+      { name: "Đào tạo", slug: "dao-tao" },
+    ]);
+    console.log("✓ Tạo 4 danh mục bài viết mẫu");
+  } else {
+    console.log("• Đã có danh mục bài viết, bỏ qua.");
+  }
+
+  // Đối tác mặc định
+  const existingPartners = await db.query.partners.findMany();
+  if (existingPartners.length === 0) {
+    await db.insert(partners).values([
+      { name: "Trường Đại học Y tế Đài Loan", sortOrder: 0 },
+      { name: "BV Nhi Thanh Hóa", sortOrder: 1 },
+      { name: "Sở Y tế Thanh Hóa", sortOrder: 2 },
+      { name: "BV 71 TW", sortOrder: 3 },
+      { name: "Trung tâm Y tế Quảng Xương", sortOrder: 4 },
+    ]);
+    console.log("✓ Tạo 5 đối tác mẫu");
+  } else {
+    console.log("• Đã có đối tác, bỏ qua.");
+  }
+
+  // Đội ngũ giảng viên mặc định
+  const existingFaculty = await db.query.faculty.findMany();
+  if (existingFaculty.length === 0) {
+    await db.insert(faculty).values([
+      { name: "ThS.BS Nguyễn Văn An", role: "Trưởng khoa Điều dưỡng", sortOrder: 0 },
+      { name: "DS.CKI Trần Thị Bình", role: "Trưởng khoa Dược", sortOrder: 1 },
+      { name: "ThS Lê Văn Cường", role: "Trưởng khoa Xét nghiệm", sortOrder: 2 },
+      { name: "BS.CKII Phạm Thị Dung", role: "Phó Hiệu trưởng", sortOrder: 3 },
+    ]);
+    console.log("✓ Tạo 4 giảng viên mẫu");
+  } else {
+    console.log("• Đã có giảng viên, bỏ qua.");
+  }
+
+  // Đánh giá cựu sinh viên mặc định
+  const existingTestimonials = await db.query.testimonials.findMany();
+  if (existingTestimonials.length === 0) {
+    await db.insert(testimonials).values([
+      {
+        quote:
+          "Nhờ chương trình thực hành sớm tại Hợp Lực, tôi tự tin làm việc ngay sau khi tốt nghiệp.",
+        name: "Vũ Thị Hoa",
+        role: "Điều dưỡng viên, BV Đa khoa tỉnh",
+        sortOrder: 0,
+      },
+      {
+        quote:
+          "Giảng viên tận tâm, cơ sở vật chất hiện đại giúp tôi vững kiến thức chuyên môn.",
+        name: "Đỗ Văn Hùng",
+        role: "Dược sĩ, Nhà thuốc Long Châu",
+        sortOrder: 1,
+      },
+    ]);
+    console.log("✓ Tạo 2 đánh giá cựu sinh viên mẫu");
+  } else {
+    console.log("• Đã có đánh giá cựu sinh viên, bỏ qua.");
   }
 
   console.log("Seed hoàn tất.");

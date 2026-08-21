@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { saveUploadedFileIfPresent } from "@/lib/media";
 
 const STAT_COUNT = 4;
 const FEATURE_COUNT = 3;
@@ -17,10 +18,10 @@ export async function updateHomepageContentAction(formData: FormData) {
   const heroTitleLine1 = field(formData, "heroTitleLine1");
   const heroTitleLine2 = field(formData, "heroTitleLine2");
   const heroDescription = field(formData, "heroDescription");
-  const heroImageCardLabel = field(formData, "heroImageCardLabel");
-  const heroImageCardTitle = field(formData, "heroImageCardTitle");
-  const heroRatingValue = field(formData, "heroRatingValue");
-  const heroRatingText = field(formData, "heroRatingText");
+  const heroBadge1Value = field(formData, "heroBadge1Value");
+  const heroBadge1Label = field(formData, "heroBadge1Label");
+  const heroBadge2Value = field(formData, "heroBadge2Value");
+  const heroBadge2Label = field(formData, "heroBadge2Label");
   const ctaTitle = field(formData, "ctaTitle");
   const ctaDescription = field(formData, "ctaDescription");
 
@@ -29,15 +30,24 @@ export async function updateHomepageContentAction(formData: FormData) {
     !heroTitleLine1 ||
     !heroTitleLine2 ||
     !heroDescription ||
-    !heroImageCardLabel ||
-    !heroImageCardTitle ||
-    !heroRatingValue ||
-    !heroRatingText ||
+    !heroBadge1Value ||
+    !heroBadge1Label ||
+    !heroBadge2Value ||
+    !heroBadge2Label ||
     !ctaTitle ||
     !ctaDescription
   ) {
     return;
   }
+
+  const current = await db.query.homepageContent.findFirst({
+    where: eq(schema.homepageContent.id, "main"),
+  });
+  const heroImageUrl = await saveUploadedFileIfPresent(
+    formData,
+    "heroImage",
+    current?.heroImageUrl ?? null
+  );
 
   const stats = Array.from({ length: STAT_COUNT }, (_, i) => ({
     value: field(formData, `stat${i}_value`),
@@ -55,14 +65,15 @@ export async function updateHomepageContentAction(formData: FormData) {
   await db
     .update(schema.homepageContent)
     .set({
+      heroImageUrl,
       heroBadge,
       heroTitleLine1,
       heroTitleLine2,
       heroDescription,
-      heroImageCardLabel,
-      heroImageCardTitle,
-      heroRatingValue,
-      heroRatingText,
+      heroBadge1Value,
+      heroBadge1Label,
+      heroBadge2Value,
+      heroBadge2Label,
       statsJson: JSON.stringify(stats),
       featuresJson: JSON.stringify(features),
       stepsJson: JSON.stringify(steps),

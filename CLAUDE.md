@@ -86,12 +86,29 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - **Drizzle ORM** + **SQLite** (qua driver `@libsql/client`)
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`)
-`admin_users`, `posts`, `pages`, `media_items`, `admission_submissions`
-(5 bảng gốc) + `programs`, `site_settings` (bảng đơn dòng, id cố định
-`"main"`), `homepage_content` (bảng đơn dòng, id cố định `"main"`) — 3 bảng
-thêm để CMS quản lý được ngành đào tạo, thông tin liên hệ/banner, và nội
-dung chữ ở Trang chủ (trước đây hard-code trong `constants.ts`/`page.tsx`).
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 13 bảng
+`admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`,
+`media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
+`programs`, `site_settings` (đơn dòng, id `"main"`), `homepage_content`
+(đơn dòng, id `"main"`, có `hero_image_url` + 2 badge nổi
+`hero_badge1/2_value/label`) — nhóm bảng gốc/Giai đoạn 1a. Thêm ở đợt dựng
+lại Trang chủ theo thiết kế mới: `categories` (danh mục bài viết),
+`partners`, `gallery_items`, `faculty`, `testimonials` — 4 bảng sau đều có
+cột `sort_order` (admin tự nhập số để sắp vị trí hiển thị, không làm
+kéo-thả).
+
+### 4.1c Upload ảnh/video thật (`src/lib/media.ts`)
+`saveUploadedFile(file)` — ghi file vào `public/uploads/` (tên file thêm
+tiền tố `Date.now()-` để tránh trùng) + insert 1 dòng `media_items`. Mọi
+form cần ảnh trong admin (Trang chủ hero, Bài viết cover, Đối tác không cần
+ảnh, Giảng viên, Đánh giá, Thư viện Trang chủ) đều gọi hàm này trực tiếp
+trong Server Action của form đó — **không** có bước "chọn từ thư viện có
+sẵn" riêng, upload xong dùng luôn (giữ đúng triết lý server-first, ít state
+client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
+`media_items`. Xoá 1 mục trong Trang tĩnh/Giảng viên/Đánh giá/Gallery
+**không** xoá file vật lý hay dòng `media_items` tương ứng (giống WordPress
+— thư viện media độc lập với nơi đang dùng ảnh) — muốn xoá hẳn file thì vào
+`admin/media` xoá trực tiếp.
 
 ### 4.2 Vì sao chọn từng thứ (để không đổi lại vô tình)
 
@@ -125,18 +142,20 @@ dung chữ ở Trang chủ (trước đây hard-code trong `constants.ts`/`page.
 ## 5. Trạng thái hiện tại
 
 ### Đã xong, dùng được thật (không phải giao diện giả)
-- Trang chủ (`(site)/page.tsx`) — đầy đủ nội dung, đúng design system, **toàn bộ nội dung chữ (Hero/chỉ số/điểm mạnh/quy trình/CTA) lấy từ DB** qua `getHomepageContent()`, không còn hard-code
+- Trang chủ (`(site)/page.tsx`) — **dựng lại hoàn toàn theo bộ thiết kế Claude Design mới** (`Home.dc.html`, khác bản đầu) — 11 section: Hero (ảnh + 2 badge nổi) → Đối tác → 4 chỉ số → 3 điểm mạnh → 6 ngành đào tạo → 4 bước quy trình → Thư viện bento 5 ảnh → Đội ngũ giảng viên → Đánh giá cựu SV → Tin tức (3 bài mới nhất) → CTA. Toàn bộ nội dung lấy từ DB, **không hard-code**. Khi admin chưa upload ảnh, dùng `<ImagePlaceholder>` (gradient + nhãn) — không vỡ layout, không hiện icon ảnh lỗi
 - Đăng nhập/đăng xuất admin thật (Server Action, session cookie, bcrypt)
 - `src/proxy.ts` chặn truy cập `/admin/*` nếu chưa đăng nhập — **đã test bằng Playwright**: chặn khi chưa login ✓, login redirect đúng ✓, logout ✓, chặn lại sau logout ✓
 - Dashboard admin — số liệu thật từ DB (đếm bài viết, hồ sơ mới)
-- Quản lý bài viết (`admin/bai-viet`) — tạo/xoá/đăng-gỡ, sinh slug tự động tránh trùng, list tự refresh (`revalidatePath`) — **đã test tạo bài viết thành công qua trình duyệt thật**
+- Quản lý bài viết (`admin/bai-viet`) — tạo/xoá/đăng-gỡ, sinh slug tự động tránh trùng, **có Danh mục** (bảng `categories`, admin tự thêm/xoá ngay trong trang, gán qua dropdown) + **ảnh đại diện** (upload thật) — **đã test qua trình duyệt thật**: tạo bài có danh mục → hiện đúng trên Trang chủ
 - Quản lý ngành đào tạo (`admin/nganh-dao-tao`) — CRUD đầy đủ (thêm/sửa/xoá/toggle featured), thay thế hẳn mảng tĩnh `PROGRAMS` — **đã test qua trình duyệt thật**: sửa 1 ngành → Trang chủ cập nhật ngay
+- Đối tác / Giảng viên / Đánh giá cựu SV / Thư viện ảnh Trang chủ (`admin/doi-tac`, `admin/giang-vien`, `admin/danh-gia`, `admin/thu-vien-trang-chu`) — CRUD đầy đủ, có upload ảnh thật + ô "Vị trí" (số nhỏ hiện trước) — **đã test qua trình duyệt thật** từng trang: thêm/sửa vị trí/xoá, xác nhận Trang chủ cập nhật đúng thứ tự và đúng ảnh
+- **Thư viện media** (`admin/media`) — upload thật (kéo/chọn nhiều file, lưu `public/uploads/`), lọc Ảnh/Video, xoá (xoá cả file vật lý) — **đã test qua trình duyệt thật** bằng file thật (tạo `File`/`DataTransfer` qua JS vì công cụ trình duyệt test không có picker OS)
 - Cài đặt chung (`admin/cai-dat`) — sửa hotline/email/địa chỉ/banner thông báo/mạng xã hội, áp dụng ngay cho Header + Footer toàn site — **đã test qua trình duyệt thật**
-- Nội dung Trang chủ (`admin/trang-chu`) — sửa toàn bộ chữ ở Hero/4 chỉ số/3 điểm mạnh/4 bước quy trình/CTA band (số lượng mục cố định, chỉ sửa nội dung) — **đã test qua trình duyệt thật**
+- Nội dung Trang chủ (`admin/trang-chu`) — sửa toàn bộ chữ + ảnh Hero, 2 badge nổi, 4 chỉ số, 3 điểm mạnh, 4 bước quy trình, CTA band (số lượng mục cố định, chỉ sửa nội dung) — **đã test qua trình duyệt thật**
 - Trang tĩnh (`admin/trang-tinh`) — CRUD đầy đủ cho bảng `pages` (thêm/sửa/xoá) — **đã test qua trình duyệt thật**. Chưa nối hiển thị ra `gioi-thieu`/`lien-he` (xem phần PageStub bên dưới)
 - Quản lý tuyển sinh (`admin/tuyen-sinh`) — danh sách hồ sơ, đổi trạng thái (Mới/Đã xem/Đã liên hệ)
 - API `/api/admissions` — nhận form đăng ký tuyển sinh từ site công khai, lưu DB thật
-- Database: 8 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
+- Database: 13 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 ### Còn là khung tạm (`PageStub` — cần làm nội dung thật)
@@ -150,8 +169,8 @@ Giới thiệu/Liên hệ: nội dung đã có thể nhập qua `admin/trang-tin
 `pages`), nhưng trang công khai **chưa đọc từ đó** — vẫn là `PageStub` trống.
 Việc nối hiển thị để dành cho đợt làm UI các trang này.
 
-**Trang admin:** Thư viện media (upload — cần quyết định lưu file ở đâu, xem
-mục 8).
+`/thu-vien` (trang công khai) cũng chưa nối vào `gallery_items`/`media_items`
+— hiện chỉ dùng nội bộ cho khối bento ở Trang chủ.
 
 ### Danh sách ngành đào tạo — quản lý qua DB, không còn mảng tĩnh
 Bảng `programs` (xem mục 4.1b), quản lý qua `admin/nganh-dao-tao` —
@@ -172,22 +191,24 @@ Bảng `programs` (xem mục 4.1b), quản lý qua `admin/nganh-dao-tao` —
 6. **File tạm/test (screenshot .png, db test data) không commit vào git** — dọn trước khi đóng gói/commit.
 7. **Sửa/xoá bảng đơn dòng** (`site_settings`, `homepage_content`): luôn query/update theo `id = "main"` cố định — không tạo dòng thứ 2, không xoá dòng này (form admin chỉ có Sửa, không có Thêm/Xoá cho 2 bảng này).
 8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ).
+9. **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file.
+10. **Danh sách có thứ tự hiển thị** (`partners`, `gallery_items`, `faculty`, `testimonials`): dùng cột `sortOrder` nhập tay, sort bằng `asc(schema.<table>.sortOrder)` ở data layer — không thêm thư viện kéo-thả.
 
 ---
 
 ## 7. Việc cần làm tiếp theo (theo thứ tự ưu tiên gợi ý)
 
-1. Hoàn thiện các trang công khai còn là `PageStub` — ưu tiên: **Tin tức** (đã có sẵn bảng `posts` trong DB với dữ liệu thật, chỉ cần query + hiển thị), **Tuyển sinh** (nối form thật vào API `/api/admissions` đã có sẵn), **Giới thiệu/Liên hệ** (nội dung đã nhập được qua `admin/trang-tinh`, chỉ cần trang công khai đọc bảng `pages` theo slug và hiển thị). ~~Ngành đào tạo~~ đã xong (DB thật + CMS `admin/nganh-dao-tao`).
-2. Trang quản trị **Media** — cần quyết định: lưu file ảnh/video ở đâu khi còn dùng SQLite local (lưu vào `public/uploads/` là đơn giản nhất cho giai đoạn này) — khi lên production đổi sang S3.
-3. ~~Trang quản trị Trang tĩnh~~ — đã xong CRUD (`admin/trang-tinh`), chỉ còn thiếu bước 1 ở trên (nối hiển thị ra web công khai).
-4. Khi các trang xong hết → thực hiện chuyển DB sang PostgreSQL theo mục 4.4.
+1. Hoàn thiện các trang công khai còn là `PageStub` — ưu tiên: **Tin tức** (danh sách + chi tiết — đã có sẵn bảng `posts` + `categories` với dữ liệu thật, Trang chủ đã query mẫu qua `getLatestPublishedPosts()`, chỉ cần dựng UI 2 trang này), **Tuyển sinh** (nối form thật vào API `/api/admissions` đã có sẵn), **Giới thiệu/Liên hệ** (nội dung đã nhập được qua `admin/trang-tinh`, chỉ cần trang công khai đọc bảng `pages` theo slug và hiển thị), **Thư viện** (`/thu-vien` — có thể dùng lại `gallery_items` + `media_items`). ~~Ngành đào tạo~~ đã xong.
+2. Upload ảnh thật cho các mục đang seed rỗng (`gallery_items` chưa có ảnh, `heroImageUrl`/`photoUrl`/`avatarUrl` đa số null) — hiện Trang chủ tự hiện placeholder gradient, cần người dùng vào từng trang admin liên quan (`admin/trang-chu`, `admin/thu-vien-trang-chu`, `admin/giang-vien`, `admin/danh-gia`) upload ảnh thật.
+3. ~~Trang quản trị Media~~ đã xong (upload thật vào `public/uploads/`). ~~Trang quản trị Trang tĩnh~~ đã xong CRUD, chỉ còn thiếu nối hiển thị (mục 1). ~~Danh mục bài viết~~, ~~Đối tác~~, ~~Giảng viên~~, ~~Đánh giá cựu SV~~, ~~Thư viện ảnh Trang chủ~~ đều đã xong.
+4. Khi các trang xong hết → thực hiện chuyển DB sang PostgreSQL theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c).
 5. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 
 ---
 
 ## 8. Vấn đề còn bỏ ngỏ — cần người dùng quyết định khi tới lúc
 
-- **Lưu trữ media**: local filesystem (đơn giản, đủ cho SQLite/dev) hay cloud storage (S3/Cloudinary) ngay từ bây giờ?
+- ~~Lưu trữ media~~ — **đã quyết định**: local filesystem (`public/uploads/`) cho giai đoạn dev/SQLite hiện tại, chuyển sang S3 khi lên production cùng lúc chuyển PostgreSQL (xem mục 4.1c, 4.4).
 - **Liên kết LMS VNPT**: chỉ là link đơn giản hay cần SSO/API thật? (SRS ghi "tuỳ chọn SSO nếu VNPT hỗ trợ" — chưa xác nhận VNPT có hỗ trợ không)
 - **Domain/hosting thật**: chưa chọn nền tảng deploy (Vercel? VPS? AWS?) — ảnh hưởng cách cấu hình env, DB connection.
 
@@ -229,5 +250,14 @@ Tương tự, `npm run build` (Turbopack) trong sandbox có thể báo lỗi
 `.next/node_modules/...` — do sandbox không có quyền tạo junction point trên
 Windows, **không phải lỗi code**. Next 16 chưa có cờ tắt Turbopack để build
 bằng webpack thay thế. Khi gặp lỗi này trong sandbox, dùng `npx tsc --noEmit`
-+ `npm run lint` + test qua `npm run dev` trong trình duyệt để xác nhận thay
-vì `npm run build`. Trên máy thật của người dùng, lệnh này chạy bình thường.
++ `npm run lint` để xác nhận thay vì `npm run build`.
+
+**Lỗi này cũng xảy ra với `npm run dev`** nếu Claude tự khởi động server đó
+từ bên trong sandbox (cùng nguyên nhân junction point) — nhưng nếu **người
+dùng tự chạy `npm run dev` từ terminal thật của họ** (ngoài sandbox), server
+chạy bình thường và Claude có thể gắn trình duyệt vào (`preview_start` với
+`url`, không phải `name`) để test qua UI thật. Vì vậy khi cần verify UI mà
+gặp lỗi junction point, nhờ người dùng tự chạy `npm run dev` thay vì Claude
+tự chạy. Trên máy thật của người dùng (ngoài sandbox hoàn toàn), cả
+`npm run build` lẫn `npm run dev` đều chạy bình thường không cần thao tác gì
+thêm.

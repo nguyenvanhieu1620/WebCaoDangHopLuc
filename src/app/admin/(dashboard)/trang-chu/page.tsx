@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { getHomepageContent } from "@/lib/data/homepage";
 import { updateHomepageContentAction } from "./actions";
@@ -69,42 +70,60 @@ export default async function AdminHomepagePage() {
                 className={inputClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>Ảnh Hero (để trống = giữ ảnh cũ)</label>
+              {content.heroImageUrl && (
+                <Image
+                  src={content.heroImageUrl}
+                  alt="Ảnh Hero hiện tại"
+                  width={220}
+                  height={128}
+                  className="mb-2 h-32 w-auto rounded-lg border border-line object-cover"
+                />
+              )}
+              <input
+                type="file"
+                name="heroImage"
+                accept="image/*"
+                className="w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Nhãn thẻ ảnh (VD: &quot;Cơ sở thực hành&quot;)</label>
+                <label className={labelClass}>Badge nổi 1 — số liệu (VD: &quot;12+&quot;)</label>
                 <input
-                  name="heroImageCardLabel"
+                  name="heroBadge1Value"
                   required
-                  defaultValue={content.heroImageCardLabel}
+                  defaultValue={content.heroBadge1Value}
                   className={inputClass}
                 />
               </div>
               <div>
-                <label className={labelClass}>Tiêu đề thẻ ảnh</label>
+                <label className={labelClass}>Badge nổi 1 — nhãn</label>
                 <input
-                  name="heroImageCardTitle"
+                  name="heroBadge1Label"
                   required
-                  defaultValue={content.heroImageCardTitle}
+                  defaultValue={content.heroBadge1Label}
                   className={inputClass}
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Điểm đánh giá (VD: &quot;4.8&quot;)</label>
+                <label className={labelClass}>Badge nổi 2 — số liệu (VD: &quot;96%&quot;)</label>
                 <input
-                  name="heroRatingValue"
+                  name="heroBadge2Value"
                   required
-                  defaultValue={content.heroRatingValue}
+                  defaultValue={content.heroBadge2Value}
                   className={inputClass}
                 />
               </div>
               <div>
-                <label className={labelClass}>Chú thích đánh giá</label>
+                <label className={labelClass}>Badge nổi 2 — nhãn</label>
                 <input
-                  name="heroRatingText"
+                  name="heroBadge2Label"
                   required
-                  defaultValue={content.heroRatingText}
+                  defaultValue={content.heroBadge2Label}
                   className={inputClass}
                 />
               </div>

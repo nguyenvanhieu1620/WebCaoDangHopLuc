@@ -18,16 +18,42 @@ CREATE TABLE `admission_submissions` (
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE `categories` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`slug` text NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `categories_slug_unique` ON `categories` (`slug`);--> statement-breakpoint
+CREATE TABLE `faculty` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`role` text NOT NULL,
+	`photo_url` text,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `gallery_items` (
+	`id` text PRIMARY KEY NOT NULL,
+	`image_url` text NOT NULL,
+	`caption` text NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `homepage_content` (
 	`id` text PRIMARY KEY DEFAULT 'main' NOT NULL,
+	`hero_image_url` text,
 	`hero_badge` text NOT NULL,
 	`hero_title_line1` text NOT NULL,
 	`hero_title_line2` text NOT NULL,
 	`hero_description` text NOT NULL,
-	`hero_image_card_label` text NOT NULL,
-	`hero_image_card_title` text NOT NULL,
-	`hero_rating_value` text NOT NULL,
-	`hero_rating_text` text NOT NULL,
+	`hero_badge1_value` text NOT NULL,
+	`hero_badge1_label` text NOT NULL,
+	`hero_badge2_value` text NOT NULL,
+	`hero_badge2_label` text NOT NULL,
 	`stats_json` text NOT NULL,
 	`features_json` text NOT NULL,
 	`steps_json` text NOT NULL,
@@ -53,6 +79,13 @@ CREATE TABLE `pages` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `pages_slug_unique` ON `pages` (`slug`);--> statement-breakpoint
+CREATE TABLE `partners` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `posts` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
@@ -60,6 +93,8 @@ CREATE TABLE `posts` (
 	`excerpt` text,
 	`content` text NOT NULL,
 	`status` text DEFAULT 'draft' NOT NULL,
+	`category_id` text,
+	`cover_image_url` text,
 	`published_at` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -91,4 +126,14 @@ CREATE TABLE `site_settings` (
 	`zalo_url` text DEFAULT '#' NOT NULL,
 	`youtube_url` text DEFAULT '#' NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `testimonials` (
+	`id` text PRIMARY KEY NOT NULL,
+	`quote` text NOT NULL,
+	`name` text NOT NULL,
+	`role` text NOT NULL,
+	`avatar_url` text,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
