@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-900: #06325a;
+  --brand-700: #0b6cb0;
+  --brand-500: #1e9ad6;
+  --accent-600: #c41e24;
+  --accent-500: #e8562f;
+  --paper: #f7f9fb;
+  --ink: #0f1e29;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+::selection {
+  background: #fce7e5;
+  color: #9c161b;
+}
+
+/* Dấu chấm nhấp nháy cho các nhãn "đang mở / trực tiếp" */
+@keyframes pulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 86, 47, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(232, 86, 47, 0);
+  }
+}
+.dot-pulse {
+  animation: pulseDot 2s infinite;
+}
+
+/* Hiệu ứng nổi nhẹ cho khối trang trí trong hero */
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+.float-y {
+  animation: floatY 6s ease-in-out infinite;
+}
+

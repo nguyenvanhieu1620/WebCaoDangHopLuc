@@ -1,0 +1,18 @@
+node_modules
+.next
+out
+dist
+.env*.local
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Drizzle / SQLite dev DB — dữ liệu local/test, không commit (xem CLAUDE.md mục 6)
+drizzle/*.db
+drizzle/*.db-journal
+.env
+
+# File tham khảo thiết kế tạm thời, không thuộc source code Next.js
+*.dc.html
+Cao đẳng Y Dược Hợp Lực website design.zip
+Hop Luc - Trang chu.html
