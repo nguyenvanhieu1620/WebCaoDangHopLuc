@@ -86,7 +86,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - **Drizzle ORM** + **SQLite** (qua driver `@libsql/client`)
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 13 bảng
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 14 bảng
 `admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`,
 `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
 `programs`, `site_settings` (đơn dòng, id `"main"`), `homepage_content`
@@ -95,7 +95,10 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 lại Trang chủ theo thiết kế mới: `categories` (danh mục bài viết),
 `partners`, `gallery_items`, `faculty`, `testimonials` — 4 bảng sau đều có
 cột `sort_order` (admin tự nhập số để sắp vị trí hiển thị, không làm
-kéo-thả).
+kéo-thả). Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự trỏ tới
+`nav_items.id` khác — null = danh mục to, có giá trị = danh mục con;
+`is_primary` chỉ áp dụng cho danh mục to: 1 = hiện ở thanh ngang chính,
+0 = nằm trong nút ☰ "Danh mục khác" — xem `src/lib/data/nav.ts`).
 
 ### 4.1c Upload ảnh/video thật (`src/lib/media.ts`)
 `saveUploadedFile(file)` — ghi file vào `public/uploads/` (tên file thêm
@@ -153,9 +156,10 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - Cài đặt chung (`admin/cai-dat`) — sửa hotline/email/địa chỉ/banner thông báo/mạng xã hội, áp dụng ngay cho Header + Footer toàn site — **đã test qua trình duyệt thật**
 - Nội dung Trang chủ (`admin/trang-chu`) — sửa toàn bộ chữ + ảnh Hero, 2 badge nổi, 4 chỉ số, 3 điểm mạnh, 4 bước quy trình, CTA band (số lượng mục cố định, chỉ sửa nội dung) — **đã test qua trình duyệt thật**
 - Trang tĩnh (`admin/trang-tinh`) — CRUD đầy đủ cho bảng `pages` (thêm/sửa/xoá) — **đã test qua trình duyệt thật**. Chưa nối hiển thị ra `gioi-thieu`/`lien-he` (xem phần PageStub bên dưới)
+- **Menu chính** (`admin/menu`) — CRUD danh mục to/con cho menu điều hướng (`SiteHeader.tsx`), thay hẳn mảng tĩnh `SITE_NAV`. Danh mục to có con → desktop hover hiện dropdown con; danh mục to đánh dấu không phải "menu chính" gom vào 1 nút ☰ riêng cạnh thanh ngang (khác hamburger mobile). Mobile: 1 danh sách phẳng, mục có con bấm mở rộng thụt vào. Xoá 1 danh mục to sẽ xoá cascade toàn bộ con của nó — **đã test qua trình duyệt thật**: sửa/xoá danh mục con → Trang chủ cập nhật đúng dropdown; xoá danh mục to có con → con biến mất theo
 - Quản lý tuyển sinh (`admin/tuyen-sinh`) — danh sách hồ sơ, đổi trạng thái (Mới/Đã xem/Đã liên hệ)
 - API `/api/admissions` — nhận form đăng ký tuyển sinh từ site công khai, lưu DB thật
-- Database: 13 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
+- Database: 14 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 ### Còn là khung tạm (`PageStub` — cần làm nội dung thật)

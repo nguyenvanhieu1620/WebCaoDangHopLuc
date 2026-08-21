@@ -14,27 +14,11 @@ export const SITE = {
   tagline: "Medical Pharmacy College",
 };
 
-export type NavItem = {
-  key: string;
-  label: string;
-  href: string;
-};
-
-/** Menu chính của website công khai — khớp với SiteHeader.dc.html gốc. */
-export const SITE_NAV: NavItem[] = [
-  { key: "home", label: "Trang chủ", href: "/" },
-  { key: "about", label: "Giới thiệu", href: "/gioi-thieu" },
-  { key: "programs", label: "Ngành đào tạo", href: "/nganh-dao-tao" },
-  { key: "admissions", label: "Tuyển sinh", href: "/tuyen-sinh" },
-  { key: "lookup", label: "Tra cứu KQ", href: "/tra-cuu-ket-qua" },
-  { key: "news", label: "Tin tức", href: "/tin-tuc" },
-  { key: "gallery", label: "Thư viện", href: "/thu-vien" },
-  { key: "lms", label: "LMS VNPT", href: "/lms" },
-  { key: "contact", label: "Liên hệ", href: "/lien-he" },
-];
-
-/** Số mục hiển thị trực tiếp trên thanh nav trước khi gộp vào menu "Thêm". */
-export const SITE_NAV_MAX_VISIBLE = 6;
+/**
+ * Menu chính của website công khai giờ quản lý qua bảng `nav_items` trong DB
+ * (CMS admin/menu) — KHÔNG còn mảng tĩnh ở đây. Lấy dữ liệu qua
+ * src/lib/data/nav.ts (page/component không gọi `db` trực tiếp).
+ */
 
 export type AdminNavGroup = {
   label: string;
@@ -51,6 +35,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: "Nội dung",
     items: [
       { key: "posts", label: "Bài viết", href: "/admin/bai-viet" },
+      { key: "menu", label: "Menu chính", href: "/admin/menu" },
       { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao" },
       { key: "partners", label: "Đối tác", href: "/admin/doi-tac" },
       { key: "faculty", label: "Đội ngũ giảng viên", href: "/admin/giang-vien" },

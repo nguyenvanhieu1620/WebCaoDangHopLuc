@@ -12,6 +12,7 @@ import {
   partners,
   faculty,
   testimonials,
+  navItems,
 } from "./schema";
 
 /**
@@ -291,6 +292,43 @@ async function main() {
     console.log("✓ Tạo 2 đánh giá cựu sinh viên mẫu");
   } else {
     console.log("• Đã có đánh giá cựu sinh viên, bỏ qua.");
+  }
+
+  // Menu chính mặc định — minh hoạ danh mục to/con bằng Ngành đào tạo
+  const existingNavItems = await db.query.navItems.findMany();
+  if (existingNavItems.length === 0) {
+    await db.insert(navItems).values([
+      { label: "Trang chủ", href: "/", isPrimary: 1, sortOrder: 0 },
+      { label: "Giới thiệu", href: "/gioi-thieu", isPrimary: 1, sortOrder: 1 },
+      { label: "Ngành đào tạo", href: "/nganh-dao-tao", isPrimary: 1, sortOrder: 2 },
+      { label: "Tuyển sinh", href: "/tuyen-sinh", isPrimary: 1, sortOrder: 3 },
+      { label: "Tin tức", href: "/tin-tuc", isPrimary: 1, sortOrder: 4 },
+      { label: "Liên hệ", href: "/lien-he", isPrimary: 1, sortOrder: 5 },
+    ]);
+
+    const programsParent = await db.query.navItems.findFirst({
+      where: (n, { eq }) => eq(n.href, "/nganh-dao-tao"),
+    });
+    if (!programsParent) throw new Error("Không tìm thấy nav item Ngành đào tạo vừa tạo");
+
+    await db.insert(navItems).values([
+      { label: "Điều dưỡng", href: "/nganh-dao-tao/dieu-duong", parentId: programsParent.id, sortOrder: 0 },
+      { label: "Dược", href: "/nganh-dao-tao/duoc", parentId: programsParent.id, sortOrder: 1 },
+      { label: "Xét nghiệm Y học", href: "/nganh-dao-tao/xet-nghiem-y-hoc", parentId: programsParent.id, sortOrder: 2 },
+      { label: "Hộ sinh", href: "/nganh-dao-tao/ho-sinh", parentId: programsParent.id, sortOrder: 3 },
+      { label: "Phục hồi chức năng", href: "/nganh-dao-tao/phuc-hoi-chuc-nang", parentId: programsParent.id, sortOrder: 4 },
+      { label: "Y sĩ đa khoa", href: "/nganh-dao-tao/y-si-da-khoa", parentId: programsParent.id, sortOrder: 5 },
+    ]);
+
+    await db.insert(navItems).values([
+      { label: "Tra cứu KQ", href: "/tra-cuu-ket-qua", isPrimary: 0, sortOrder: 6 },
+      { label: "Thư viện", href: "/thu-vien", isPrimary: 0, sortOrder: 7 },
+      { label: "LMS VNPT", href: "/lms", isPrimary: 0, sortOrder: 8 },
+    ]);
+
+    console.log("✓ Tạo menu chính mặc định (6 danh mục to, 6 danh mục con dưới Ngành đào tạo, 3 danh mục khác)");
+  } else {
+    console.log("• Đã có menu chính, bỏ qua.");
   }
 
   console.log("Seed hoàn tất.");

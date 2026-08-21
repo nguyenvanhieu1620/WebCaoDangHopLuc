@@ -153,6 +153,23 @@ export const homepageContent = sqliteTable("homepage_content", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/** Mục menu chính của site công khai — danh mục to (parentId null) và danh mục con (parentId trỏ tới 1 danh mục to). */
+export const navItems = sqliteTable("nav_items", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  label: text("label").notNull(),
+  href: text("href").notNull(),
+  /** null = danh mục to. Có giá trị = danh mục con thuộc nav_items.id đó. */
+  parentId: text("parent_id"),
+  /** Chỉ áp dụng cho danh mục to: 1 = hiện ở thanh ngang chính, 0 = nằm trong nút ☰ "Danh mục khác". */
+  isPrimary: integer("is_primary").notNull().default(1),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Đối tác hiển thị ở dải logo/tên Trang chủ — sortOrder do admin tự nhập để sắp vị trí. */
 export const partners = sqliteTable("partners", {
   id: text("id")
@@ -240,3 +257,4 @@ export type Partner = typeof partners.$inferSelect;
 export type GalleryItem = typeof galleryItems.$inferSelect;
 export type Faculty = typeof faculty.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
+export type NavItem = typeof navItems.$inferSelect;
