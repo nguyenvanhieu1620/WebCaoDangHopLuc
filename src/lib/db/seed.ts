@@ -13,6 +13,7 @@ import {
   faculty,
   testimonials,
   navItems,
+  pages,
 } from "./schema";
 
 /**
@@ -329,6 +330,114 @@ async function main() {
     console.log("✓ Tạo menu chính mặc định (6 danh mục to, 6 danh mục con dưới Ngành đào tạo, 3 danh mục khác)");
   } else {
     console.log("• Đã có menu chính, bỏ qua.");
+  }
+
+  // Trang "Công khai" mặc định — nội dung là KHUNG THEO ĐÚNG QUY ĐỊNH
+  // (Thông tư 36/2017 — "3 công khai" cho cơ sở GDNN), số liệu để dạng
+  // placeholder trong ngoặc vuông, KHÔNG bịa số liệu thật — trường tự cập
+  // nhật qua admin/trang-tinh trước khi công bố chính thức.
+  const congKhaiSlugs = [
+    "cong-khai-tai-chinh",
+    "cong-khai-co-so-vat-chat",
+    "cong-khai-chuong-trinh-dao-tao",
+    "cong-khai-doi-ngu-giang-vien",
+  ];
+  const existingCongKhai = await db.query.pages.findMany({
+    where: (p, { inArray }) => inArray(p.slug, congKhaiSlugs),
+  });
+  if (existingCongKhai.length === 0) {
+    await db.insert(pages).values([
+      {
+        slug: "cong-khai-tai-chinh",
+        title: "Công khai tài chính",
+        content: `Thực hiện theo quy định về công khai tài chính đối với cơ sở giáo dục nghề nghiệp.
+
+— Học phí năm học [điền năm học]: [điền mức học phí theo từng ngành]
+— Các khoản thu khác (nếu có): [điền chi tiết]
+— Tổng nguồn thu năm [điền năm]: [điền số liệu]
+— Tổng chi năm [điền năm]: [điền số liệu]
+
+[Ban Tài chính — Kế toán cập nhật số liệu chính thức trước khi công bố]`,
+      },
+      {
+        slug: "cong-khai-co-so-vat-chat",
+        title: "Công khai cơ sở vật chất",
+        content: `— Tổng diện tích khuôn viên: [điền số liệu] m²
+— Số phòng học lý thuyết: [điền số lượng]
+— Số phòng/xưởng thực hành, thực tập: [điền số lượng]
+— Thư viện: [điền quy mô, số đầu sách]
+— Ký túc xá (nếu có): [điền quy mô]
+— Trang thiết bị thực hành chính: [điền danh mục]
+
+[Phòng Quản trị — Cơ sở vật chất cập nhật số liệu chính thức trước khi công bố]`,
+      },
+      {
+        slug: "cong-khai-chuong-trinh-dao-tao",
+        title: "Công khai chương trình đào tạo",
+        content: `Danh sách ngành đào tạo và thời lượng chương trình — xem chi tiết từng
+ngành tại trang /nganh-dao-tao.
+
+— Chuẩn đầu ra: [điền chuẩn đầu ra theo từng ngành]
+— Khối lượng kiến thức toàn khoá: [điền số tín chỉ/đơn vị học trình]
+— Tỷ lệ thời lượng lý thuyết/thực hành: [điền tỷ lệ]
+— Tỷ lệ sinh viên tốt nghiệp có việc làm đúng ngành: [điền số liệu khảo sát]
+
+[Phòng Đào tạo cập nhật số liệu chính thức trước khi công bố]`,
+      },
+      {
+        slug: "cong-khai-doi-ngu-giang-vien",
+        title: "Công khai đội ngũ giảng viên",
+        content: `— Tổng số giảng viên cơ hữu: [điền số lượng]
+— Trình độ Tiến sĩ: [điền số lượng/tỷ lệ %]
+— Trình độ Thạc sĩ: [điền số lượng/tỷ lệ %]
+— Trình độ Đại học/CKI/CKII: [điền số lượng/tỷ lệ %]
+— Tỷ lệ sinh viên/giảng viên: [điền số liệu]
+
+Danh sách giảng viên tiêu biểu — xem tại Trang chủ, mục "Đội ngũ giảng viên".
+
+[Phòng Tổ chức — Cán bộ cập nhật số liệu chính thức trước khi công bố]`,
+      },
+    ]);
+    console.log("✓ Tạo 4 trang Công khai mặc định (khung template, cần trường điền số liệu thật)");
+  } else {
+    console.log("• Đã có trang Công khai, bỏ qua.");
+  }
+
+  // Mục menu "Công khai" — danh mục to (nằm trong nút ☰, giống site tham khảo) + 4 danh mục con
+  const existingCongKhaiNav = await db.query.navItems.findFirst({
+    where: (n, { eq }) => eq(n.href, "/cong-khai"),
+  });
+  if (!existingCongKhaiNav) {
+    await db.insert(navItems).values({
+      label: "Công khai",
+      href: "/cong-khai",
+      isPrimary: 0,
+      sortOrder: 9,
+    });
+    const congKhaiParent = await db.query.navItems.findFirst({
+      where: (n, { eq }) => eq(n.href, "/cong-khai"),
+    });
+    if (!congKhaiParent) throw new Error("Không tìm thấy nav item Công khai vừa tạo");
+
+    await db.insert(navItems).values(
+      congKhaiSlugs.map((slug, i) => {
+        const titles: Record<string, string> = {
+          "cong-khai-tai-chinh": "Tài chính",
+          "cong-khai-co-so-vat-chat": "Cơ sở vật chất",
+          "cong-khai-chuong-trinh-dao-tao": "Chương trình đào tạo",
+          "cong-khai-doi-ngu-giang-vien": "Đội ngũ giảng viên",
+        };
+        return {
+          label: titles[slug],
+          href: `/cong-khai/${slug}`,
+          parentId: congKhaiParent.id,
+          sortOrder: i,
+        };
+      })
+    );
+    console.log("✓ Tạo mục menu Công khai (danh mục to + 4 danh mục con)");
+  } else {
+    console.log("• Đã có mục menu Công khai, bỏ qua.");
   }
 
   console.log("Seed hoàn tất.");
