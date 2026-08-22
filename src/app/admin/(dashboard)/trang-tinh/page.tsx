@@ -23,7 +23,7 @@ export default async function AdminPagesPage({
     <div>
       <AdminTopbar
         title="Trang tĩnh"
-        description="Sửa nội dung các trang: Công khai (đã hiện ở /cong-khai), Giới thiệu, Liên hệ... (2 trang sau chưa nối hiển thị ra web công khai)"
+        description="Sửa nội dung các trang: Công khai, Giới thiệu, Liên hệ... — sửa xong hiện ngay trên web công khai theo đúng slug"
       />
       <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_400px]">
         {/* Danh sách trang */}

@@ -18,3 +18,9 @@ export function slugify(input: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 }
+
+/** Định dạng ngày kiểu Việt Nam (dd/mm/yyyy) từ chuỗi ISO — trả về "" nếu rỗng. */
+export function formatVNDate(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("vi-VN");
+}

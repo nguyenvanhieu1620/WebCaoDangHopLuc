@@ -403,6 +403,43 @@ Danh sách giảng viên tiêu biểu — xem tại Trang chủ, mục "Đội n
     console.log("• Đã có trang Công khai, bỏ qua.");
   }
 
+  // Trang Giới thiệu / Liên hệ mặc định — nội dung giới thiệu chung, các
+  // mốc thời gian/số liệu cụ thể để placeholder, trường tự điền số liệu thật.
+  const existingAboutContact = await db.query.pages.findMany({
+    where: (p, { inArray }) => inArray(p.slug, ["gioi-thieu", "lien-he"]),
+  });
+  if (existingAboutContact.length === 0) {
+    await db.insert(pages).values([
+      {
+        slug: "gioi-thieu",
+        title: "Giới thiệu",
+        content: `Trường Cao đẳng Y Dược Hợp Lực đào tạo nguồn nhân lực y dược chất lượng cao, gắn lý thuyết với thực hành lâm sàng thực tế ngay từ năm nhất — hợp tác cùng nhiều bệnh viện, nhà thuốc đối tác để sinh viên có môi trường thực hành sát với công việc thật sau khi ra trường.
+
+Sứ mệnh
+Đào tạo đội ngũ Điều dưỡng, Dược sĩ, Kỹ thuật viên xét nghiệm và các ngành y tế khác vững chuyên môn, giàu y đức, đáp ứng nhu cầu nhân lực ngành y tế trong nước và khu vực.
+
+Lịch sử hình thành
+[Trường điền: năm thành lập, các mốc phát triển quan trọng, quyết định thành lập/nâng cấp trường theo hồ sơ pháp lý chính thức]
+
+Đội ngũ lãnh đạo
+[Trường điền: danh sách Ban Giám hiệu — họ tên, chức danh, học hàm/học vị]
+
+Cơ sở vật chất
+[Trường điền: quy mô khuôn viên, phòng học, phòng thực hành — chi tiết đầy đủ xem tại /cong-khai/cong-khai-co-so-vat-chat]`,
+      },
+      {
+        slug: "lien-he",
+        title: "Liên hệ",
+        content: `Đội ngũ tư vấn tuyển sinh của trường luôn sẵn sàng giải đáp thắc mắc về ngành học, hồ sơ xét tuyển và học phí — liên hệ qua hotline, email hoặc đến trực tiếp trường theo thông tin bên dưới.
+
+Giờ làm việc: [Trường điền: VD Thứ 2 - Thứ 6, 7h30 - 17h00]`,
+      },
+    ]);
+    console.log("✓ Tạo trang Giới thiệu, Liên hệ mặc định");
+  } else {
+    console.log("• Đã có trang Giới thiệu/Liên hệ, bỏ qua.");
+  }
+
   // Mục menu "Công khai" — danh mục to (nằm trong nút ☰, giống site tham khảo) + 4 danh mục con
   const existingCongKhaiNav = await db.query.navItems.findFirst({
     where: (n, { eq }) => eq(n.href, "/cong-khai"),

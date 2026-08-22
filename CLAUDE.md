@@ -164,15 +164,22 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 ### Còn là khung tạm (`PageStub` — cần làm nội dung thật)
-**Trang công khai:** Giới thiệu, Tuyển sinh (form thật — hiện tại API đã sẵn
-nhưng UI form chưa nối), Tra cứu kết quả, Tin tức (danh sách + chi tiết bài
-viết — cần nối với bảng `posts` đã có sẵn trong DB), Thư viện ảnh/video, LMS
-(trang hướng dẫn link VNPT), Liên hệ. (Ngành đào tạo danh sách + chi tiết đã
-xong, lấy dữ liệu thật từ DB.)
+**Trang công khai:** Tuyển sinh (form thật — hiện tại API đã sẵn nhưng UI
+form chưa nối), Tra cứu kết quả, Thư viện ảnh/video (`/thu-vien` — có thể
+dùng lại `gallery_items`/`media_items` đã có), LMS (trang hướng dẫn link
+VNPT). (Ngành đào tạo, Giới thiệu, Liên hệ, Tin tức, Công khai đã xong, lấy
+dữ liệu thật từ DB.)
 
-Giới thiệu/Liên hệ: nội dung đã có thể nhập qua `admin/trang-tinh` (bảng
-`pages`), nhưng trang công khai **chưa đọc từ đó** — vẫn là `PageStub` trống.
-Việc nối hiển thị để dành cho đợt làm UI các trang này.
+**Tin tức** (`/tin-tuc` danh sách + `/tin-tuc/[slug]` chi tiết) — đọc qua
+`getAllPublishedPosts()`/`getPublishedPostBySlug()` (`src/lib/data/posts.ts`,
+cùng file với `getLatestPublishedPosts()` Trang chủ đã dùng). Bài `draft`
+truy cập trực tiếp trả về 404 (không lộ bài chưa đăng).
+
+**Giới thiệu/Liên hệ** — đã nối đọc từ bảng `pages` qua `getPageBySlug()`
+(slug `gioi-thieu`/`lien-he`); nếu admin lỡ xoá trang tương ứng, tự động
+rơi về lại `PageStub` (không vỡ trang, không lỗi). Liên hệ còn hiển thị
+thêm khối liên hệ thật lấy từ `site_settings` (địa chỉ/hotline/email/mạng
+xã hội, ẩn link nào còn để giá trị mặc định `"#"`).
 
 `/thu-vien` (trang công khai) cũng chưa nối vào `gallery_items`/`media_items`
 — hiện chỉ dùng nội bộ cho khối bento ở Trang chủ.
@@ -203,9 +210,9 @@ Bảng `programs` (xem mục 4.1b), quản lý qua `admin/nganh-dao-tao` —
 
 ## 7. Việc cần làm tiếp theo (theo thứ tự ưu tiên gợi ý)
 
-1. Hoàn thiện các trang công khai còn là `PageStub` — ưu tiên: **Tin tức** (danh sách + chi tiết — đã có sẵn bảng `posts` + `categories` với dữ liệu thật, Trang chủ đã query mẫu qua `getLatestPublishedPosts()`, chỉ cần dựng UI 2 trang này), **Tuyển sinh** (nối form thật vào API `/api/admissions` đã có sẵn), **Giới thiệu/Liên hệ** (nội dung đã nhập được qua `admin/trang-tinh`, chỉ cần trang công khai đọc bảng `pages` theo slug và hiển thị), **Thư viện** (`/thu-vien` — có thể dùng lại `gallery_items` + `media_items`). ~~Ngành đào tạo~~ đã xong.
-2. Upload ảnh thật cho các mục đang seed rỗng (`gallery_items` chưa có ảnh, `heroImageUrl`/`photoUrl`/`avatarUrl` đa số null) — hiện Trang chủ tự hiện placeholder gradient, cần người dùng vào từng trang admin liên quan (`admin/trang-chu`, `admin/thu-vien-trang-chu`, `admin/giang-vien`, `admin/danh-gia`) upload ảnh thật.
-3. ~~Trang quản trị Media~~ đã xong (upload thật vào `public/uploads/`). ~~Trang quản trị Trang tĩnh~~ đã xong CRUD, chỉ còn thiếu nối hiển thị (mục 1). ~~Danh mục bài viết~~, ~~Đối tác~~, ~~Giảng viên~~, ~~Đánh giá cựu SV~~, ~~Thư viện ảnh Trang chủ~~ đều đã xong.
+1. Hoàn thiện các trang công khai còn là `PageStub` — ưu tiên: **Tuyển sinh** (nối form thật vào API `/api/admissions` đã có sẵn), **Tra cứu kết quả**, **Thư viện** (`/thu-vien` — có thể dùng lại `gallery_items` + `media_items`), **LMS** (chỉ cần trang hướng dẫn + link VNPT, không xây LMS riêng ở Giai đoạn 1). ~~Ngành đào tạo~~, ~~Giới thiệu~~, ~~Liên hệ~~, ~~Tin tức~~, ~~Công khai~~ đã xong.
+2. Upload ảnh thật cho các mục đang seed rỗng (`gallery_items` chưa có ảnh, `heroImageUrl`/`photoUrl`/`avatarUrl` đa số null) — hiện Trang chủ tự hiện placeholder gradient, cần người dùng vào từng trang admin liên quan (`admin/trang-chu`, `admin/thu-vien-trang-chu`, `admin/giang-vien`, `admin/danh-gia`) upload ảnh thật. **Đặc biệt lưu ý riêng 4 trang Công khai** (`admin/trang-tinh`, slug `cong-khai-*`) — nội dung đang là khung placeholder `[điền ...]`, cần xác nhận với nhà trường có bắt buộc áp dụng theo Thông tư 36/2017 không rồi điền số liệu thật trước khi công bố (xem mục 5).
+3. ~~Trang quản trị Media~~, ~~Trang quản trị Trang tĩnh~~ (CRUD + đã nối hiển thị), ~~Danh mục bài viết~~, ~~Đối tác~~, ~~Giảng viên~~, ~~Đánh giá cựu SV~~, ~~Thư viện ảnh Trang chủ~~, ~~Menu chính~~ đều đã xong.
 4. Khi các trang xong hết → thực hiện chuyển DB sang PostgreSQL theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c).
 5. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 

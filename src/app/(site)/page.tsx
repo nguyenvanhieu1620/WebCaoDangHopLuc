@@ -12,12 +12,7 @@ import { getGalleryItems } from "@/lib/data/gallery";
 import { getFacultyList } from "@/lib/data/faculty";
 import { getTestimonials } from "@/lib/data/testimonials";
 import { getLatestPublishedPosts } from "@/lib/data/posts";
-import { cn } from "@/lib/utils";
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("vi-VN");
-}
+import { cn, formatVNDate } from "@/lib/utils";
 
 export default async function HomePage() {
   const [
@@ -368,7 +363,7 @@ export default async function HomePage() {
                   </div>
                   <div className="p-5">
                     <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
-                      {formatDate(n.publishedAt)}
+                      {formatVNDate(n.publishedAt)}
                       {n.categoryName ? ` · ${n.categoryName}` : ""}
                     </div>
                     <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
