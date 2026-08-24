@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { resolveImageUrl } from "@/lib/media";
+import { autoFillTranslations } from "@/lib/translate";
 
 export async function createPostAction(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
@@ -12,6 +13,9 @@ export async function createPostAction(formData: FormData) {
   const content = String(formData.get("content") || "").trim();
   const categoryId = String(formData.get("categoryId") || "").trim();
   const publishNow = formData.get("publishNow") === "on";
+  const titleEn = String(formData.get("titleEn") || "").trim();
+  const excerptEn = String(formData.get("excerptEn") || "").trim();
+  const contentEn = String(formData.get("contentEn") || "").trim();
 
   if (!title || !content) return;
 
@@ -26,11 +30,20 @@ export async function createPostAction(formData: FormData) {
 
   const coverImageUrl = await resolveImageUrl(formData, "coverImage", "coverImageExisting");
 
+  const [titleEnFinal, excerptEnFinal, contentEnFinal] = await autoFillTranslations([
+    { vi: title, en: titleEn },
+    { vi: excerpt, en: excerptEn },
+    { vi: content, en: contentEn },
+  ]);
+
   await db.insert(schema.posts).values({
     title,
+    titleEn: titleEnFinal || null,
     slug,
     excerpt: excerpt || null,
+    excerptEn: excerptEnFinal || null,
     content,
+    contentEn: contentEnFinal || null,
     categoryId: categoryId || null,
     coverImageUrl,
     status: publishNow ? "published" : "draft",
@@ -44,6 +57,7 @@ export async function createPostAction(formData: FormData) {
 
 export async function createCategoryAction(formData: FormData) {
   const name = String(formData.get("categoryName") || "").trim();
+  const nameEn = String(formData.get("categoryNameEn") || "").trim();
   if (!name) return;
 
   const baseSlug = slugify(name) || `danh-muc-${Date.now()}`;
@@ -54,7 +68,9 @@ export async function createCategoryAction(formData: FormData) {
     slug = `${baseSlug}-${counter}`;
   }
 
-  await db.insert(schema.categories).values({ name, slug });
+  const [nameEnFinal] = await autoFillTranslations([{ vi: name, en: nameEn }]);
+
+  await db.insert(schema.categories).values({ name, nameEn: nameEnFinal || null, slug });
   revalidatePath("/admin/bai-viet");
 }
 

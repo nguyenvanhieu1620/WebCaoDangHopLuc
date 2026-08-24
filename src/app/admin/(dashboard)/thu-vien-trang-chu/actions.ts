@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
+import { autoFillTranslations } from "@/lib/translate";
 
 export async function upsertGalleryItemAction(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   const caption = String(formData.get("caption") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
+  const captionEn = String(formData.get("captionEn") || "").trim();
 
   if (!caption) return;
 
@@ -19,13 +21,20 @@ export async function upsertGalleryItemAction(formData: FormData) {
 
   if (!imageUrl) return;
 
+  const [captionEnFinal] = await autoFillTranslations([{ vi: caption, en: captionEn }]);
+
   if (id) {
     await db
       .update(schema.galleryItems)
-      .set({ caption, sortOrder, imageUrl })
+      .set({ caption, captionEn: captionEnFinal || null, sortOrder, imageUrl })
       .where(eq(schema.galleryItems.id, id));
   } else {
-    await db.insert(schema.galleryItems).values({ caption, sortOrder, imageUrl });
+    await db.insert(schema.galleryItems).values({
+      caption,
+      captionEn: captionEnFinal || null,
+      sortOrder,
+      imageUrl,
+    });
   }
 
   revalidatePath("/admin/thu-vien-trang-chu");

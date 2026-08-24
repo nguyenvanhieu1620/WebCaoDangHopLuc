@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertProgramAction, deleteProgramAction } from "./actions";
@@ -163,6 +164,40 @@ export default async function AdminProgramsPage({
                 placeholder="Dành cho trang chi tiết ngành đào tạo (làm sau) — có thể để trống"
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3 space-y-3">
+                <AutoTranslateButton
+                  pairs={[
+                    { viName: "name", enName: "nameEn" },
+                    { viName: "summary", enName: "summaryEn" },
+                    { viName: "content", enName: "contentEn" },
+                  ]}
+                />
+                <input
+                  name="nameEn"
+                  defaultValue={editing?.nameEn ?? ""}
+                  placeholder="Program name (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <textarea
+                  name="summaryEn"
+                  rows={3}
+                  defaultValue={editing?.summaryEn ?? ""}
+                  placeholder="Short summary (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <textarea
+                  name="contentEn"
+                  rows={4}
+                  defaultValue={editing?.contentEn ?? ""}
+                  placeholder="Full detail content (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+              </div>
+            </details>
             <label className="flex items-center gap-2 text-xs font-medium text-ink-soft">
               <input
                 type="checkbox"

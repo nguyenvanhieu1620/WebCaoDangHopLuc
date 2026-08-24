@@ -3,9 +3,9 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
-import { desc, eq } from "drizzle-orm";
-import { getCategories } from "@/lib/data/categories";
+import { asc, desc, eq } from "drizzle-orm";
 import {
   createPostAction,
   togglePublishAction,
@@ -32,7 +32,7 @@ export default async function AdminPostsPage({
 
   const [allPosts, categories, mediaImages] = await Promise.all([
     db.query.posts.findMany({ orderBy: desc(schema.posts.createdAt) }),
-    getCategories(),
+    db.query.categories.findMany({ orderBy: asc(schema.categories.name) }),
     db.query.mediaItems.findMany({
       where: eq(schema.mediaItems.type, "image"),
       orderBy: desc(schema.mediaItems.createdAt),
@@ -186,19 +186,29 @@ export default async function AdminPostsPage({
                 ))}
               </ul>
             )}
-            <form action={createCategoryAction} className="flex gap-2">
+            <form action={createCategoryAction} className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  name="categoryName"
+                  required
+                  placeholder="Tên danh mục mới"
+                  className="flex-1 rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
+                />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-brand-700 px-3.5 py-2 text-[13px] font-semibold text-white"
+                >
+                  Thêm
+                </button>
+              </div>
               <input
-                name="categoryName"
-                required
-                placeholder="Tên danh mục mới"
-                className="flex-1 rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
+                name="categoryNameEn"
+                placeholder="Category name (English, tuỳ chọn)"
+                className="w-full rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
               />
-              <button
-                type="submit"
-                className="rounded-lg bg-brand-700 px-3.5 py-2 text-[13px] font-semibold text-white"
-              >
-                Thêm
-              </button>
+              <AutoTranslateButton
+                pairs={[{ viName: "categoryName", enName: "categoryNameEn" }]}
+              />
             </form>
           </div>
 
@@ -217,6 +227,31 @@ export default async function AdminPostsPage({
                   placeholder="VD: Thông báo lịch thi cuối kỳ"
                 />
               </div>
+              <details className="rounded-lg border border-line p-3">
+                <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                  🇬🇧 Bản tiếng Anh (tuỳ chọn)
+                </summary>
+                <div className="mt-3 space-y-3">
+                  <AutoTranslateButton
+                    pairs={[
+                      { viName: "title", enName: "titleEn" },
+                      { viName: "excerpt", enName: "excerptEn" },
+                      { viName: "content", enName: "contentEn" },
+                    ]}
+                  />
+                  <input
+                    name="titleEn"
+                    placeholder="Title (English)"
+                    className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  />
+                  <input
+                    name="excerptEn"
+                    placeholder="Short excerpt (English)"
+                    className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  />
+                  <MarkdownEditor name="contentEn" rows={6} placeholder="Full content in English..." />
+                </div>
+              </details>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Danh mục

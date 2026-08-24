@@ -1,5 +1,6 @@
 import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
+import { getLocale, pickLocale } from "@/lib/locale";
 
 export type NavNode = {
   id: string;
@@ -14,17 +15,19 @@ export type NavNode = {
  * `secondary` (nằm trong nút ☰ "Danh mục khác") theo cột `isPrimary`.
  */
 export async function getNavTree(): Promise<{ primary: NavNode[]; secondary: NavNode[] }> {
-  const rows = await db.query.navItems.findMany({
-    orderBy: asc(schema.navItems.sortOrder),
-  });
+  const [rows, locale] = await Promise.all([
+    db.query.navItems.findMany({ orderBy: asc(schema.navItems.sortOrder) }),
+    getLocale(),
+  ]);
 
+  const label = (row: (typeof rows)[number]) => pickLocale(row.label, row.labelEn, locale);
   const toNode = (row: (typeof rows)[number]): NavNode => ({
     id: row.id,
-    label: row.label,
+    label: label(row),
     href: row.href,
     children: rows
       .filter((r) => r.parentId === row.id)
-      .map((r) => ({ id: r.id, label: r.label, href: r.href, children: [] })),
+      .map((r) => ({ id: r.id, label: label(r), href: r.href, children: [] })),
   });
 
   const topLevel = rows.filter((r) => !r.parentId);

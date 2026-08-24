@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
-import { getSiteSettings } from "@/lib/data/site-settings";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
+import { db, schema } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { updateSiteSettingsAction } from "./actions";
 
 export const metadata: Metadata = { title: "Cài đặt chung" };
 
 export default async function AdminSiteSettingsPage() {
-  const settings = await getSiteSettings();
+  const settings = await db.query.siteSettings.findFirst({
+    where: eq(schema.siteSettings.id, "main"),
+  });
+  if (!settings) {
+    throw new Error("Chưa có dữ liệu site_settings — chạy `npm run db:seed` trước.");
+  }
 
   return (
     <div>
@@ -29,6 +36,22 @@ export default async function AdminSiteSettingsPage() {
               defaultValue={settings.announcement}
               className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
             />
+            <details className="mt-2 rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3">
+                <AutoTranslateButton
+                  pairs={[{ viName: "announcement", enName: "announcementEn" }]}
+                />
+              </div>
+              <input
+                name="announcementEn"
+                defaultValue={settings.announcementEn ?? ""}
+                placeholder="Announcement banner (English)"
+                className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              />
+            </details>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

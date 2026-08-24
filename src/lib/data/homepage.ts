@@ -1,5 +1,6 @@
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { getLocale, pickLocale } from "@/lib/locale";
 
 export type StatItem = { value: string; label: string };
 export type FeatureItem = { title: string; desc: string };
@@ -27,10 +28,36 @@ export type HomepageContent = {
  * CTA band) — quản lý qua admin/trang-chu, luôn chỉ 1 dòng duy nhất trong DB
  * (id "main"). Seed đảm bảo dòng này luôn tồn tại.
  */
-export async function getHomepageContent(): Promise<HomepageContent> {
-  const row = await db.query.homepageContent.findFirst({
-    where: eq(schema.homepageContent.id, "main"),
+/** Merge mảng bản dịch (theo index) vào mảng gốc — thiếu phần tử/field nào thì fallback tiếng Việt. */
+function mergeArray<T extends Record<string, string>>(
+  viJson: string,
+  enJson: string | null,
+  locale: "vi" | "en"
+): T[] {
+  const vi = JSON.parse(viJson) as T[];
+  if (locale !== "en" || !enJson) return vi;
+  let en: Partial<T>[] = [];
+  try {
+    en = JSON.parse(enJson) as Partial<T>[];
+  } catch {
+    return vi;
+  }
+  return vi.map((item, i) => {
+    const enItem = en[i];
+    if (!enItem) return item;
+    const merged = { ...item };
+    for (const key of Object.keys(item) as (keyof T)[]) {
+      if (enItem[key]) merged[key] = enItem[key] as T[keyof T];
+    }
+    return merged;
   });
+}
+
+export async function getHomepageContent(): Promise<HomepageContent> {
+  const [row, locale] = await Promise.all([
+    db.query.homepageContent.findFirst({ where: eq(schema.homepageContent.id, "main") }),
+    getLocale(),
+  ]);
   if (!row) {
     throw new Error(
       "Chưa có dữ liệu homepage_content — chạy `npm run db:seed` trước."
@@ -38,18 +65,18 @@ export async function getHomepageContent(): Promise<HomepageContent> {
   }
   return {
     heroImageUrl: row.heroImageUrl,
-    heroBadge: row.heroBadge,
-    heroTitleLine1: row.heroTitleLine1,
-    heroTitleLine2: row.heroTitleLine2,
-    heroDescription: row.heroDescription,
+    heroBadge: pickLocale(row.heroBadge, row.heroBadgeEn, locale),
+    heroTitleLine1: pickLocale(row.heroTitleLine1, row.heroTitleLine1En, locale),
+    heroTitleLine2: pickLocale(row.heroTitleLine2, row.heroTitleLine2En, locale),
+    heroDescription: pickLocale(row.heroDescription, row.heroDescriptionEn, locale),
     heroBadge1Value: row.heroBadge1Value,
-    heroBadge1Label: row.heroBadge1Label,
+    heroBadge1Label: pickLocale(row.heroBadge1Label, row.heroBadge1LabelEn, locale),
     heroBadge2Value: row.heroBadge2Value,
-    heroBadge2Label: row.heroBadge2Label,
-    stats: JSON.parse(row.statsJson) as StatItem[],
-    features: JSON.parse(row.featuresJson) as FeatureItem[],
-    steps: JSON.parse(row.stepsJson) as StepItem[],
-    ctaTitle: row.ctaTitle,
-    ctaDescription: row.ctaDescription,
+    heroBadge2Label: pickLocale(row.heroBadge2Label, row.heroBadge2LabelEn, locale),
+    stats: mergeArray<StatItem>(row.statsJson, row.statsJsonEn, locale),
+    features: mergeArray<FeatureItem>(row.featuresJson, row.featuresJsonEn, locale),
+    steps: mergeArray<StepItem>(row.stepsJson, row.stepsJsonEn, locale),
+    ctaTitle: pickLocale(row.ctaTitle, row.ctaTitleEn, locale),
+    ctaDescription: pickLocale(row.ctaDescription, row.ctaDescriptionEn, locale),
   };
 }

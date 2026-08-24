@@ -34,6 +34,8 @@ export const categories = sqliteTable("categories", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
+  /** Bản tiếng Anh của `name` — để trống thì site hiện bản tiếng Việt khi khách chọn EN. */
+  nameEn: text("name_en"),
   slug: text("slug").notNull().unique(),
   createdAt: text("created_at")
     .notNull()
@@ -46,9 +48,12 @@ export const posts = sqliteTable("posts", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   title: text("title").notNull(),
+  titleEn: text("title_en"),
   slug: text("slug").notNull().unique(),
   excerpt: text("excerpt"),
+  excerptEn: text("excerpt_en"),
   content: text("content").notNull(),
+  contentEn: text("content_en"),
   /** "draft" (bản nháp) | "published" (đã đăng) */
   status: text("status").notNull().default("draft"),
   categoryId: text("category_id"),
@@ -69,7 +74,9 @@ export const pages = sqliteTable("pages", {
     .$defaultFn(() => crypto.randomUUID()),
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
+  titleEn: text("title_en"),
   content: text("content").notNull(),
+  contentEn: text("content_en"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -97,11 +104,14 @@ export const programs = sqliteTable("programs", {
   slug: text("slug").notNull().unique(),
   code: text("code").notNull(),
   name: text("name").notNull(),
+  nameEn: text("name_en"),
   duration: text("duration").notNull(),
   intake: integer("intake").notNull(),
   summary: text("summary").notNull(),
+  summaryEn: text("summary_en"),
   /** Nội dung chi tiết đầy đủ — để dành cho trang chi tiết ngành đào tạo, chưa bắt buộc nhập. */
   content: text("content"),
+  contentEn: text("content_en"),
   /** 0 = không hiện ở Trang chủ, 1 = hiện. Nếu không ngành nào featured, Trang chủ tự lấy 6 ngành đầu. */
   featured: integer("featured").notNull().default(0),
   createdAt: text("created_at")
@@ -119,6 +129,7 @@ export const siteSettings = sqliteTable("site_settings", {
   email: text("email").notNull(),
   address: text("address").notNull(),
   announcement: text("announcement").notNull(),
+  announcementEn: text("announcement_en"),
   facebookUrl: text("facebook_url").notNull().default("#"),
   zaloUrl: text("zalo_url").notNull().default("#"),
   youtubeUrl: text("youtube_url").notNull().default("#"),
@@ -134,22 +145,33 @@ export const homepageContent = sqliteTable("homepage_content", {
   id: text("id").primaryKey().default("main"),
   heroImageUrl: text("hero_image_url"),
   heroBadge: text("hero_badge").notNull(),
+  heroBadgeEn: text("hero_badge_en"),
   heroTitleLine1: text("hero_title_line1").notNull(),
+  heroTitleLine1En: text("hero_title_line1_en"),
   heroTitleLine2: text("hero_title_line2").notNull(),
+  heroTitleLine2En: text("hero_title_line2_en"),
   heroDescription: text("hero_description").notNull(),
+  heroDescriptionEn: text("hero_description_en"),
   /** 2 badge số liệu nổi trên ảnh Hero, VD "12+"/"Năm đào tạo" và "96%"/"Có việc làm". */
   heroBadge1Value: text("hero_badge1_value").notNull(),
   heroBadge1Label: text("hero_badge1_label").notNull(),
+  heroBadge1LabelEn: text("hero_badge1_label_en"),
   heroBadge2Value: text("hero_badge2_value").notNull(),
   heroBadge2Label: text("hero_badge2_label").notNull(),
+  heroBadge2LabelEn: text("hero_badge2_label_en"),
   /** JSON.stringify của mảng 4 {value,label}. */
   statsJson: text("stats_json").notNull(),
+  statsJsonEn: text("stats_json_en"),
   /** JSON.stringify của mảng 3 {title,desc}. */
   featuresJson: text("features_json").notNull(),
+  featuresJsonEn: text("features_json_en"),
   /** JSON.stringify của mảng 4 {title,desc}. */
   stepsJson: text("steps_json").notNull(),
+  stepsJsonEn: text("steps_json_en"),
   ctaTitle: text("cta_title").notNull(),
+  ctaTitleEn: text("cta_title_en"),
   ctaDescription: text("cta_description").notNull(),
+  ctaDescriptionEn: text("cta_description_en"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -161,6 +183,7 @@ export const navItems = sqliteTable("nav_items", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   label: text("label").notNull(),
+  labelEn: text("label_en"),
   href: text("href").notNull(),
   /** null = danh mục to. Có giá trị = danh mục con thuộc nav_items.id đó. */
   parentId: text("parent_id"),
@@ -178,6 +201,7 @@ export const partners = sqliteTable("partners", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
+  nameEn: text("name_en"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
@@ -191,6 +215,7 @@ export const galleryItems = sqliteTable("gallery_items", {
     .$defaultFn(() => crypto.randomUUID()),
   imageUrl: text("image_url").notNull(),
   caption: text("caption").notNull(),
+  captionEn: text("caption_en"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
@@ -204,6 +229,7 @@ export const faculty = sqliteTable("faculty", {
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   role: text("role").notNull(),
+  roleEn: text("role_en"),
   photoUrl: text("photo_url"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
@@ -217,8 +243,10 @@ export const testimonials = sqliteTable("testimonials", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   quote: text("quote").notNull(),
+  quoteEn: text("quote_en"),
   name: text("name").notNull(),
   role: text("role").notNull(),
+  roleEn: text("role_en"),
   avatarUrl: text("avatar_url"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")

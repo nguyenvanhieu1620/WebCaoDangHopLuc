@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getNavTree } from "@/lib/data/nav";
+import { getLocale } from "@/lib/locale";
 
 /**
  * Layout dùng chung cho mọi trang công khai (route group "(site)").
@@ -13,10 +14,14 @@ export default async function SiteGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, navTree] = await Promise.all([getSiteSettings(), getNavTree()]);
+  const [settings, navTree, locale] = await Promise.all([
+    getSiteSettings(),
+    getNavTree(),
+    getLocale(),
+  ]);
   return (
     <div className="bg-paper">
-      <SiteHeader settings={settings} navTree={navTree} />
+      <SiteHeader settings={settings} navTree={navTree} locale={locale} />
       <main>{children}</main>
       <SiteFooter settings={settings} />
     </div>

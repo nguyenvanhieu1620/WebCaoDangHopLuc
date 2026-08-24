@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertPageAction, deletePageAction } from "./actions";
@@ -121,6 +122,31 @@ export default async function AdminPagesPage({
                 placeholder="Nội dung đầy đủ của trang..."
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3 space-y-3">
+                <AutoTranslateButton
+                  pairs={[
+                    { viName: "title", enName: "titleEn" },
+                    { viName: "content", enName: "contentEn" },
+                  ]}
+                />
+                <input
+                  name="titleEn"
+                  defaultValue={editing?.titleEn ?? ""}
+                  placeholder="Title (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <MarkdownEditor
+                  name="contentEn"
+                  rows={8}
+                  defaultValue={editing?.contentEn ?? ""}
+                  placeholder="Full content (English)"
+                />
+              </div>
+            </details>
             <button
               type="submit"
               className="w-full rounded-lg bg-gradient-to-br from-accent-600 to-accent-500 py-2.5 text-sm font-bold text-white shadow-red"

@@ -7,12 +7,15 @@ import { useState } from "react";
 import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 import type { SiteSettings } from "@/lib/db/schema";
 import type { NavNode } from "@/lib/data/nav";
+import type { Locale } from "@/lib/locale";
 
 type SiteHeaderProps = {
   settings: Pick<SiteSettings, "hotline" | "email" | "announcement">;
   navTree: { primary: NavNode[]; secondary: NavNode[] };
+  locale: Locale;
 };
 
 /**
@@ -25,7 +28,7 @@ type SiteHeaderProps = {
  * `settings` (hotline/email/banner thông báo) lấy từ DB ở layout cha, quản lý
  * qua admin/cai-dat.
  */
-export function SiteHeader({ settings, navTree }: SiteHeaderProps) {
+export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -52,9 +55,10 @@ export function SiteHeader({ settings, navTree }: SiteHeaderProps) {
       <div className="bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 text-white">
         <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-6 py-2 font-mono text-[11px] uppercase tracking-wider sm:px-8">
           <span className="truncate">{settings.announcement}</span>
-          <div className="hidden shrink-0 gap-5 opacity-90 md:flex">
-            <span>Hotline: {settings.hotline}</span>
-            <span>{settings.email}</span>
+          <div className="flex shrink-0 items-center gap-5 opacity-90">
+            <span className="hidden md:inline">Hotline: {settings.hotline}</span>
+            <span className="hidden md:inline">{settings.email}</span>
+            <LanguageSwitcher locale={locale} />
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertNavItemAction, deleteNavItemAction } from "./actions";
@@ -159,6 +160,20 @@ export default async function AdminMenuPage({
                 placeholder="VD: /nganh-dao-tao"
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Tên hiển thị tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3">
+                <AutoTranslateButton pairs={[{ viName: "label", enName: "labelEn" }]} />
+              </div>
+              <input
+                name="labelEn"
+                defaultValue={editing?.labelEn ?? ""}
+                placeholder="VD: Programs"
+                className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              />
+            </details>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Danh mục cha</label>
               <select

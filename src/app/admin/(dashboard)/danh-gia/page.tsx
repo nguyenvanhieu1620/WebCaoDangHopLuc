@@ -3,6 +3,7 @@ import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertTestimonialAction, deleteTestimonialAction } from "./actions";
@@ -130,6 +131,32 @@ export default async function AdminTestimonialsPage({
                 placeholder="VD: Điều dưỡng viên, BV Đa khoa tỉnh"
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3 space-y-3">
+                <AutoTranslateButton
+                  pairs={[
+                    { viName: "quote", enName: "quoteEn" },
+                    { viName: "role", enName: "roleEn" },
+                  ]}
+                />
+                <textarea
+                  name="quoteEn"
+                  rows={3}
+                  defaultValue={editing?.quoteEn ?? ""}
+                  placeholder="Quote (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <input
+                  name="roleEn"
+                  defaultValue={editing?.roleEn ?? ""}
+                  placeholder="Role (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+              </div>
+            </details>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh đại diện {editing ? "(để trống = giữ ảnh cũ)" : ""}

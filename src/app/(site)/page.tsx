@@ -12,7 +12,33 @@ import { getGalleryItems } from "@/lib/data/gallery";
 import { getFacultyList } from "@/lib/data/faculty";
 import { getTestimonials } from "@/lib/data/testimonials";
 import { getLatestPublishedPosts } from "@/lib/data/posts";
+import { getSiteSettings } from "@/lib/data/site-settings";
 import { cn, formatVNDate } from "@/lib/utils";
+
+const QUICK_TOOL_ICONS = {
+  admission: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  lookup: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M20 20l-4.35-4.35" strokeLinecap="round" />
+    </svg>
+  ),
+  library: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 4h4v16H4zM10 4h4v16h-4zM17 5l3 1.2v13.6L17 19z" strokeLinejoin="round" />
+    </svg>
+  ),
+  lms: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" strokeLinecap="round" />
+    </svg>
+  ),
+};
 
 export default async function HomePage() {
   const [
@@ -24,6 +50,7 @@ export default async function HomePage() {
     facultyList,
     testimonials,
     latestPosts,
+    settings,
   ] = await Promise.all([
     getFeaturedPrograms(),
     getPrograms(),
@@ -33,8 +60,41 @@ export default async function HomePage() {
     getFacultyList(),
     getTestimonials(),
     getLatestPublishedPosts(3),
+    getSiteSettings(),
   ]);
   const { stats, features, steps } = content;
+
+  const quickTools = [
+    {
+      href: "/tuyen-sinh",
+      label: "Đăng ký xét tuyển",
+      desc: "Nộp hồ sơ trực tuyến",
+      icon: QUICK_TOOL_ICONS.admission,
+      iconBg: "bg-brand-700/10 text-brand-700",
+    },
+    {
+      href: "/tra-cuu-ket-qua",
+      label: "Tra cứu kết quả",
+      desc: "Xem kết quả xét tuyển",
+      icon: QUICK_TOOL_ICONS.lookup,
+      iconBg: "bg-accent-600/10 text-accent-600",
+    },
+    {
+      href: "/thu-vien",
+      label: "Thư viện",
+      desc: "Ảnh & tư liệu nhà trường",
+      icon: QUICK_TOOL_ICONS.library,
+      iconBg: "bg-brand-700/10 text-brand-700",
+    },
+    {
+      href: settings.lmsUrl,
+      label: "Cổng học tập LMS",
+      desc: "Học liệu điện tử VNPT",
+      icon: QUICK_TOOL_ICONS.lms,
+      iconBg: "bg-accent-600/10 text-accent-600",
+      external: settings.lmsUrl !== "#",
+    },
+  ];
 
   return (
     <>
@@ -97,6 +157,31 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ============ CÔNG CỤ NHANH ============ */}
+      <section className="px-6 pb-16 sm:px-8">
+        <div className="mx-auto grid max-w-[1320px] grid-cols-2 gap-4 lg:grid-cols-4">
+          {quickTools.map((tool) => (
+            <Link
+              key={tool.href + tool.label}
+              href={tool.href}
+              target={"external" in tool && tool.external ? "_blank" : undefined}
+              rel={"external" in tool && tool.external ? "noopener noreferrer" : undefined}
+              className="group flex items-center gap-3.5 rounded-2xl border border-line bg-white p-5 shadow-sm2 transition-transform hover:-translate-y-1"
+            >
+              <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", tool.iconBg)}>
+                {tool.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[14px] font-bold text-ink group-hover:text-brand-700">
+                  {tool.label}
+                </div>
+                <div className="truncate text-[12px] text-ink-faint">{tool.desc}</div>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -272,12 +357,22 @@ export default async function HomePage() {
       {facultyList.length > 0 && (
         <section className="px-6 py-24 sm:px-8">
           <div className="mx-auto max-w-[1320px]">
-            <SectionHeading
-              eyebrow="Đội ngũ giảng viên"
-              title="Giảng viên giàu kinh nghiệm lâm sàng"
-            />
+            <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
+              <SectionHeading
+                eyebrow="Đội ngũ giảng viên"
+                title="Giảng viên giàu kinh nghiệm lâm sàng"
+                align="left"
+                className="mb-0"
+              />
+              <Link
+                href="/doi-ngu-giang-vien"
+                className="text-sm font-semibold text-brand-700 hover:text-accent-600"
+              >
+                Xem tất cả đội ngũ →
+              </Link>
+            </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {facultyList.map((f) => (
+              {facultyList.slice(0, 4).map((f) => (
                 <div
                   key={f.id}
                   className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2"

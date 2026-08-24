@@ -101,6 +101,13 @@ kéo-thả). Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự t
 `is_primary` chỉ áp dụng cho danh mục to: 1 = hiện ở thanh ngang chính,
 0 = nằm trong nút ☰ "Danh mục khác" — xem `src/lib/data/nav.ts`).
 
+**Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
+bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
+(VD `name`/`name_en`, `content`/`content_en`) — nullable, không có DEFAULT.
+Đây **không phải bảng mới**, chỉ là cột thêm vào bảng cũ qua migration
+`0003_messy_bishop.sql`. Khi thêm bảng/cột nội dung công khai mới, cân nhắc
+luôn thêm cột `*_en` cùng lúc theo đúng pattern này thay vì thêm sau.
+
 ### 4.1c Upload ảnh/video thật (`src/lib/media.ts`)
 `saveUploadedFile(file)` — ghi file vào `public/uploads/` (tên file thêm
 tiền tố `Date.now()-` để tránh trùng) + insert 1 dòng `media_items`. Mọi
@@ -224,6 +231,101 @@ Bảng `programs` (xem mục 4.1b), quản lý qua `admin/nganh-dao-tao` —
 Cả 4 đã **test qua trình duyệt thật** (kể cả submit lúc đang xem trước
 Markdown, xác nhận Huỷ/OK hộp thoại xoá, lọc kết hợp nhiều điều kiện, chọn
 ảnh có sẵn không tạo bản upload trùng).
+
+### Không chỉ tuyển sinh — 3 bổ sung sau khi so sánh với cyt.edu.vn
+Người dùng nhận xét site quá thiên về tuyển sinh, đối chiếu cyt.edu.vn (Cao
+đẳng Y tế Thanh Hóa) để bổ sung 3 hạng mục — **cả 3 đã test qua trình duyệt
+thật**:
+
+- **Trang Đội ngũ giảng viên đầy đủ** (`/doi-ngu-giang-vien`) — dùng lại
+  nguyên `getFacultyList()`, không giới hạn số lượng (khác khối rút gọn 4
+  người ở Trang chủ). Có link "Xem tất cả đội ngũ →" từ Trang chủ + mục menu
+  phụ (nút ☰) trỏ tới trang này.
+- **Widget "Công cụ nhanh" ở Trang chủ** — 4 ô tĩnh (Đăng ký xét tuyển/Tra
+  cứu kết quả/Thư viện/LMS) ngay sau Hero, hardcode trong `page.tsx` (không
+  phải nội dung biên tập qua admin — chỉ là điều hướng nội bộ tới trang có
+  sẵn).
+- **Đa ngôn ngữ tiếng Anh (dịch toàn bộ nội dung)** — người dùng chọn
+  phương án lớn nhất khi được hỏi phạm vi (không phải chỉ 1 trang tóm tắt
+  hay chỉ dịch khung giao diện). Kiến trúc:
+  - **Chọn ngôn ngữ qua cookie `locale`** (`"vi"` mặc định | `"en"`), **không
+    tách route `/en/...`** — lý do: site 1 người vận hành, không cần SEO đa
+    ngôn ngữ chuẩn (phải dựng lại toàn bộ `(site)` thành `[locale]/...`, chi
+    phí không tương xứng ở quy mô này). Đổi ngôn ngữ qua
+    `src/components/site/LanguageSwitcher.tsx` (nút "VI | EN" trong thanh
+    thông báo trên cùng) gọi Server Action `setLocaleAction`
+    (`src/lib/locale-actions.ts` — **file riêng**, không gộp chung với
+    `src/lib/locale.ts` chứa `getLocale()`/`pickLocale()`, vì Next.js không
+    cho phép Server Action khai báo `"use server"` trong hàm nằm chung file
+    với code bị Client Component import — đã gặp lỗi build thật khi gộp
+    chung, tách file là cách sửa đúng theo khuyến nghị của Next.js).
+  - **Data layer tự resolve theo ngôn ngữ** (`src/lib/data/*.ts`): mỗi hàm
+    `get*()` tự gọi `getLocale()` rồi trả về field gốc (VD `name`) đã thay
+    bằng bản `_en` tương ứng nếu đang ở chế độ EN và có dữ liệu — **giữ
+    nguyên shape kiểu trả về cũ**, nên toàn bộ `page.tsx` công khai
+    **không cần sửa gì**. `pickLocale(vi, en, locale)` fallback về bản
+    tiếng Việt nếu bản Anh chưa nhập.
+  - **QUAN TRỌNG — trang admin KHÔNG được dùng hàm data layer đã resolve
+    locale**: admin luôn phải thấy/sửa đúng field tiếng Việt gốc, bất kể
+    cookie `locale` của trình duyệt đang ở "en" hay "vi" (2 khu vực dùng
+    chung 1 trình duyệt/cookie). Vì vậy `admin/cai-dat` và `admin/trang-chu`
+    **phải** query `db.query.siteSettings`/`db.query.homepageContent` trực
+    tiếp (không gọi `getSiteSettings()`/`getHomepageContent()`) — đã tái
+    hiện lỗi thật lúc code (form admin hiện nhầm text tiếng Anh vào field
+    "tiếng Việt" rồi lưu đè mất bản gốc) và sửa lại đúng theo quy ước #1 ở
+    mục 6 (admin luôn gọi `db` trực tiếp).
+  - **Admin nhập bản tiếng Anh**: mỗi form có thêm khối `<details>` "🇬🇧 Bản
+    tiếng Anh (tuỳ chọn)" ngay dưới field tiếng Việt tương ứng — đóng mặc
+    định, không bắt buộc nhập. Áp dụng ở `bai-viet`, `nganh-dao-tao`,
+    `trang-tinh`, `danh-gia`, `giang-vien`, `doi-tac`, `thu-vien-trang-chu`,
+    `menu`, `cai-dat`, `trang-chu`.
+  - **Seed chỉ dịch sẵn phần hiển thị nhiều nhất** (`homepage_content`,
+    `site_settings.announcementEn`, `nav_items.labelEn`, `categories.nameEn`,
+    `programs.nameEn/summaryEn`) để demo có tác dụng ngay — bài viết, trang
+    "Công khai", `content_en` ngành đào tạo **cố ý để trống** (nội dung mẫu/
+    placeholder, dịch sẽ tự fallback về tiếng Việt tới khi admin nhập tay
+    nội dung thật — không phải thiếu sót).
+  - Không hỗ trợ ngôn ngữ thứ 3 trở lên (cột `_en` không mở rộng tốt cho
+    nhiều ngôn ngữ — cần thì đổi sang bảng translations riêng lúc đó).
+
+### Dịch tự động sang tiếng Anh — DeepL API (2 lớp: tự động lúc Lưu + nút chủ động)
+Sau khi có hạ tầng đa ngôn ngữ, người dùng nhận thấy phần lớn nội dung
+(bài viết, trang Công khai, giảng viên, đánh giá, đối tác...) vẫn hiện
+tiếng Việt khi bấm EN — vì seed chỉ dịch sẵn phần nổi bật nhất, còn lại chờ
+admin tự nhập tay. Người dùng sau đó xác nhận muốn **hoàn toàn tự động**:
+"chỉ cần nhập tiếng Việt, khi chuyển tiếng Anh web tự dịch" — không cần
+thêm thao tác. Đã hiện thực bằng **DeepL API** (miễn phí tới 500.000 ký
+tự/tháng, không cần thẻ tín dụng — xem `.env.example` lấy key):
+
+- `src/lib/translate.ts`:
+  - `translateTexts(texts: string[])` — gọi DeepL, dịch nhiều đoạn trong 1
+    request (tiết kiệm quota), tự nhận diện key Free (đuôi `:fx`) để gọi
+    đúng endpoint `api-free.deepl.com`. Throw lỗi rõ ràng nếu thiếu key/key
+    sai/hết quota.
+  - `autoFillTranslations(pairs: {vi, en}[])` — **lớp tự động chính**: chỉ
+    dịch những field có `en` đang rỗng (field nào admin đã tự gõ/sửa tay
+    thì giữ nguyên, không ghi đè); nếu thiếu `DEEPL_API_KEY` hoặc gọi API
+    lỗi thì **im lặng trả lại nguyên trạng** (không throw) — không được để
+    lỗi dịch chặn mất thao tác Lưu bài của admin, nội dung vẫn đúng nhờ
+    fallback về tiếng Việt (`pickLocale`) ở tầng hiển thị.
+- **Mọi `actions.ts` có field `_en`** (`bai-viet`, `nganh-dao-tao`,
+  `trang-tinh`, `danh-gia`, `giang-vien`, `doi-tac`, `thu-vien-trang-chu`,
+  `menu`, `cai-dat`, `trang-chu`) đều gọi `autoFillTranslations(...)` ngay
+  trước khi ghi DB — admin chỉ cần gõ tiếng Việt như bình thường rồi bấm
+  Lưu, bản tiếng Anh tự xuất hiện, không cần biết tới DeepL. `trang-chu`
+  (11 field rời rạc + mảng stats/features/steps) gộp hết thành 1 mảng pair
+  rồi gọi `autoFillTranslations` đúng 1 lần (1 request DeepL cho cả trang).
+- **Vẫn giữ nút "🌐 Dịch tự động sang tiếng Anh"** (`AutoTranslateButton.tsx`,
+  `translate-actions.ts` — Server Action `translateFieldsAction`, **file
+  riêng** với `translate.ts` vì bị Client Component import, theo đúng lý do
+  đã nêu ở mục "Đa ngôn ngữ") ở mọi khối `<details>` "🇬🇧" — dùng khi admin
+  **sửa lại nội dung tiếng Việt của bài đã có bản Anh cũ** và muốn dịch lại
+  ngay để xem trước (tự động lúc Lưu chỉ điền khi `en` đang rỗng, không tự
+  refresh bản dịch cũ).
+- Khi thêm trang admin mới có field `_en`, luôn làm cả 2: gọi
+  `autoFillTranslations` trong `actions.ts` lúc lưu, **và** thêm
+  `<AutoTranslateButton pairs={[...]} />` cạnh field — không chỉ làm 1
+  trong 2.
 
 ---
 

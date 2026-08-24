@@ -1,6 +1,16 @@
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import type { Program } from "@/lib/db/schema";
+import { getLocale, pickLocale } from "@/lib/locale";
+
+function localize(p: Program, locale: "vi" | "en"): Program {
+  return {
+    ...p,
+    name: pickLocale(p.name, p.nameEn, locale),
+    summary: pickLocale(p.summary, p.summaryEn, locale),
+    content: p.content ? pickLocale(p.content, p.contentEn, locale) : p.content,
+  };
+}
 
 /**
  * LỚP TRUY XUẤT DỮ LIỆU (data layer) — đây là điểm mấu chốt để base "vững" khi
@@ -16,9 +26,11 @@ import type { Program } from "@/lib/db/schema";
 
 /** Lấy toàn bộ danh sách ngành đào tạo, theo đúng thứ tự tạo. */
 export async function getPrograms(): Promise<Program[]> {
-  return db.query.programs.findMany({
-    orderBy: asc(schema.programs.createdAt),
-  });
+  const [rows, locale] = await Promise.all([
+    db.query.programs.findMany({ orderBy: asc(schema.programs.createdAt) }),
+    getLocale(),
+  ]);
+  return rows.map((p) => localize(p, locale));
 }
 
 /** Lấy danh sách ngành hiển thị ở Trang chủ (ưu tiên featured, fallback 6 ngành đầu). */
@@ -30,14 +42,20 @@ export async function getFeaturedPrograms(): Promise<Program[]> {
 
 /** Lấy 1 ngành theo slug — dùng cho trang chi tiết. Trả về null nếu không tìm thấy. */
 export async function getProgramBySlug(slug: string): Promise<Program | null> {
-  const program = await db.query.programs.findFirst({
-    where: eq(schema.programs.slug, slug),
-  });
-  return program ?? null;
+  const [program, locale] = await Promise.all([
+    db.query.programs.findFirst({ where: eq(schema.programs.slug, slug) }),
+    getLocale(),
+  ]);
+  return program ? localize(program, locale) : null;
 }
 
-/** Lấy toàn bộ slug — dùng cho generateStaticParams (Next.js static generation). */
+/**
+ * Lấy toàn bộ slug — dùng cho generateStaticParams (Next.js static generation).
+ * Cố ý KHÔNG gọi getPrograms()/getLocale(): generateStaticParams chạy lúc
+ * build, không có request/cookie — gọi cookies() ở đó sẽ lỗi. Slug cũng
+ * không cần resolve theo ngôn ngữ (không đổi giữa vi/en).
+ */
 export async function getAllProgramSlugs(): Promise<string[]> {
-  const all = await getPrograms();
-  return all.map((p) => p.slug);
+  const rows = await db.query.programs.findMany({ columns: { slug: true } });
+  return rows.map((p) => p.slug);
 }

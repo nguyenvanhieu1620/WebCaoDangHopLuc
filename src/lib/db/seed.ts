@@ -170,6 +170,45 @@ async function main() {
     console.log("• Đã có ngành đào tạo, bỏ qua.");
   }
 
+  // Backfill bản tiếng Anh cho ngành đào tạo (idempotent — chỉ set khi đang trống)
+  const programTranslations: Record<string, { nameEn: string; summaryEn: string }> = {
+    "dieu-duong": {
+      nameEn: "Nursing",
+      summaryEn:
+        "Comprehensive patient care with strong clinical skills — broad job opportunities at hospitals.",
+    },
+    duoc: {
+      nameEn: "Pharmacy",
+      summaryEn:
+        "Drug compounding, management, and safe-use counseling at pharmacies, hospitals, and pharmaceutical companies.",
+    },
+    "xet-nghiem-y-hoc": {
+      nameEn: "Medical Laboratory Science",
+      summaryEn:
+        "Modern diagnostic laboratory analysis — working in hospital testing departments.",
+    },
+    "ho-sinh": {
+      nameEn: "Midwifery",
+      summaryEn:
+        "Maternal and child reproductive health care, supporting safe childbirth at healthcare facilities.",
+    },
+    "phuc-hoi-chuc-nang": {
+      nameEn: "Physical Therapy & Rehabilitation",
+      summaryEn:
+        "Physical therapy and mobility rehabilitation for patients after injury or surgery.",
+    },
+    "y-si-da-khoa": {
+      nameEn: "General Medicine Practitioner",
+      summaryEn: "Examining and treating common illnesses at grassroots health stations.",
+    },
+  };
+  for (const [slug, t] of Object.entries(programTranslations)) {
+    const row = await db.query.programs.findFirst({ where: (p, { eq }) => eq(p.slug, slug) });
+    if (row && !row.nameEn) {
+      await db.update(programs).set(t).where(eq(programs.id, row.id));
+    }
+  }
+
   // Cài đặt chung của site (hotline, email, địa chỉ, banner, mạng xã hội)
   const existingSettings = await db.query.siteSettings.findFirst({
     where: (s, { eq }) => eq(s.id, "main"),
@@ -189,6 +228,18 @@ async function main() {
     console.log("✓ Tạo cài đặt chung mặc định");
   } else {
     console.log("• Đã có cài đặt chung, bỏ qua.");
+  }
+
+  // Backfill bản tiếng Anh cho banner thông báo (idempotent)
+  const settingsRow = await db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.id, "main") });
+  if (settingsRow && !settingsRow.announcementEn) {
+    await db
+      .update(siteSettings)
+      .set({
+        announcementEn:
+          "Admissions 2026 now open — Tuition discount for the first 500 early applicants",
+      })
+      .where(eq(siteSettings.id, "main"));
   }
 
   // Nội dung Trang chủ mặc định
@@ -243,6 +294,51 @@ async function main() {
     console.log("• Đã có nội dung Trang chủ, bỏ qua.");
   }
 
+  // Backfill bản tiếng Anh cho nội dung Trang chủ (idempotent)
+  const homepageRow = await db.query.homepageContent.findFirst({ where: (h, { eq }) => eq(h.id, "main") });
+  if (homepageRow && !homepageRow.heroBadgeEn) {
+    await db
+      .update(homepageContent)
+      .set({
+        heroBadgeEn: "Admissions 2026",
+        heroTitleLine1En: "Building",
+        heroTitleLine2En: "dedicated & skilled healthcare talent",
+        heroDescriptionEn:
+          "Hop Luc Medical Pharmacy College trains Nursing, Pharmacy, Laboratory Science and other healthcare majors, closely combining theory with clinical practice at partner hospitals.",
+        heroBadge1LabelEn: "Years of training",
+        heroBadge2LabelEn: "Employed after graduation",
+        statsJsonEn: JSON.stringify([
+          { label: "Years of training experience" },
+          { label: "Graduates" },
+          { label: "Students employed" },
+          { label: "Hospital partners" },
+        ]),
+        featuresJsonEn: JSON.stringify([
+          {
+            title: "Early clinical practice",
+            desc: "Students train at partner hospitals from year one, gaining real-world work experience.",
+          },
+          {
+            title: "Highly qualified faculty",
+            desc: "Experienced doctors and pharmacists teach and directly supervise practical training.",
+          },
+          {
+            title: "Employment commitment",
+            desc: "Job placement support after graduation across our nationwide network of partner hospitals and clinics.",
+          },
+        ]),
+        stepsJsonEn: JSON.stringify([
+          { title: "Submit application", desc: "Apply online or in person at the school" },
+          { title: "Transcript-based admission", desc: "Evaluated by high school academic results" },
+          { title: "Receive results", desc: "Check admission results online" },
+          { title: "Enrollment", desc: "Complete procedures and enroll" },
+        ]),
+        ctaTitleEn: "Ready to start your healthcare career journey?",
+        ctaDescriptionEn: "Submit your application today — our admissions team is ready to help 24/7.",
+      })
+      .where(eq(homepageContent.id, "main"));
+  }
+
   // Danh mục bài viết mặc định
   const existingCategories = await db.query.categories.findMany();
   if (existingCategories.length === 0) {
@@ -255,6 +351,20 @@ async function main() {
     console.log("✓ Tạo 4 danh mục bài viết mẫu");
   } else {
     console.log("• Đã có danh mục bài viết, bỏ qua.");
+  }
+
+  // Backfill bản tiếng Anh cho danh mục bài viết (idempotent)
+  const categoryTranslations: Record<string, string> = {
+    "tuyen-sinh": "Admissions",
+    "su-kien": "Events",
+    "hop-tac": "Partnerships",
+    "dao-tao": "Training",
+  };
+  for (const [slug, nameEn] of Object.entries(categoryTranslations)) {
+    const row = await db.query.categories.findFirst({ where: (c, { eq }) => eq(c.slug, slug) });
+    if (row && !row.nameEn) {
+      await db.update(categories).set({ nameEn }).where(eq(categories.id, row.id));
+    }
   }
 
   // Đối tác mặc định
@@ -346,6 +456,24 @@ async function main() {
   } else {
     console.log("• Đã có menu chính, bỏ qua.");
   }
+
+  // Mục menu "Đội ngũ giảng viên" — trang đầy đủ mới, nằm trong nút ☰ (danh mục khác)
+  const existingFacultyNav = await db.query.navItems.findFirst({
+    where: (n, { eq }) => eq(n.href, "/doi-ngu-giang-vien"),
+  });
+  if (!existingFacultyNav) {
+    await db.insert(navItems).values({
+      label: "Đội ngũ giảng viên",
+      labelEn: "Faculty",
+      href: "/doi-ngu-giang-vien",
+      isPrimary: 0,
+      sortOrder: 10,
+    });
+    console.log("✓ Tạo mục menu Đội ngũ giảng viên");
+  } else {
+    console.log("• Đã có mục menu Đội ngũ giảng viên, bỏ qua.");
+  }
+
 
   // Trang "Công khai" mặc định — nội dung là KHUNG THEO ĐÚNG QUY ĐỊNH
   // (Thông tư 36/2017 — "3 công khai" cho cơ sở GDNN), số liệu để dạng
@@ -490,6 +618,39 @@ Giờ làm việc: [Trường điền: VD Thứ 2 - Thứ 6, 7h30 - 17h00]`,
     console.log("✓ Tạo mục menu Công khai (danh mục to + 4 danh mục con)");
   } else {
     console.log("• Đã có mục menu Công khai, bỏ qua.");
+  }
+
+  // Backfill bản tiếng Anh cho toàn bộ mục menu hiện có (idempotent) — chạy
+  // cuối cùng sau khi mọi mục menu (kể cả Công khai, Đội ngũ giảng viên) đã tồn tại.
+  const navTranslations: Record<string, string> = {
+    "/": "Home",
+    "/gioi-thieu": "About",
+    "/nganh-dao-tao": "Programs",
+    "/tuyen-sinh": "Admissions",
+    "/tin-tuc": "News",
+    "/lien-he": "Contact",
+    "/nganh-dao-tao/dieu-duong": "Nursing",
+    "/nganh-dao-tao/duoc": "Pharmacy",
+    "/nganh-dao-tao/xet-nghiem-y-hoc": "Medical Laboratory Science",
+    "/nganh-dao-tao/ho-sinh": "Midwifery",
+    "/nganh-dao-tao/phuc-hoi-chuc-nang": "Physical Therapy & Rehabilitation",
+    "/nganh-dao-tao/y-si-da-khoa": "General Medicine Practitioner",
+    "/tra-cuu-ket-qua": "Check Results",
+    "/thu-vien": "Gallery",
+    "/lms": "LMS Portal",
+    "/doi-ngu-giang-vien": "Faculty",
+    "/cong-khai": "Public Disclosure",
+    "/cong-khai/cong-khai-tai-chinh": "Finance",
+    "/cong-khai/cong-khai-co-so-vat-chat": "Facilities",
+    "/cong-khai/cong-khai-chuong-trinh-dao-tao": "Training Programs",
+    "/cong-khai/cong-khai-doi-ngu-giang-vien": "Faculty",
+  };
+  const allNavRows = await db.query.navItems.findMany();
+  for (const row of allNavRows) {
+    const labelEn = navTranslations[row.href];
+    if (labelEn && !row.labelEn) {
+      await db.update(navItems).set({ labelEn }).where(eq(navItems.id, row.id));
+    }
   }
 
   console.log("Seed hoàn tất.");

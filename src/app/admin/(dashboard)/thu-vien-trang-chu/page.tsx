@@ -3,6 +3,7 @@ import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertGalleryItemAction, deleteGalleryItemAction } from "./actions";
@@ -109,6 +110,20 @@ export default async function AdminGalleryPage({
                 placeholder="VD: Thực hành lâm sàng"
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Chú thích tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3">
+                <AutoTranslateButton pairs={[{ viName: "caption", enName: "captionEn" }]} />
+              </div>
+              <input
+                name="captionEn"
+                defaultValue={editing?.captionEn ?? ""}
+                placeholder="Caption (English)"
+                className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              />
+            </details>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}

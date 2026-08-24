@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
+import { autoFillTranslations } from "@/lib/translate";
 
 export async function upsertProgramAction(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
@@ -14,8 +15,17 @@ export async function upsertProgramAction(formData: FormData) {
   const summary = String(formData.get("summary") || "").trim();
   const content = String(formData.get("content") || "").trim();
   const featured = formData.get("featured") === "on";
+  const nameEn = String(formData.get("nameEn") || "").trim();
+  const summaryEn = String(formData.get("summaryEn") || "").trim();
+  const contentEn = String(formData.get("contentEn") || "").trim();
 
   if (!code || !name || !duration || !summary || !intake) return;
+
+  const [nameEnFinal, summaryEnFinal, contentEnFinal] = await autoFillTranslations([
+    { vi: name, en: nameEn },
+    { vi: summary, en: summaryEn },
+    { vi: content, en: contentEn },
+  ]);
 
   if (id) {
     await db
@@ -23,10 +33,13 @@ export async function upsertProgramAction(formData: FormData) {
       .set({
         code,
         name,
+        nameEn: nameEnFinal || null,
         duration,
         intake,
         summary,
+        summaryEn: summaryEnFinal || null,
         content: content || null,
+        contentEn: contentEnFinal || null,
         featured: featured ? 1 : 0,
         updatedAt: new Date().toISOString(),
       })
@@ -45,10 +58,13 @@ export async function upsertProgramAction(formData: FormData) {
       slug,
       code,
       name,
+      nameEn: nameEnFinal || null,
       duration,
       intake,
       summary,
+      summaryEn: summaryEnFinal || null,
       content: content || null,
+      contentEn: contentEnFinal || null,
       featured: featured ? 1 : 0,
     });
   }

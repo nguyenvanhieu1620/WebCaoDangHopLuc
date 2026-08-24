@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ImagePicker } from "@/components/admin/ImagePicker";
-import { getHomepageContent } from "@/lib/data/homepage";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { desc, eq } from "drizzle-orm";
 import { updateHomepageContentAction } from "./actions";
+
+type ArrayItem = Record<string, string>;
+
+function parseArray(json: string | null): ArrayItem[] {
+  if (!json) return [];
+  try {
+    return JSON.parse(json) as ArrayItem[];
+  } catch {
+    return [];
+  }
+}
 
 export const metadata: Metadata = { title: "Nội dung Trang chủ" };
 
@@ -24,11 +35,45 @@ function FormSection({ title, children }: { title: string; children: React.React
 }
 
 export default async function AdminHomepagePage() {
-  const content = await getHomepageContent();
-  const mediaImages = await db.query.mediaItems.findMany({
-    where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
-  });
+  const [row, mediaImages] = await Promise.all([
+    db.query.homepageContent.findFirst({ where: eq(schema.homepageContent.id, "main") }),
+    db.query.mediaItems.findMany({
+      where: eq(schema.mediaItems.type, "image"),
+      orderBy: desc(schema.mediaItems.createdAt),
+    }),
+  ]);
+  if (!row) {
+    throw new Error("Chưa có dữ liệu homepage_content — chạy `npm run db:seed` trước.");
+  }
+  const content = {
+    ...row,
+    stats: parseArray(row.statsJson),
+    features: parseArray(row.featuresJson),
+    steps: parseArray(row.stepsJson),
+  };
+  const statsEn = parseArray(row.statsJsonEn);
+  const featuresEn = parseArray(row.featuresJsonEn);
+  const stepsEn = parseArray(row.stepsJsonEn);
+
+  const allEnglishPairs = [
+    { viName: "heroBadge", enName: "heroBadgeEn" },
+    { viName: "heroTitleLine1", enName: "heroTitleLine1En" },
+    { viName: "heroTitleLine2", enName: "heroTitleLine2En" },
+    { viName: "heroDescription", enName: "heroDescriptionEn" },
+    { viName: "heroBadge1Label", enName: "heroBadge1LabelEn" },
+    { viName: "heroBadge2Label", enName: "heroBadge2LabelEn" },
+    ...content.stats.map((_, i) => ({ viName: `stat${i}_label`, enName: `stat${i}_label_en` })),
+    ...content.features.flatMap((_, i) => [
+      { viName: `feature${i}_title`, enName: `feature${i}_title_en` },
+      { viName: `feature${i}_desc`, enName: `feature${i}_desc_en` },
+    ]),
+    ...content.steps.flatMap((_, i) => [
+      { viName: `step${i}_title`, enName: `step${i}_title_en` },
+      { viName: `step${i}_desc`, enName: `step${i}_desc_en` },
+    ]),
+    { viName: "ctaTitle", enName: "ctaTitleEn" },
+    { viName: "ctaDescription", enName: "ctaDescriptionEn" },
+  ];
 
   return (
     <div>
@@ -41,6 +86,11 @@ export default async function AdminHomepagePage() {
           action={updateHomepageContentAction}
           className="max-w-3xl space-y-6 rounded-2xl border border-line bg-white p-6"
         >
+          <AutoTranslateButton
+            pairs={allEnglishPairs}
+            label="Dịch toàn bộ nội dung Trang chủ sang tiếng Anh"
+          />
+
           <FormSection title="Hero">
             <div>
               <label className={labelClass}>Badge nhỏ trên tiêu đề</label>
@@ -125,19 +175,80 @@ export default async function AdminHomepagePage() {
                 />
               </div>
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3 space-y-3">
+                <input
+                  name="heroBadgeEn"
+                  defaultValue={row.heroBadgeEn ?? ""}
+                  placeholder="Badge (English)"
+                  className={inputClass}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    name="heroTitleLine1En"
+                    defaultValue={row.heroTitleLine1En ?? ""}
+                    placeholder="Title line 1 (English)"
+                    className={inputClass}
+                  />
+                  <input
+                    name="heroTitleLine2En"
+                    defaultValue={row.heroTitleLine2En ?? ""}
+                    placeholder="Title line 2 (English)"
+                    className={inputClass}
+                  />
+                </div>
+                <textarea
+                  name="heroDescriptionEn"
+                  rows={3}
+                  defaultValue={row.heroDescriptionEn ?? ""}
+                  placeholder="Description (English)"
+                  className={inputClass}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    name="heroBadge1LabelEn"
+                    defaultValue={row.heroBadge1LabelEn ?? ""}
+                    placeholder="Badge 1 label (English)"
+                    className={inputClass}
+                  />
+                  <input
+                    name="heroBadge2LabelEn"
+                    defaultValue={row.heroBadge2LabelEn ?? ""}
+                    placeholder="Badge 2 label (English)"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </details>
           </FormSection>
 
           <FormSection title="4 chỉ số thống kê">
             {content.stats.map((s, i) => (
-              <div key={i} className="grid grid-cols-[120px_1fr] gap-3">
-                <div>
-                  <label className={labelClass}>Số liệu</label>
-                  <input name={`stat${i}_value`} required defaultValue={s.value} className={inputClass} />
+              <div key={i} className="space-y-2 rounded-lg border border-line p-3">
+                <div className="grid grid-cols-[120px_1fr] gap-3">
+                  <div>
+                    <label className={labelClass}>Số liệu</label>
+                    <input name={`stat${i}_value`} required defaultValue={s.value} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Nhãn</label>
+                    <input name={`stat${i}_label`} required defaultValue={s.label} className={inputClass} />
+                  </div>
                 </div>
-                <div>
-                  <label className={labelClass}>Nhãn</label>
-                  <input name={`stat${i}_label`} required defaultValue={s.label} className={inputClass} />
-                </div>
+                <details>
+                  <summary className="cursor-pointer text-[11px] font-semibold text-ink-soft">
+                    🇬🇧 Nhãn tiếng Anh (tuỳ chọn)
+                  </summary>
+                  <input
+                    name={`stat${i}_label_en`}
+                    defaultValue={statsEn[i]?.label ?? ""}
+                    placeholder="Label (English)"
+                    className={`${inputClass} mt-2`}
+                  />
+                </details>
               </div>
             ))}
           </FormSection>
@@ -159,6 +270,26 @@ export default async function AdminHomepagePage() {
                     className={inputClass}
                   />
                 </div>
+                <details>
+                  <summary className="cursor-pointer text-[11px] font-semibold text-ink-soft">
+                    🇬🇧 Bản tiếng Anh (tuỳ chọn)
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <input
+                      name={`feature${i}_title_en`}
+                      defaultValue={featuresEn[i]?.title ?? ""}
+                      placeholder="Title (English)"
+                      className={inputClass}
+                    />
+                    <textarea
+                      name={`feature${i}_desc_en`}
+                      rows={2}
+                      defaultValue={featuresEn[i]?.desc ?? ""}
+                      placeholder="Description (English)"
+                      className={inputClass}
+                    />
+                  </div>
+                </details>
               </div>
             ))}
           </FormSection>
@@ -180,6 +311,26 @@ export default async function AdminHomepagePage() {
                     className={inputClass}
                   />
                 </div>
+                <details>
+                  <summary className="cursor-pointer text-[11px] font-semibold text-ink-soft">
+                    🇬🇧 Bản tiếng Anh (tuỳ chọn)
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <input
+                      name={`step${i}_title_en`}
+                      defaultValue={stepsEn[i]?.title ?? ""}
+                      placeholder="Title (English)"
+                      className={inputClass}
+                    />
+                    <textarea
+                      name={`step${i}_desc_en`}
+                      rows={2}
+                      defaultValue={stepsEn[i]?.desc ?? ""}
+                      placeholder="Description (English)"
+                      className={inputClass}
+                    />
+                  </div>
+                </details>
               </div>
             ))}
           </FormSection>
@@ -199,6 +350,26 @@ export default async function AdminHomepagePage() {
                 className={inputClass}
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3 space-y-3">
+                <input
+                  name="ctaTitleEn"
+                  defaultValue={row.ctaTitleEn ?? ""}
+                  placeholder="Title (English)"
+                  className={inputClass}
+                />
+                <textarea
+                  name="ctaDescriptionEn"
+                  rows={2}
+                  defaultValue={row.ctaDescriptionEn ?? ""}
+                  placeholder="Description (English)"
+                  className={inputClass}
+                />
+              </div>
+            </details>
           </FormSection>
 
           <button

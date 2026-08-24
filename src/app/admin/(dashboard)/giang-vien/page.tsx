@@ -3,6 +3,7 @@ import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertFacultyAction, deleteFacultyAction } from "./actions";
@@ -120,6 +121,20 @@ export default async function AdminFacultyPage({
                 placeholder="VD: Trưởng khoa Điều dưỡng"
               />
             </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Chức danh tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3">
+                <AutoTranslateButton pairs={[{ viName: "role", enName: "roleEn" }]} />
+              </div>
+              <input
+                name="roleEn"
+                defaultValue={editing?.roleEn ?? ""}
+                placeholder="VD: Head of Nursing Department"
+                className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              />
+            </details>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh chân dung {editing ? "(để trống = giữ ảnh cũ)" : ""}

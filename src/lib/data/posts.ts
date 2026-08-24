@@ -1,5 +1,6 @@
 import { db, schema } from "@/lib/db";
 import { desc, eq } from "drizzle-orm";
+import { getLocale, pickLocale } from "@/lib/locale";
 
 export type PublishedPostPreview = {
   id: string;
@@ -25,11 +26,14 @@ async function categoryNameMap(categoryIds: string[]): Promise<Map<string, strin
 
 /** Bài viết đã đăng, mới nhất trước — dùng cho khối "Tin tức" ở Trang chủ. */
 export async function getLatestPublishedPosts(limit: number): Promise<PublishedPostPreview[]> {
-  const rows = await db.query.posts.findMany({
-    where: eq(schema.posts.status, "published"),
-    orderBy: desc(schema.posts.publishedAt),
-    limit,
-  });
+  const [rows, locale] = await Promise.all([
+    db.query.posts.findMany({
+      where: eq(schema.posts.status, "published"),
+      orderBy: desc(schema.posts.publishedAt),
+      limit,
+    }),
+    getLocale(),
+  ]);
   if (rows.length === 0) return [];
 
   const names = await categoryNameMap(
@@ -38,8 +42,8 @@ export async function getLatestPublishedPosts(limit: number): Promise<PublishedP
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
-    title: r.title,
-    excerpt: r.excerpt,
+    title: pickLocale(r.title, r.titleEn, locale),
+    excerpt: r.excerpt ? pickLocale(r.excerpt, r.excerptEn, locale) : r.excerpt,
     coverImageUrl: r.coverImageUrl,
     categoryName: r.categoryId ? names.get(r.categoryId) ?? null : null,
     publishedAt: r.publishedAt,
@@ -53,20 +57,21 @@ export async function getAllPublishedPosts(): Promise<PublishedPostPreview[]> {
 
 /** 1 bài viết đã đăng theo slug — dùng cho trang chi tiết /tin-tuc/[slug]. Trả về null nếu không có hoặc chưa đăng. */
 export async function getPublishedPostBySlug(slug: string): Promise<PublishedPostDetail | null> {
-  const row = await db.query.posts.findFirst({
-    where: eq(schema.posts.slug, slug),
-  });
+  const [row, locale] = await Promise.all([
+    db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) }),
+    getLocale(),
+  ]);
   if (!row || row.status !== "published") return null;
 
   const names = await categoryNameMap(row.categoryId ? [row.categoryId] : []);
   return {
     id: row.id,
     slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
+    title: pickLocale(row.title, row.titleEn, locale),
+    excerpt: row.excerpt ? pickLocale(row.excerpt, row.excerptEn, locale) : row.excerpt,
     coverImageUrl: row.coverImageUrl,
     categoryName: row.categoryId ? names.get(row.categoryId) ?? null : null,
     publishedAt: row.publishedAt,
-    content: row.content,
+    content: pickLocale(row.content, row.contentEn, locale),
   };
 }
