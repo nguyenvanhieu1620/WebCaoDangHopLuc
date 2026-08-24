@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { upsertTestimonialAction, deleteTestimonialAction } from "./actions";
 
 export const metadata: Metadata = { title: "Đánh giá cựu sinh viên" };
@@ -19,6 +21,10 @@ export default async function AdminTestimonialsPage({
   const editing = edit
     ? await db.query.testimonials.findFirst({ where: eq(schema.testimonials.id, edit) })
     : null;
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
@@ -67,12 +73,12 @@ export default async function AdminTestimonialsPage({
                         await deleteTestimonialAction(t.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                        confirmMessage={`Xoá đánh giá của "${t.name}"? Không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </li>
@@ -128,20 +134,11 @@ export default async function AdminTestimonialsPage({
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh đại diện {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
-              {editing?.avatarUrl && (
-                <Image
-                  src={editing.avatarUrl}
-                  alt={editing.name}
-                  width={56}
-                  height={56}
-                  className="mb-2 h-14 w-14 rounded-full border border-line object-cover"
-                />
-              )}
-              <input
-                type="file"
-                name="avatar"
-                accept="image/*"
-                className="w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+              <ImagePicker
+                fileFieldName="avatar"
+                pickedFieldName="avatarExisting"
+                images={mediaImages}
+                currentUrl={editing?.avatarUrl}
               />
             </div>
             <div>

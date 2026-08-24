@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { upsertFacultyAction, deleteFacultyAction } from "./actions";
 
 export const metadata: Metadata = { title: "Đội ngũ giảng viên" };
@@ -19,6 +21,10 @@ export default async function AdminFacultyPage({
   const editing = edit
     ? await db.query.faculty.findFirst({ where: eq(schema.faculty.id, edit) })
     : null;
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
@@ -67,12 +73,12 @@ export default async function AdminFacultyPage({
                         await deleteFacultyAction(f.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                        confirmMessage={`Xoá giảng viên "${f.name}"? Không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </li>
@@ -118,20 +124,11 @@ export default async function AdminFacultyPage({
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh chân dung {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
-              {editing?.photoUrl && (
-                <Image
-                  src={editing.photoUrl}
-                  alt={editing.name}
-                  width={64}
-                  height={64}
-                  className="mb-2 h-16 w-16 rounded-full border border-line object-cover"
-                />
-              )}
-              <input
-                type="file"
-                name="photo"
-                accept="image/*"
-                className="w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+              <ImagePicker
+                fileFieldName="photo"
+                pickedFieldName="photoExisting"
+                images={mediaImages}
+                currentUrl={editing?.photoUrl}
               />
             </div>
             <div>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { saveUploadedFileIfPresent } from "@/lib/media";
+import { resolveImageUrl } from "@/lib/media";
 
 const STAT_COUNT = 4;
 const FEATURE_COUNT = 3;
@@ -43,9 +43,10 @@ export async function updateHomepageContentAction(formData: FormData) {
   const current = await db.query.homepageContent.findFirst({
     where: eq(schema.homepageContent.id, "main"),
   });
-  const heroImageUrl = await saveUploadedFileIfPresent(
+  const heroImageUrl = await resolveImageUrl(
     formData,
     "heroImage",
+    "heroImageExisting",
     current?.heroImageUrl ?? null
   );
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
 
 export async function generateMetadata({
@@ -38,9 +39,7 @@ export default async function CongKhaiDetailPage({
         <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
           {page.title}
         </h1>
-        <div className="mt-8 whitespace-pre-line text-[15.5px] leading-relaxed text-ink-soft">
-          {page.content}
-        </div>
+        <MarkdownContent content={page.content} className="mt-8" />
       </div>
     </section>
   );

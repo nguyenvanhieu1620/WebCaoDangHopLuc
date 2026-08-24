@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getCategories } from "@/lib/data/categories";
 import {
   createPostAction,
@@ -13,12 +16,43 @@ import {
 
 export const metadata: Metadata = { title: "Quản lý bài viết" };
 
-export default async function AdminPostsPage() {
-  const [allPosts, categories] = await Promise.all([
+const STATUS_FILTERS = [
+  { key: "all", label: "Tất cả" },
+  { key: "published", label: "Đã đăng" },
+  { key: "draft", label: "Bản nháp" },
+] as const;
+
+export default async function AdminPostsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status } = await searchParams;
+  const activeStatus = status === "published" || status === "draft" ? status : "all";
+
+  const [allPosts, categories, mediaImages] = await Promise.all([
     db.query.posts.findMany({ orderBy: desc(schema.posts.createdAt) }),
     getCategories(),
+    db.query.mediaItems.findMany({
+      where: eq(schema.mediaItems.type, "image"),
+      orderBy: desc(schema.mediaItems.createdAt),
+    }),
   ]);
   const categoryNameById = new Map(categories.map((c) => [c.id, c.name]));
+
+  const filteredPosts = allPosts.filter((post) => {
+    if (activeStatus !== "all" && post.status !== activeStatus) return false;
+    if (q && !post.title.toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  });
+
+  const buildFilterHref = (nextStatus: string) => {
+    const params = new URLSearchParams();
+    if (nextStatus !== "all") params.set("status", nextStatus);
+    if (q) params.set("q", q);
+    const qs = params.toString();
+    return qs ? `/admin/bai-viet?${qs}` : "/admin/bai-viet";
+  };
 
   return (
     <div>
@@ -26,18 +60,45 @@ export default async function AdminPostsPage() {
       <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
         {/* Danh sách bài viết */}
         <div className="rounded-2xl border border-line bg-white">
-          <div className="flex items-center justify-between border-b border-line px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">
-              Danh sách ({allPosts.length})
+              Danh sách ({filteredPosts.length}/{allPosts.length})
             </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {STATUS_FILTERS.map((f) => (
+                <a
+                  key={f.key}
+                  href={buildFilterHref(f.key)}
+                  className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold ${
+                    activeStatus === f.key
+                      ? "bg-brand-700 text-white"
+                      : "border border-line text-ink-soft hover:border-brand-500"
+                  }`}
+                >
+                  {f.label}
+                </a>
+              ))}
+              <form action="/admin/bai-viet" method="get" className="flex items-center gap-1.5">
+                {activeStatus !== "all" && <input type="hidden" name="status" value={activeStatus} />}
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={q ?? ""}
+                  placeholder="Tìm theo tiêu đề..."
+                  className="w-40 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] outline-none focus:border-brand-500"
+                />
+              </form>
+            </div>
           </div>
-          {allPosts.length === 0 ? (
+          {filteredPosts.length === 0 ? (
             <div className="p-10 text-center text-sm text-ink-faint">
-              Chưa có bài viết nào. Tạo bài viết đầu tiên ở form bên phải.
+              {allPosts.length === 0
+                ? "Chưa có bài viết nào. Tạo bài viết đầu tiên ở form bên phải."
+                : "Không tìm thấy bài viết phù hợp với bộ lọc."}
             </div>
           ) : (
             <ul className="divide-y divide-line">
-              {allPosts.map((post) => (
+              {filteredPosts.map((post) => (
                 <li key={post.id} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-ink">{post.title}</div>
@@ -82,12 +143,12 @@ export default async function AdminPostsPage() {
                         await deletePostAction(post.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                        confirmMessage={`Xoá bài viết "${post.title}"? Không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </li>
@@ -114,12 +175,12 @@ export default async function AdminPostsPage() {
                         await deleteCategoryAction(c.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="text-[11px] font-semibold text-accent-600 hover:underline"
+                        confirmMessage={`Xoá danh mục "${c.name}"? Bài viết đang gắn danh mục này sẽ không còn danh mục.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </li>
                 ))}
@@ -187,22 +248,20 @@ export default async function AdminPostsPage() {
                 <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Ảnh đại diện (tuỳ chọn)
                 </label>
-                <input
-                  type="file"
-                  name="coverImage"
-                  accept="image/*"
-                  className="w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+                <ImagePicker
+                  fileFieldName="coverImage"
+                  pickedFieldName="coverImageExisting"
+                  images={mediaImages}
                 />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Nội dung
                 </label>
-                <textarea
+                <MarkdownEditor
                   name="content"
                   required
                   rows={6}
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   placeholder="Nội dung đầy đủ của bài viết..."
                 />
               </div>

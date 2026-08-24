@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
-import { saveUploadedFileIfPresent } from "@/lib/media";
+import { resolveImageUrl } from "@/lib/media";
 
 export async function createPostAction(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
@@ -24,7 +24,7 @@ export async function createPostAction(formData: FormData) {
     slug = `${baseSlug}-${counter}`;
   }
 
-  const coverImageUrl = await saveUploadedFileIfPresent(formData, "coverImage");
+  const coverImageUrl = await resolveImageUrl(formData, "coverImage", "coverImageExisting");
 
   await db.insert(schema.posts).values({
     title,

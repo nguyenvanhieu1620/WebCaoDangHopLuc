@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { upsertGalleryItemAction, deleteGalleryItemAction } from "./actions";
 
 export const metadata: Metadata = { title: "Thư viện ảnh Trang chủ" };
@@ -19,6 +21,10 @@ export default async function AdminGalleryPage({
   const editing = edit
     ? await db.query.galleryItems.findFirst({ where: eq(schema.galleryItems.id, edit) })
     : null;
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
@@ -63,12 +69,12 @@ export default async function AdminGalleryPage({
                         await deleteGalleryItemAction(item.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                        confirmMessage={`Xoá ảnh "${item.caption}"? Không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </li>
@@ -107,21 +113,11 @@ export default async function AdminGalleryPage({
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
-              {editing?.imageUrl && (
-                <Image
-                  src={editing.imageUrl}
-                  alt={editing.caption}
-                  width={160}
-                  height={100}
-                  className="mb-2 h-24 w-auto rounded-lg border border-line object-cover"
-                />
-              )}
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                required={!editing}
-                className="w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+              <ImagePicker
+                fileFieldName="image"
+                pickedFieldName="imageExisting"
+                images={mediaImages}
+                currentUrl={editing?.imageUrl}
               />
             </div>
             <div>

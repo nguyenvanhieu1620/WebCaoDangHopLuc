@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { getHomepageContent } from "@/lib/data/homepage";
+import { db, schema } from "@/lib/db";
+import { desc, eq } from "drizzle-orm";
 import { updateHomepageContentAction } from "./actions";
 
 export const metadata: Metadata = { title: "Nội dung Trang chủ" };
@@ -23,6 +25,10 @@ function FormSection({ title, children }: { title: string; children: React.React
 
 export default async function AdminHomepagePage() {
   const content = await getHomepageContent();
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
@@ -72,20 +78,11 @@ export default async function AdminHomepagePage() {
             </div>
             <div>
               <label className={labelClass}>Ảnh Hero (để trống = giữ ảnh cũ)</label>
-              {content.heroImageUrl && (
-                <Image
-                  src={content.heroImageUrl}
-                  alt="Ảnh Hero hiện tại"
-                  width={220}
-                  height={128}
-                  className="mb-2 h-32 w-auto rounded-lg border border-line object-cover"
-                />
-              )}
-              <input
-                type="file"
-                name="heroImage"
-                accept="image/*"
-                className="w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+              <ImagePicker
+                fileFieldName="heroImage"
+                pickedFieldName="heroImageExisting"
+                images={mediaImages}
+                currentUrl={content.heroImageUrl}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">

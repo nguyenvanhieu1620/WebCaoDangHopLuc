@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PageStub } from "@/components/ui/PageStub";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
 import { getSiteSettings } from "@/lib/data/site-settings";
 
@@ -35,9 +36,7 @@ export default async function ContactPage() {
           <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
             {page.title}
           </h1>
-          <div className="mt-8 whitespace-pre-line text-[15.5px] leading-relaxed text-ink-soft">
-            {page.content}
-          </div>
+          <MarkdownContent content={page.content} className="mt-8" />
         </div>
 
         <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2">

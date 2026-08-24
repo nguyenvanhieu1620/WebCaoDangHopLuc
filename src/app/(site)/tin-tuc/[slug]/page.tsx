@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPublishedPostBySlug } from "@/lib/data/posts";
 import { formatVNDate } from "@/lib/utils";
 
@@ -56,9 +57,7 @@ export default async function NewsDetailPage({
           )}
         </div>
 
-        <div className="mt-8 whitespace-pre-line text-[15.5px] leading-relaxed text-ink-soft">
-          {post.content}
-        </div>
+        <MarkdownContent content={post.content} className="mt-8" />
       </div>
     </section>
   );

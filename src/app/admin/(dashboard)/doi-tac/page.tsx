@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertPartnerAction, deletePartnerAction } from "./actions";
@@ -57,12 +58,12 @@ export default async function AdminPartnersPage({
                         await deletePartnerAction(p.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                        confirmMessage={`Xoá đối tác "${p.name}"? Không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </li>

@@ -18,10 +18,43 @@ const STATUS_CLASS: Record<string, string> = {
   contacted: "bg-paper-alt text-ink-soft",
 };
 
-export default async function AdminAdmissionsPage() {
-  const submissions = await db.query.admissionSubmissions.findMany({
+const STATUS_FILTERS = [
+  { key: "all", label: "Tất cả" },
+  { key: "new", label: "Mới" },
+  { key: "reviewed", label: "Đã xem" },
+  { key: "contacted", label: "Đã liên hệ" },
+] as const;
+
+export default async function AdminAdmissionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status } = await searchParams;
+  const activeStatus =
+    status === "new" || status === "reviewed" || status === "contacted" ? status : "all";
+
+  const allSubmissions = await db.query.admissionSubmissions.findMany({
     orderBy: desc(schema.admissionSubmissions.createdAt),
   });
+
+  const submissions = allSubmissions.filter((s) => {
+    if (activeStatus !== "all" && s.status !== activeStatus) return false;
+    if (q) {
+      const needle = q.toLowerCase();
+      const haystack = `${s.fullName} ${s.phone} ${s.idNumber ?? ""}`.toLowerCase();
+      if (!haystack.includes(needle)) return false;
+    }
+    return true;
+  });
+
+  const buildFilterHref = (nextStatus: string) => {
+    const params = new URLSearchParams();
+    if (nextStatus !== "all") params.set("status", nextStatus);
+    if (q) params.set("q", q);
+    const qs = params.toString();
+    return qs ? `/admin/tuyen-sinh?${qs}` : "/admin/tuyen-sinh";
+  };
 
   return (
     <div>
@@ -30,10 +63,39 @@ export default async function AdminAdmissionsPage() {
         description="Danh sách hồ sơ đăng ký xét tuyển từ website"
       />
       <div className="p-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {STATUS_FILTERS.map((f) => (
+              <a
+                key={f.key}
+                href={buildFilterHref(f.key)}
+                className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold ${
+                  activeStatus === f.key
+                    ? "bg-brand-700 text-white"
+                    : "border border-line text-ink-soft hover:border-brand-500"
+                }`}
+              >
+                {f.label}
+              </a>
+            ))}
+          </div>
+          <form action="/admin/tuyen-sinh" method="get" className="flex items-center gap-1.5">
+            {activeStatus !== "all" && <input type="hidden" name="status" value={activeStatus} />}
+            <input
+              type="text"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Tìm theo tên, SĐT, CCCD..."
+              className="w-56 rounded-lg border border-line px-3 py-1.5 text-[12.5px] outline-none focus:border-brand-500"
+            />
+          </form>
+        </div>
         <div className="overflow-hidden rounded-2xl border border-line bg-white">
           {submissions.length === 0 ? (
             <div className="p-10 text-center text-sm text-ink-faint">
-              Chưa có hồ sơ đăng ký nào.
+              {allSubmissions.length === 0
+                ? "Chưa có hồ sơ đăng ký nào."
+                : "Không tìm thấy hồ sơ phù hợp với bộ lọc."}
             </div>
           ) : (
             <table className="w-full text-left text-sm">

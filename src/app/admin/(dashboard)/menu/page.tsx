@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertNavItemAction, deleteNavItemAction } from "./actions";
@@ -71,12 +72,16 @@ export default async function AdminMenuPage({
                           await deleteNavItemAction(item.id);
                         }}
                       >
-                        <button
-                          type="submit"
+                        <ConfirmDeleteButton
                           className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                          confirmMessage={
+                            childrenOf(item.id).length > 0
+                              ? `Xoá "${item.label}" sẽ xoá luôn ${childrenOf(item.id).length} danh mục con của nó. Không thể hoàn tác.`
+                              : `Xoá mục menu "${item.label}"? Không thể hoàn tác.`
+                          }
                         >
                           Xoá
-                        </button>
+                        </ConfirmDeleteButton>
                       </form>
                     </div>
                   </div>
@@ -103,12 +108,12 @@ export default async function AdminMenuPage({
                                 await deleteNavItemAction(child.id);
                               }}
                             >
-                              <button
-                                type="submit"
+                              <ConfirmDeleteButton
                                 className="rounded-lg border border-line px-2 py-1 text-[11px] font-semibold text-accent-600 hover:border-accent-500"
+                                confirmMessage={`Xoá danh mục con "${child.label}"? Không thể hoàn tác.`}
                               >
                                 Xoá
-                              </button>
+                              </ConfirmDeleteButton>
                             </form>
                           </div>
                         </li>

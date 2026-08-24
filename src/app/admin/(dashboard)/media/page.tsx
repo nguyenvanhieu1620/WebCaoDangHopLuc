@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
 import { uploadMediaAction, deleteMediaAction } from "./actions";
@@ -117,12 +118,12 @@ export default async function AdminMediaPage({
                         await deleteMediaAction(item.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="text-[10.5px] font-semibold text-accent-600 hover:underline"
+                        confirmMessage={`Xoá tệp "${item.filename}"? File vật lý cũng sẽ bị xoá, không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </div>

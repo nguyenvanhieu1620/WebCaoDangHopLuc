@@ -59,3 +59,24 @@ export async function saveUploadedFileIfPresent(
   }
   return fallbackUrl;
 }
+
+/**
+ * Giống `saveUploadedFileIfPresent` nhưng còn hỗ trợ chọn ảnh có sẵn từ Thư
+ * viện media (dùng cùng <ImagePicker>, xem src/components/admin/ImagePicker.tsx).
+ * Thứ tự ưu tiên: file mới tải lên > ảnh chọn từ thư viện > giá trị cũ (khi sửa).
+ */
+export async function resolveImageUrl(
+  formData: FormData,
+  fileFieldName: string,
+  pickedFieldName: string,
+  fallbackUrl: string | null = null
+): Promise<string | null> {
+  const file = formData.get(fileFieldName);
+  if (file instanceof File && file.size > 0) {
+    const saved = await saveUploadedFile(file);
+    return saved.url;
+  }
+  const picked = String(formData.get(pickedFieldName) || "").trim();
+  if (picked) return picked;
+  return fallbackUrl;
+}

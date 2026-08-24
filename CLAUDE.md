@@ -85,6 +85,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - **Tailwind CSS 3** — design tokens tập trung ở `tailwind.config.ts`
 - **Drizzle ORM** + **SQLite** (qua driver `@libsql/client`)
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
+- **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
 ### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 14 bảng
 `admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`,
@@ -188,6 +189,41 @@ Bảng `programs` (xem mục 4.1b), quản lý qua `admin/nganh-dao-tao` —
 để chọn ngành hiện ở trang chủ (không đánh dấu ngành nào thì tự lấy 6 ngành
 đầu). Màu thẻ tự xoay vòng qua `programGradient(index)` trong
 `constants.ts`, không cần khai báo màu thủ công.
+
+### Admin dễ dùng hơn — 4 cải tiến UX (tham khảo nhu cầu thực tế, không phải
+### theo 1 site cụ thể nào)
+- **Soạn nội dung có định dạng** — `MarkdownEditor` (`src/components/admin/MarkdownEditor.tsx`)
+  thay textarea trắng cho `admin/bai-viet` (nội dung bài) và `admin/trang-tinh`
+  (nội dung trang) — thanh công cụ B/I/H2/H3/trích dẫn/danh sách/link chèn cú
+  pháp Markdown vào đúng vị trí con trỏ, có nút "Xem trước". Field DB **vẫn
+  là text thường** (không đổi schema) — chỉ đổi cách soạn + cách hiển thị.
+  Hiển thị lại qua `<MarkdownContent>` (`src/components/ui/MarkdownContent.tsx`,
+  dùng `react-markdown`) ở mọi nơi từng dùng `whitespace-pre-line`: bài viết,
+  Giới thiệu, Liên hệ, Công khai. **Lưu ý khi sửa lại 2 component này**: ô
+  soạn (`<textarea>`) phải luôn nằm trong DOM kể cả lúc đang "Xem trước" (chỉ
+  ẩn bằng class `hidden`, không được unmount) — nếu unmount, submit lúc đang
+  xem trước sẽ mất nội dung vì FormData không đọc được field đã biến mất
+  (đã tái hiện lỗi này thật khi test, đã sửa).
+- **Xác nhận trước khi Xoá** — `<ConfirmDeleteButton>` (`src/components/admin/ConfirmDeleteButton.tsx`)
+  thay mọi nút "Xoá" submit-ngay trong admin (đã áp dụng cho toàn bộ 9 trang
+  có thao tác xoá). Dùng `window.confirm()` — chặn submit nếu người dùng bấm
+  Huỷ. Khi thêm trang admin mới có nút Xoá, **luôn dùng component này**, không
+  viết `<button type="submit">Xoá</button>` trần.
+- **Tìm kiếm/lọc danh sách dài** — `admin/bai-viet` (lọc theo trạng thái +
+  tìm theo tiêu đề) và `admin/tuyen-sinh` (lọc theo trạng thái + tìm theo
+  tên/SĐT/CCCD) — lọc qua query param (`?q=`, `?status=`), fetch hết rồi lọc
+  trong JS (đủ nhanh ở quy mô 1 trường, không cần query DB có điều kiện).
+- **Chọn ảnh từ Thư viện media thay vì upload lại** — `<ImagePicker>`
+  (`src/components/admin/ImagePicker.tsx`) thay `<input type="file">` trần ở
+  5 nơi cần ảnh: Giảng viên, Đánh giá, Thư viện Trang chủ, Bài viết (ảnh đại
+  diện), Nội dung Trang chủ (ảnh Hero). Action tương ứng dùng
+  `resolveImageUrl()` (`src/lib/media.ts`, thay `saveUploadedFileIfPresent()`
+  cũ) — ưu tiên: file mới tải lên > ảnh chọn từ thư viện > ảnh cũ (khi sửa).
+  Field ẩn đặt tên `<field>Existing` (VD `photoExisting`, `avatarExisting`).
+
+Cả 4 đã **test qua trình duyệt thật** (kể cả submit lúc đang xem trước
+Markdown, xác nhận Huỷ/OK hộp thoại xoá, lọc kết hợp nhiều điều kiện, chọn
+ảnh có sẵn không tạo bản upload trùng).
 
 ---
 

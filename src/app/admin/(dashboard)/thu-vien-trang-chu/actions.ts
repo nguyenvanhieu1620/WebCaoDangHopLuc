@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { saveUploadedFileIfPresent } from "@/lib/media";
+import { resolveImageUrl } from "@/lib/media";
 
 export async function upsertGalleryItemAction(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
@@ -15,7 +15,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
   const current = id
     ? await db.query.galleryItems.findFirst({ where: eq(schema.galleryItems.id, id) })
     : null;
-  const imageUrl = await saveUploadedFileIfPresent(formData, "image", current?.imageUrl ?? null);
+  const imageUrl = await resolveImageUrl(formData, "image", "imageExisting", current?.imageUrl ?? null);
 
   if (!imageUrl) return;
 

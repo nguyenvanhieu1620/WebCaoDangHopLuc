@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertPageAction, deletePageAction } from "./actions";
@@ -59,12 +61,12 @@ export default async function AdminPagesPage({
                         await deletePageAction(p.id);
                       }}
                     >
-                      <button
-                        type="submit"
+                      <ConfirmDeleteButton
                         className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-600 hover:border-accent-500"
+                        confirmMessage={`Xoá trang "${p.title}"? Không thể hoàn tác.`}
                       >
                         Xoá
-                      </button>
+                      </ConfirmDeleteButton>
                     </form>
                   </div>
                 </li>
@@ -111,12 +113,11 @@ export default async function AdminPagesPage({
             )}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Nội dung</label>
-              <textarea
+              <MarkdownEditor
                 name="content"
                 required
                 rows={8}
                 defaultValue={editing?.content}
-                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 placeholder="Nội dung đầy đủ của trang..."
               />
             </div>
