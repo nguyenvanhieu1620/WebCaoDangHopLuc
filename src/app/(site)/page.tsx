@@ -372,24 +372,34 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {facultyList.slice(0, 4).map((f) => (
-                <div
-                  key={f.id}
-                  className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2"
-                >
-                  <div className="relative h-[200px]">
-                    {f.photoUrl ? (
-                      <Image src={f.photoUrl} alt={f.name} fill className="object-cover" />
-                    ) : (
-                      <ImagePlaceholder label="Ảnh chân dung" />
-                    )}
+              {facultyList.slice(0, 4).map((f) => {
+                const card = (
+                  <>
+                    <div className="relative h-[200px]">
+                      {f.photoUrl ? (
+                        <Image src={f.photoUrl} alt={f.name} fill className="object-cover" />
+                      ) : (
+                        <ImagePlaceholder label="Ảnh chân dung" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-display text-base font-semibold text-ink">{f.name}</h4>
+                      <div className="mt-0.5 text-[12.5px] text-brand-700">{f.role}</div>
+                    </div>
+                  </>
+                );
+                const className =
+                  "overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
+                return f.slug ? (
+                  <Link key={f.id} href={`/doi-ngu-giang-vien/${f.slug}`} className={className}>
+                    {card}
+                  </Link>
+                ) : (
+                  <div key={f.id} className={className}>
+                    {card}
                   </div>
-                  <div className="p-4">
-                    <h4 className="font-display text-base font-semibold text-ink">{f.name}</h4>
-                    <div className="mt-0.5 text-[12.5px] text-brand-700">{f.role}</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

@@ -2,6 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "./client";
+import { slugify } from "../utils";
 import {
   adminUsers,
   posts,
@@ -15,6 +16,8 @@ import {
   testimonials,
   navItems,
   pages,
+  events,
+  faqs,
 } from "./schema";
 
 /**
@@ -386,14 +389,47 @@ async function main() {
   const existingFaculty = await db.query.faculty.findMany();
   if (existingFaculty.length === 0) {
     await db.insert(faculty).values([
-      { name: "ThS.BS Nguyễn Văn An", role: "Trưởng khoa Điều dưỡng", sortOrder: 0 },
-      { name: "DS.CKI Trần Thị Bình", role: "Trưởng khoa Dược", sortOrder: 1 },
-      { name: "ThS Lê Văn Cường", role: "Trưởng khoa Xét nghiệm", sortOrder: 2 },
-      { name: "BS.CKII Phạm Thị Dung", role: "Phó Hiệu trưởng", sortOrder: 3 },
+      {
+        slug: "ths-bs-nguyen-van-an",
+        name: "ThS.BS Nguyễn Văn An",
+        role: "Trưởng khoa Điều dưỡng",
+        sortOrder: 0,
+      },
+      {
+        slug: "ds-cki-tran-thi-binh",
+        name: "DS.CKI Trần Thị Bình",
+        role: "Trưởng khoa Dược",
+        sortOrder: 1,
+      },
+      {
+        slug: "ths-le-van-cuong",
+        name: "ThS Lê Văn Cường",
+        role: "Trưởng khoa Xét nghiệm",
+        sortOrder: 2,
+      },
+      {
+        slug: "bs-ckii-pham-thi-dung",
+        name: "BS.CKII Phạm Thị Dung",
+        role: "Phó Hiệu trưởng",
+        sortOrder: 3,
+      },
     ]);
     console.log("✓ Tạo 4 giảng viên mẫu");
   } else {
     console.log("• Đã có giảng viên, bỏ qua.");
+    // Backfill slug cho giảng viên tạo trước khi có cột này (dùng cho trang chi tiết)
+    for (const f of existingFaculty) {
+      if (!f.slug) {
+        const baseSlug = slugify(f.name) || `giang-vien-${f.id.slice(0, 8)}`;
+        let slug = baseSlug;
+        let counter = 1;
+        while (await db.query.faculty.findFirst({ where: (r, { eq }) => eq(r.slug, slug) })) {
+          counter += 1;
+          slug = `${baseSlug}-${counter}`;
+        }
+        await db.update(faculty).set({ slug }).where(eq(faculty.id, f.id));
+      }
+    }
   }
 
   // Đánh giá cựu sinh viên mặc định
@@ -472,6 +508,95 @@ async function main() {
     console.log("✓ Tạo mục menu Đội ngũ giảng viên");
   } else {
     console.log("• Đã có mục menu Đội ngũ giảng viên, bỏ qua.");
+  }
+
+  // Mục menu "Sự kiện" và "Câu hỏi thường gặp" — cũng nằm trong nút ☰
+  const existingEventsNav = await db.query.navItems.findFirst({
+    where: (n, { eq }) => eq(n.href, "/su-kien"),
+  });
+  if (!existingEventsNav) {
+    await db.insert(navItems).values({
+      label: "Sự kiện",
+      labelEn: "Events",
+      href: "/su-kien",
+      isPrimary: 0,
+      sortOrder: 11,
+    });
+    console.log("✓ Tạo mục menu Sự kiện");
+  } else {
+    console.log("• Đã có mục menu Sự kiện, bỏ qua.");
+  }
+
+  const existingFaqNav = await db.query.navItems.findFirst({
+    where: (n, { eq }) => eq(n.href, "/faq"),
+  });
+  if (!existingFaqNav) {
+    await db.insert(navItems).values({
+      label: "Câu hỏi thường gặp",
+      labelEn: "FAQ",
+      href: "/faq",
+      isPrimary: 0,
+      sortOrder: 12,
+    });
+    console.log("✓ Tạo mục menu Câu hỏi thường gặp");
+  } else {
+    console.log("• Đã có mục menu Câu hỏi thường gặp, bỏ qua.");
+  }
+
+  // Sự kiện mẫu
+  const existingEvents = await db.query.events.findMany();
+  if (existingEvents.length === 0) {
+    const inThreeWeeks = new Date();
+    inThreeWeeks.setDate(inThreeWeeks.getDate() + 21);
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+    await db.insert(events).values([
+      {
+        title: "Ngày hội tư vấn tuyển sinh 2026",
+        description:
+          "Tư vấn trực tiếp về các ngành đào tạo, học phí, học bổng và cơ hội việc làm sau tốt nghiệp.",
+        location: "Hội trường A, cơ sở chính",
+        startAt: inThreeWeeks.toISOString(),
+      },
+      {
+        title: "Lễ tốt nghiệp khoá 2023-2026",
+        description: "Lễ tốt nghiệp và trao bằng cho sinh viên khoá 2023-2026.",
+        location: "Hội trường lớn",
+        startAt: twoMonthsAgo.toISOString(),
+      },
+    ]);
+    console.log("✓ Tạo 2 sự kiện mẫu");
+  } else {
+    console.log("• Đã có sự kiện, bỏ qua.");
+  }
+
+  // Câu hỏi thường gặp mẫu
+  const existingFaqs = await db.query.faqs.findMany();
+  if (existingFaqs.length === 0) {
+    await db.insert(faqs).values([
+      {
+        question: "Học phí năm 2026 là bao nhiêu?",
+        answer:
+          "Học phí tuỳ theo từng ngành đào tạo — xem chi tiết tại trang từng ngành ở mục Ngành đào tạo, hoặc liên hệ hotline để được tư vấn cụ thể.",
+        sortOrder: 0,
+      },
+      {
+        question: "Hồ sơ xét tuyển cần những gì?",
+        answer:
+          "Hồ sơ gồm: bản sao học bạ/bằng tốt nghiệp THPT, CCCD, ảnh 3x4 và đơn đăng ký xét tuyển — nộp trực tuyến qua trang Tuyển sinh hoặc trực tiếp tại trường.",
+        sortOrder: 1,
+      },
+      {
+        question: "Sau khi nộp hồ sơ, khi nào có kết quả?",
+        answer:
+          "Kết quả xét tuyển thường có sau 3-5 ngày làm việc — tra cứu bằng số CCCD tại trang Tra cứu kết quả.",
+        sortOrder: 2,
+      },
+    ]);
+    console.log("✓ Tạo 3 câu hỏi thường gặp mẫu");
+  } else {
+    console.log("• Đã có câu hỏi thường gặp, bỏ qua.");
   }
 
 

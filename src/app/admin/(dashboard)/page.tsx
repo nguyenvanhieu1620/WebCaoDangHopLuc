@@ -6,10 +6,11 @@ import { desc, eq } from "drizzle-orm";
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function AdminDashboardPage() {
-  const [allPosts, publishedPosts, newAdmissions, recentPosts] = await Promise.all([
+  const [allPosts, publishedPosts, newAdmissions, newContactMessages, recentPosts] = await Promise.all([
     db.query.posts.findMany(),
     db.query.posts.findMany({ where: eq(schema.posts.status, "published") }),
     db.query.admissionSubmissions.findMany({ where: eq(schema.admissionSubmissions.status, "new") }),
+    db.query.contactMessages.findMany({ where: eq(schema.contactMessages.status, "new") }),
     db.query.posts.findMany({ orderBy: desc(schema.posts.createdAt), limit: 5 }),
   ]);
 
@@ -17,12 +18,13 @@ export default async function AdminDashboardPage() {
     { label: "Bài viết đã đăng", value: String(publishedPosts.length) },
     { label: "Tổng số bài viết", value: String(allPosts.length) },
     { label: "Hồ sơ tuyển sinh mới", value: String(newAdmissions.length) },
+    { label: "Tin nhắn liên hệ mới", value: String(newContactMessages.length) },
   ];
 
   return (
     <div>
       <AdminTopbar title="Dashboard" description="Tổng quan hệ thống website" />
-      <div className="grid grid-cols-1 gap-5 p-8 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 p-8 sm:grid-cols-2 lg:grid-cols-4">
         {KPIS.map((k) => (
           <div key={k.label} className="rounded-2xl border border-line bg-white p-5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">

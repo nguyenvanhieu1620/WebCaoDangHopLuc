@@ -75,6 +75,8 @@ export const pages = sqliteTable("pages", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   titleEn: text("title_en"),
+  /** Ảnh banner đầu trang — tuỳ chọn, không có thì trang không hiện khối ảnh. */
+  coverImageUrl: text("cover_image_url"),
   content: text("content").notNull(),
   contentEn: text("content_en"),
   updatedAt: text("updated_at")
@@ -222,15 +224,84 @@ export const galleryItems = sqliteTable("gallery_items", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
-/** Đội ngũ giảng viên hiển thị ở Trang chủ. */
+/** Đội ngũ giảng viên hiển thị ở Trang chủ và trang chi tiết /doi-ngu-giang-vien/[slug]. */
 export const faculty = sqliteTable("faculty", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  /**
+   * Dùng cho URL trang chi tiết — tự sinh từ tên, không bắt buộc nhập tay.
+   * Để nullable (thay vì notNull như slug các bảng khác) vì bảng này đã có
+   * sẵn dữ liệu — SQLite không cho ALTER TABLE thêm cột NOT NULL vào bảng
+   * đã có dòng mà không có DEFAULT. Action luôn tự sinh + set slug lúc tạo
+   * mới, nên trong thực tế cột này luôn có giá trị.
+   */
+  slug: text("slug").unique(),
   name: text("name").notNull(),
   role: text("role").notNull(),
   roleEn: text("role_en"),
+  /** Học vị/bằng cấp, VD "Thạc sĩ Điều dưỡng, Đại học Y Hà Nội" — tuỳ chọn, hiện ở trang chi tiết. */
+  education: text("education"),
+  educationEn: text("education_en"),
+  /** Chuyên môn/lĩnh vực giảng dạy — tuỳ chọn, hiện ở trang chi tiết. */
+  specialty: text("specialty"),
+  specialtyEn: text("specialty_en"),
+  /** Tiểu sử đầy đủ (Markdown) — tuỳ chọn, chỉ hiện ở trang chi tiết, không hiện ở thẻ rút gọn. */
+  bio: text("bio"),
+  bioEn: text("bio_en"),
   photoUrl: text("photo_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Sự kiện — lịch sự kiện riêng ở /su-kien, khác Tin tức (không có trạng thái nháp/đăng). */
+export const events = sqliteTable("events", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  titleEn: text("title_en"),
+  description: text("description"),
+  descriptionEn: text("description_en"),
+  location: text("location"),
+  locationEn: text("location_en"),
+  /** Thời điểm bắt đầu — bắt buộc, dùng để sắp xếp + tách "Sắp diễn ra"/"Đã diễn ra". */
+  startAt: text("start_at").notNull(),
+  /** Thời điểm kết thúc — tuỳ chọn, để trống nếu sự kiện diễn ra trong 1 buổi. */
+  endAt: text("end_at"),
+  coverImageUrl: text("cover_image_url"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Tin nhắn gửi từ form Liên hệ công khai — admin xem/đổi trạng thái qua admin/lien-he. */
+export const contactMessages = sqliteTable("contact_messages", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  message: text("message").notNull(),
+  /** "new" (mới) | "read" (đã xem) */
+  status: text("status").notNull().default("new"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Câu hỏi thường gặp — hiện ở /faq, admin sắp xếp qua sortOrder. */
+export const faqs = sqliteTable("faqs", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  question: text("question").notNull(),
+  questionEn: text("question_en"),
+  answer: text("answer").notNull(),
+  answerEn: text("answer_en"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
@@ -290,3 +361,6 @@ export type GalleryItem = typeof galleryItems.$inferSelect;
 export type Faculty = typeof faculty.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type NavItem = typeof navItems.$inferSelect;
+export type Event = typeof events.$inferSelect;
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type Faq = typeof faqs.$inferSelect;

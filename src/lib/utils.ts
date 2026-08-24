@@ -24,3 +24,10 @@ export function formatVNDate(iso: string | null): string {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("vi-VN");
 }
+
+/** Định dạng ngày giờ kiểu Việt Nam (dd/mm/yyyy HH:mm) từ chuỗi ISO — dùng cho Sự kiện. */
+export function formatVNDateTime(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("vi-VN")} · ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+}

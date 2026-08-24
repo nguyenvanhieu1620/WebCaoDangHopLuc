@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
@@ -39,6 +40,11 @@ export default async function CongKhaiDetailPage({
         <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
           {page.title}
         </h1>
+        {page.coverImageUrl && (
+          <div className="relative mt-8 h-[240px] overflow-hidden rounded-2xl sm:h-[300px]">
+            <Image src={page.coverImageUrl} alt={page.title} fill className="object-cover" />
+          </div>
+        )}
         <MarkdownContent content={page.content} className="mt-8" />
       </div>
     </section>

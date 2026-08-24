@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PageStub } from "@/components/ui/PageStub";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
@@ -28,6 +29,11 @@ export default async function AboutPage() {
         <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
           {page.title}
         </h1>
+        {page.coverImageUrl && (
+          <div className="relative mt-8 h-[280px] overflow-hidden rounded-2xl sm:h-[360px]">
+            <Image src={page.coverImageUrl} alt={page.title} fill className="object-cover" />
+          </div>
+        )}
         <MarkdownContent content={page.content} className="mt-8" />
       </div>
     </section>

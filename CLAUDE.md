@@ -87,19 +87,25 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 - **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 14 bảng
-`admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`,
-`media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 17 bảng
+`admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`
+(có thêm `cover_image_url` — trang tĩnh giờ cũng thêm ảnh được, không chỉ
+text), `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
 `programs`, `site_settings` (đơn dòng, id `"main"`), `homepage_content`
 (đơn dòng, id `"main"`, có `hero_image_url` + 2 badge nổi
 `hero_badge1/2_value/label`) — nhóm bảng gốc/Giai đoạn 1a. Thêm ở đợt dựng
 lại Trang chủ theo thiết kế mới: `categories` (danh mục bài viết),
-`partners`, `gallery_items`, `faculty`, `testimonials` — 4 bảng sau đều có
-cột `sort_order` (admin tự nhập số để sắp vị trí hiển thị, không làm
-kéo-thả). Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự trỏ tới
+`partners`, `gallery_items`, `faculty` (có thêm `slug`, `bio`, `education`,
+`specialty` — xem mục 5 "Sự kiện, Form Liên hệ thật, FAQ, Trang chi tiết
+giảng viên"), `testimonials` — các bảng có thứ tự hiển thị đều có cột
+`sort_order` (admin tự nhập số để sắp vị trí hiển thị, không làm kéo-thả).
+Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự trỏ tới
 `nav_items.id` khác — null = danh mục to, có giá trị = danh mục con;
 `is_primary` chỉ áp dụng cho danh mục to: 1 = hiện ở thanh ngang chính,
-0 = nằm trong nút ☰ "Danh mục khác" — xem `src/lib/data/nav.ts`).
+0 = nằm trong nút ☰ "Danh mục khác" — xem `src/lib/data/nav.ts`). Thêm ở
+đợt mở rộng tính năng (không chỉ tuyển sinh): `events` (Sự kiện),
+`contact_messages` (tin nhắn từ form Liên hệ thật), `faqs` (Câu hỏi thường
+gặp).
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -163,7 +169,7 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - **Thư viện media** (`admin/media`) — upload thật (kéo/chọn nhiều file, lưu `public/uploads/`), lọc Ảnh/Video, xoá (xoá cả file vật lý) — **đã test qua trình duyệt thật** bằng file thật (tạo `File`/`DataTransfer` qua JS vì công cụ trình duyệt test không có picker OS)
 - Cài đặt chung (`admin/cai-dat`) — sửa hotline/email/địa chỉ/banner thông báo/mạng xã hội, áp dụng ngay cho Header + Footer toàn site — **đã test qua trình duyệt thật**
 - Nội dung Trang chủ (`admin/trang-chu`) — sửa toàn bộ chữ + ảnh Hero, 2 badge nổi, 4 chỉ số, 3 điểm mạnh, 4 bước quy trình, CTA band (số lượng mục cố định, chỉ sửa nội dung) — **đã test qua trình duyệt thật**
-- Trang tĩnh (`admin/trang-tinh`) — CRUD đầy đủ cho bảng `pages` (thêm/sửa/xoá) — **đã test qua trình duyệt thật**. Đã nối hiển thị ra `/gioi-thieu`, `/lien-he`, `/cong-khai/*` (xem ghi chú bên dưới)
+- Trang tĩnh (`admin/trang-tinh`) — CRUD đầy đủ cho bảng `pages` (thêm/sửa/xoá), có **ảnh banner tuỳ chọn** (`coverImageUrl`, qua `ImagePicker` — trước đây trang tĩnh chỉ sửa được text, người dùng phản hồi cần thêm ảnh giống các trang khác nên đã bổ sung) — **đã test qua trình duyệt thật**. Đã nối hiển thị ra `/gioi-thieu`, `/lien-he`, `/cong-khai/*` (xem ghi chú bên dưới)
 - **Trang "Công khai"** (`/cong-khai` + `/cong-khai/[slug]`) — mục lục + trang chi tiết đọc từ bảng `pages` (slug `cong-khai-*`) qua `getPageBySlug()`/`getPagesBySlugPrefix()` (`src/lib/data/pages.ts`) — **trang tĩnh ĐẦU TIÊN đã nối hiển thị thật ra web công khai**. Theo tham khảo `cyt.edu.vn` (Cao đẳng Y tế Thanh Hóa) — các trường GDNN thường phải công khai tài chính/cơ sở vật chất/chương trình đào tạo/đội ngũ giảng viên theo Thông tư 36/2017 ("3 công khai"). **Nội dung seed hiện là khung template với placeholder `[điền ...]`, KHÔNG phải số liệu thật** — phải xác nhận với nhà trường có bắt buộc áp dụng không, rồi vào `admin/trang-tinh` điền số liệu thật trước khi công bố chính thức. Đã gắn vào `admin/menu` (danh mục to "Công khai" trong nút ☰ + 4 danh mục con)
 - **Menu chính** (`admin/menu`) — CRUD danh mục to/con cho menu điều hướng (`SiteHeader.tsx`), thay hẳn mảng tĩnh `SITE_NAV`. Danh mục to có con → desktop hover hiện dropdown con; danh mục to đánh dấu không phải "menu chính" gom vào 1 nút ☰ riêng cạnh thanh ngang (khác hamburger mobile). Mobile: 1 danh sách phẳng, mục có con bấm mở rộng thụt vào. Xoá 1 danh mục to sẽ xoá cascade toàn bộ con của nó — **đã test qua trình duyệt thật**: sửa/xoá danh mục con → Trang chủ cập nhật đúng dropdown; xoá danh mục to có con → con biến mất theo
 - **Tuyển sinh** (`/tuyen-sinh`) — form đăng ký thật (client component `AdmissionForm`, POST tới `/api/admissions`) + bảng chỉ tiêu theo ngành lấy từ `getPrograms()`. Form thu thêm **CCCD** (bắt buộc) làm khoá tra cứu sau này
@@ -172,7 +178,7 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - **LMS** (`/lms`) — trang hướng dẫn + nút link tới `site_settings.lmsUrl` (cột mới, quản lý qua `admin/cai-dat`); chưa cấu hình thì tự hiện thông báo "chưa cập nhật" thay vì nút link hỏng
 - Quản lý tuyển sinh (`admin/tuyen-sinh`) — danh sách hồ sơ (có cột CCCD), đổi trạng thái (Mới/Đã xem/Đã liên hệ)
 - API `/api/admissions` — nhận form đăng ký tuyển sinh từ site công khai, lưu DB thật
-- Database: 14 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
+- Database: 17 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 **Tất cả các trang công khai trong SRS Giai đoạn 1 giờ đã có nội dung thật —
@@ -326,6 +332,43 @@ tự/tháng, không cần thẻ tín dụng — xem `.env.example` lấy key):
   `autoFillTranslations` trong `actions.ts` lúc lưu, **và** thêm
   `<AutoTranslateButton pairs={[...]} />` cạnh field — không chỉ làm 1
   trong 2.
+
+### Sự kiện, Form Liên hệ thật, FAQ, Trang chi tiết giảng viên
+Tiếp tục so sánh với cyt.edu.vn/RMIT/HMU, người dùng chọn thêm 4 hạng mục —
+**cả 4 đã test qua trình duyệt thật** (kể cả gửi thật 1 tin nhắn liên hệ và
+xác nhận admin xem được):
+
+- **Sự kiện** (`/su-kien`, admin `admin/su-kien`) — bảng `events` riêng,
+  **khác Tin tức/`posts`** (không có trạng thái nháp/đăng, có `start_at`/
+  `end_at`). Trang công khai tự tách "Sắp diễn ra"/"Đã diễn ra" theo
+  `start_at` so với giờ hiện tại — logic so sánh đặt trong 1 hàm thường
+  `splitUpcomingPast()` bên ngoài component (không phải trong thân
+  component), vì ESLint rule `react-hooks/purity` (React Compiler) cấm gọi
+  hàm impure như `Date.now()` trực tiếp trong component — **khi cần lấy
+  thời điểm hiện tại ở trang nào, luôn tách ra hàm helper riêng như vậy**,
+  đừng gọi `Date.now()`/`new Date()` không đối số thẳng trong hàm component.
+- **Form Liên hệ thật** (`/lien-he` thêm `<ContactForm>`, POST
+  `/api/contact`) — trang `/lien-he` từ chỗ chỉ hiện thông tin tĩnh giờ có
+  form gửi câu hỏi thật, lưu bảng `contact_messages`, admin xem/đánh dấu đã
+  xem/xoá qua `admin/lien-he`. `ContactForm.tsx` copy nguyên pattern từ
+  `AdmissionForm.tsx` (chụp `const form = e.currentTarget` **trước** mọi
+  `await` — xem lỗi thật đã gặp ở mục 4.2/lịch sử trước đây).
+- **FAQ** (`/faq`, admin `admin/faq`) — bảng `faqs` đơn giản (câu hỏi/trả
+  lời + `sortOrder`), trang công khai dùng `<details>` HTML thuần để
+  expand/collapse (không thêm state/JS, giống pattern khối 🇬🇧 trong admin).
+- **Trang chi tiết giảng viên** (`/doi-ngu-giang-vien/[slug]`) — mở rộng
+  bảng `faculty` thêm `slug` (nullable — xem lý do kỹ thuật dưới), `bio`,
+  `education`, `specialty` (đều có cặp `_en`). Thẻ giảng viên ở Trang chủ
+  và trang danh sách giờ bấm vào mở trang riêng từng người.
+  **Lưu ý kỹ thuật quan trọng**: cột `faculty.slug` khai báo **nullable**
+  (không `notNull()`) dù mọi slug khác trong dự án (`posts`, `programs`,
+  `pages`) đều `notNull().unique()` — vì bảng `faculty` **đã có sẵn dữ
+  liệu** lúc thêm cột này, mà SQLite không cho `ALTER TABLE ADD COLUMN` với
+  `NOT NULL` khi bảng có dòng mà không kèm `DEFAULT`. Action luôn tự sinh
+  slug lúc tạo mới nên trong thực tế cột này luôn có giá trị — nhưng **nếu
+  sau này thêm cột `notNull().unique()` mới vào 1 bảng đã có dữ liệu, nhớ
+  lại đúng vấn đề này** (nullable trước, hoặc seed backfill trước khi đổi
+  sang not-null thật sự nếu cần).
 
 ---
 

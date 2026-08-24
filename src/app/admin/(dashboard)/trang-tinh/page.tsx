@@ -3,8 +3,9 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { upsertPageAction, deletePageAction } from "./actions";
 
 export const metadata: Metadata = { title: "Quản lý trang tĩnh" };
@@ -21,6 +22,10 @@ export default async function AdminPagesPage({
   const editing = edit
     ? await db.query.pages.findFirst({ where: eq(schema.pages.id, edit) })
     : null;
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
@@ -112,6 +117,17 @@ export default async function AdminPagesPage({
                 />
               </div>
             )}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Ảnh banner (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
+              </label>
+              <ImagePicker
+                fileFieldName="coverImage"
+                pickedFieldName="coverImageExisting"
+                images={mediaImages}
+                currentUrl={editing?.coverImageUrl}
+              />
+            </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Nội dung</label>
               <MarkdownEditor

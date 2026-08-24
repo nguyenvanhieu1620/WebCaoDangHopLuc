@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PageStub } from "@/components/ui/PageStub";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
 import { getSiteSettings } from "@/lib/data/site-settings";
+import { ContactForm } from "@/components/site/ContactForm";
 
 export const metadata: Metadata = { title: "Liên hệ" };
 
@@ -36,7 +38,19 @@ export default async function ContactPage() {
           <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
             {page.title}
           </h1>
+          {page.coverImageUrl && (
+            <div className="relative mt-8 h-[240px] overflow-hidden rounded-2xl sm:h-[300px]">
+              <Image src={page.coverImageUrl} alt={page.title} fill className="object-cover" />
+            </div>
+          )}
           <MarkdownContent content={page.content} className="mt-8" />
+
+          <div className="mt-10 rounded-2xl border border-line bg-white p-7 shadow-sm2">
+            <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+              Gửi câu hỏi cho nhà trường
+            </div>
+            <ContactForm />
+          </div>
         </div>
 
         <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2">

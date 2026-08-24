@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { autoFillTranslations } from "@/lib/translate";
+import { resolveImageUrl } from "@/lib/media";
 
 export async function upsertPageAction(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
@@ -15,6 +16,16 @@ export async function upsertPageAction(formData: FormData) {
   const contentEn = String(formData.get("contentEn") || "").trim();
 
   if (!title || !content) return;
+
+  const current = id
+    ? await db.query.pages.findFirst({ where: eq(schema.pages.id, id) })
+    : null;
+  const coverImageUrl = await resolveImageUrl(
+    formData,
+    "coverImage",
+    "coverImageExisting",
+    current?.coverImageUrl ?? null
+  );
 
   const [titleEnFinal, contentEnFinal] = await autoFillTranslations([
     { vi: title, en: titleEn },
@@ -27,6 +38,7 @@ export async function upsertPageAction(formData: FormData) {
       .set({
         title,
         titleEn: titleEnFinal || null,
+        coverImageUrl,
         content,
         contentEn: contentEnFinal || null,
         updatedAt: new Date().toISOString(),
@@ -46,6 +58,7 @@ export async function upsertPageAction(formData: FormData) {
       slug,
       title,
       titleEn: titleEnFinal || null,
+      coverImageUrl,
       content,
       contentEn: contentEnFinal || null,
     });

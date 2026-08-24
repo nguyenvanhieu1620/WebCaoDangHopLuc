@@ -4,6 +4,7 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
+import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertFacultyAction, deleteFacultyAction } from "./actions";
@@ -121,19 +122,77 @@ export default async function AdminFacultyPage({
                 placeholder="VD: Trưởng khoa Điều dưỡng"
               />
             </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Học vị/bằng cấp (tuỳ chọn)
+              </label>
+              <input
+                name="education"
+                defaultValue={editing?.education ?? ""}
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                placeholder="VD: Thạc sĩ Điều dưỡng, Đại học Y Hà Nội"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Chuyên môn (tuỳ chọn)
+              </label>
+              <input
+                name="specialty"
+                defaultValue={editing?.specialty ?? ""}
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                placeholder="VD: Điều dưỡng hồi sức cấp cứu"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Tiểu sử đầy đủ (tuỳ chọn — hiện ở trang chi tiết)
+              </label>
+              <MarkdownEditor
+                name="bio"
+                rows={5}
+                defaultValue={editing?.bio ?? ""}
+                placeholder="Quá trình công tác, thành tích, kinh nghiệm giảng dạy..."
+              />
+            </div>
             <details className="rounded-lg border border-line p-3">
               <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
-                🇬🇧 Chức danh tiếng Anh (tuỳ chọn)
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
               </summary>
-              <div className="mt-3">
-                <AutoTranslateButton pairs={[{ viName: "role", enName: "roleEn" }]} />
+              <div className="mt-3 space-y-3">
+                <AutoTranslateButton
+                  pairs={[
+                    { viName: "role", enName: "roleEn" },
+                    { viName: "education", enName: "educationEn" },
+                    { viName: "specialty", enName: "specialtyEn" },
+                    { viName: "bio", enName: "bioEn" },
+                  ]}
+                />
+                <input
+                  name="roleEn"
+                  defaultValue={editing?.roleEn ?? ""}
+                  placeholder="Role (English) — VD: Head of Nursing Department"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <input
+                  name="educationEn"
+                  defaultValue={editing?.educationEn ?? ""}
+                  placeholder="Education (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <input
+                  name="specialtyEn"
+                  defaultValue={editing?.specialtyEn ?? ""}
+                  placeholder="Specialty (English)"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                />
+                <MarkdownEditor
+                  name="bioEn"
+                  rows={5}
+                  defaultValue={editing?.bioEn ?? ""}
+                  placeholder="Full bio (English)"
+                />
               </div>
-              <input
-                name="roleEn"
-                defaultValue={editing?.roleEn ?? ""}
-                placeholder="VD: Head of Nursing Department"
-                className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-              />
             </details>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
