@@ -13,6 +13,8 @@ import {
   categories,
   partners,
   faculty,
+  departments,
+  facultyAttributes,
   testimonials,
   navItems,
   pages,
@@ -385,32 +387,86 @@ async function main() {
     console.log("• Đã có đối tác, bỏ qua.");
   }
 
-  // Đội ngũ giảng viên mặc định
+  // Học hàm / Học vị / Chức vụ mặc định — cho dropdown ở admin/giang-vien
+  const existingAttributes = await db.query.facultyAttributes.findMany();
+  if (existingAttributes.length === 0) {
+    await db.insert(facultyAttributes).values([
+      { type: "academic_rank", name: "GS", sortOrder: 0 },
+      { type: "academic_rank", name: "PGS", sortOrder: 1 },
+      { type: "degree", name: "TS", sortOrder: 0 },
+      { type: "degree", name: "ThS", sortOrder: 1 },
+      { type: "degree", name: "ThS.BS", sortOrder: 2 },
+      { type: "degree", name: "BS", sortOrder: 3 },
+      { type: "degree", name: "BS.CKI", sortOrder: 4 },
+      { type: "degree", name: "BS.CKII", sortOrder: 5 },
+      { type: "degree", name: "DS", sortOrder: 6 },
+      { type: "degree", name: "DS.CKI", sortOrder: 7 },
+      { type: "degree", name: "DS.CKII", sortOrder: 8 },
+      { type: "degree", name: "CN", sortOrder: 9 },
+      { type: "position", name: "Hiệu trưởng", sortOrder: 0 },
+      { type: "position", name: "Phó Hiệu trưởng", sortOrder: 1 },
+      { type: "position", name: "Trưởng khoa Điều dưỡng", sortOrder: 2 },
+      { type: "position", name: "Trưởng khoa Dược", sortOrder: 3 },
+      { type: "position", name: "Trưởng khoa Xét nghiệm", sortOrder: 4 },
+      { type: "position", name: "Trưởng bộ môn", sortOrder: 5 },
+      { type: "position", name: "Giảng viên", sortOrder: 6 },
+    ]);
+    console.log("✓ Tạo danh sách Học hàm/Học vị/Chức vụ mặc định");
+  } else {
+    console.log("• Đã có Học hàm/Học vị/Chức vụ, bỏ qua.");
+  }
+
+  // Khoa/Bộ môn mặc định
+  const existingDepartments = await db.query.departments.findMany();
+  if (existingDepartments.length === 0) {
+    await db.insert(departments).values([
+      { name: "Ban Giám hiệu", sortOrder: 0 },
+      { name: "Khoa Điều dưỡng", sortOrder: 1 },
+      { name: "Khoa Dược", sortOrder: 2 },
+      { name: "Khoa Xét nghiệm", sortOrder: 3 },
+    ]);
+    console.log("✓ Tạo 4 khoa/bộ môn mặc định");
+  } else {
+    console.log("• Đã có khoa/bộ môn, bỏ qua.");
+  }
+  const departmentIdByName = new Map(
+    (await db.query.departments.findMany()).map((d) => [d.name, d.id])
+  );
+
+  // Đội ngũ giảng viên mặc định — tên chỉ chứa họ tên thuần, học vị/học hàm tách riêng
   const existingFaculty = await db.query.faculty.findMany();
   if (existingFaculty.length === 0) {
     await db.insert(faculty).values([
       {
-        slug: "ths-bs-nguyen-van-an",
-        name: "ThS.BS Nguyễn Văn An",
+        slug: "nguyen-van-an",
+        name: "Nguyễn Văn An",
+        degree: "ThS.BS",
         role: "Trưởng khoa Điều dưỡng",
+        departmentId: departmentIdByName.get("Khoa Điều dưỡng"),
         sortOrder: 0,
       },
       {
-        slug: "ds-cki-tran-thi-binh",
-        name: "DS.CKI Trần Thị Bình",
+        slug: "tran-thi-binh",
+        name: "Trần Thị Bình",
+        degree: "DS.CKI",
         role: "Trưởng khoa Dược",
+        departmentId: departmentIdByName.get("Khoa Dược"),
         sortOrder: 1,
       },
       {
-        slug: "ths-le-van-cuong",
-        name: "ThS Lê Văn Cường",
+        slug: "le-van-cuong",
+        name: "Lê Văn Cường",
+        degree: "ThS",
         role: "Trưởng khoa Xét nghiệm",
+        departmentId: departmentIdByName.get("Khoa Xét nghiệm"),
         sortOrder: 2,
       },
       {
-        slug: "bs-ckii-pham-thi-dung",
-        name: "BS.CKII Phạm Thị Dung",
+        slug: "pham-thi-dung",
+        name: "Phạm Thị Dung",
+        degree: "BS.CKII",
         role: "Phó Hiệu trưởng",
+        departmentId: departmentIdByName.get("Ban Giám hiệu"),
         sortOrder: 3,
       },
     ]);
@@ -428,6 +484,24 @@ async function main() {
           slug = `${baseSlug}-${counter}`;
         }
         await db.update(faculty).set({ slug }).where(eq(faculty.id, f.id));
+      }
+    }
+    // Backfill tách học vị khỏi tên + gán khoa cho 4 giảng viên mẫu tạo trước khi có
+    // các cột degree/departmentId — chỉ áp dụng cho đúng tên mẫu gốc, không đụng dữ
+    // liệu admin đã tự sửa (kiểm tra degree đang null mới backfill).
+    const facultyBackfill: Record<string, { name: string; degree: string; department: string }> = {
+      "ThS.BS Nguyễn Văn An": { name: "Nguyễn Văn An", degree: "ThS.BS", department: "Khoa Điều dưỡng" },
+      "DS.CKI Trần Thị Bình": { name: "Trần Thị Bình", degree: "DS.CKI", department: "Khoa Dược" },
+      "ThS Lê Văn Cường": { name: "Lê Văn Cường", degree: "ThS", department: "Khoa Xét nghiệm" },
+      "BS.CKII Phạm Thị Dung": { name: "Phạm Thị Dung", degree: "BS.CKII", department: "Ban Giám hiệu" },
+    };
+    for (const f of existingFaculty) {
+      const info = facultyBackfill[f.name];
+      if (info && !f.degree) {
+        await db
+          .update(faculty)
+          .set({ name: info.name, degree: info.degree, departmentId: departmentIdByName.get(info.department) })
+          .where(eq(faculty.id, f.id));
       }
     }
   }

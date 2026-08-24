@@ -224,6 +224,60 @@ export const galleryItems = sqliteTable("gallery_items", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Ảnh banner Hero Trang chủ — nhiều ảnh xoay vòng (thay cho 1 ảnh cố định
+ * `homepage_content.hero_image_url` trước đây). Nếu bảng này rỗng, Trang chủ
+ * tự fallback về `heroImageUrl` cũ — không bắt buộc admin phải thêm ngay.
+ */
+export const heroBanners = sqliteTable("hero_banners", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  imageUrl: text("image_url").notNull(),
+  caption: text("caption"),
+  captionEn: text("caption_en"),
+  /** Bấm vào banner điều hướng tới đâu — tuỳ chọn, để trống thì banner không phải link. */
+  linkUrl: text("link_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/**
+ * Danh mục Học hàm / Học vị / Chức vụ cho Giảng viên — 3 danh sách tách rời
+ * bằng cột `type`, quản lý chung 1 trang admin (`admin/danh-hieu`) để thêm
+ * 1 lần, chọn qua dropdown khi tạo giảng viên thay vì gõ tay tự do (tránh
+ * "ThS" và "Th.S" cùng tồn tại). Chỉ dùng trong admin — không cần lớp data
+ * layer riêng (theo đúng quy ước admin gọi `db` trực tiếp).
+ */
+export const facultyAttributes = sqliteTable("faculty_attributes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** "academic_rank" (Học hàm) | "degree" (Học vị) | "position" (Chức vụ). */
+  type: text("type").notNull(),
+  name: text("name").notNull(),
+  nameEn: text("name_en"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Khoa/Bộ môn — danh mục quản lý giảng viên theo đơn vị, giống `categories` cho bài viết. */
+export const departments = sqliteTable("departments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  nameEn: text("name_en"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Đội ngũ giảng viên hiển thị ở Trang chủ và trang chi tiết /doi-ngu-giang-vien/[slug]. */
 export const faculty = sqliteTable("faculty", {
   id: text("id")
@@ -237,10 +291,25 @@ export const faculty = sqliteTable("faculty", {
    * mới, nên trong thực tế cột này luôn có giá trị.
    */
   slug: text("slug").unique(),
+  /** Chỉ họ tên thuần — KHÔNG gõ dính học vị/học hàm vào đây (tách riêng ở `degree`/`academicRank`). */
   name: text("name").notNull(),
+  /** Chức vụ, VD "Trưởng khoa Điều dưỡng", "Hiệu trưởng". */
   role: text("role").notNull(),
   roleEn: text("role_en"),
-  /** Học vị/bằng cấp, VD "Thạc sĩ Điều dưỡng, Đại học Y Hà Nội" — tuỳ chọn, hiện ở trang chi tiết. */
+  /** Khoa/Bộ môn trực thuộc — trỏ tới `departments.id`, tuỳ chọn (VD Ban Giám hiệu có thể không thuộc khoa nào). */
+  departmentId: text("department_id"),
+  /** Học vị/bằng cấp viết tắt để ghép trước tên khi hiển thị, VD "ThS.BS", "TS", "DS.CKI". */
+  degree: text("degree"),
+  degreeEn: text("degree_en"),
+  /** Học hàm — hiếm, chỉ có ở GS/PGS, để trống với đa số giảng viên. */
+  academicRank: text("academic_rank"),
+  academicRankEn: text("academic_rank_en"),
+  /**
+   * Không dùng nữa — trước đây gộp học vị + trường + ngành vào 1 ô free-text,
+   * đã tách rõ thành `degree` (học vị viết tắt) + `bio` (tiểu sử đầy đủ nếu
+   * cần ghi thêm nơi đào tạo). Giữ lại cột này (rỗng) để tránh phải đổi tên
+   * cột — SQLite rename dễ bị drizzle-kit hiểu nhầm thành xoá+thêm cột mới.
+   */
   education: text("education"),
   educationEn: text("education_en"),
   /** Chuyên môn/lĩnh vực giảng dạy — tuỳ chọn, hiện ở trang chi tiết. */
@@ -364,3 +433,6 @@ export type NavItem = typeof navItems.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type Faq = typeof faqs.$inferSelect;
+export type HeroBanner = typeof heroBanners.$inferSelect;
+export type Department = typeof departments.$inferSelect;
+export type FacultyAttribute = typeof facultyAttributes.$inferSelect;

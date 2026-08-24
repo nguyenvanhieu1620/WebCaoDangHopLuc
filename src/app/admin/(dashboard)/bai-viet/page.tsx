@@ -6,13 +6,7 @@ import { ImagePicker } from "@/components/admin/ImagePicker";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
-import {
-  createPostAction,
-  togglePublishAction,
-  deletePostAction,
-  createCategoryAction,
-  deleteCategoryAction,
-} from "./actions";
+import { createPostAction, togglePublishAction, deletePostAction } from "./actions";
 
 export const metadata: Metadata = { title: "Quản lý bài viết" };
 
@@ -158,60 +152,6 @@ export default async function AdminPostsPage({
         </div>
 
         <div className="flex h-fit flex-col gap-6">
-          {/* Danh mục */}
-          <div className="rounded-2xl border border-line bg-white p-6">
-            <div className="mb-3 text-sm font-semibold text-brand-900">Danh mục</div>
-            {categories.length > 0 && (
-              <ul className="mb-3.5 space-y-1.5">
-                {categories.map((c) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between rounded-lg bg-paper-alt px-3 py-2 text-[13px]"
-                  >
-                    <span className="font-medium text-ink">{c.name}</span>
-                    <form
-                      action={async () => {
-                        "use server";
-                        await deleteCategoryAction(c.id);
-                      }}
-                    >
-                      <ConfirmDeleteButton
-                        className="text-[11px] font-semibold text-accent-600 hover:underline"
-                        confirmMessage={`Xoá danh mục "${c.name}"? Bài viết đang gắn danh mục này sẽ không còn danh mục.`}
-                      >
-                        Xoá
-                      </ConfirmDeleteButton>
-                    </form>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <form action={createCategoryAction} className="space-y-2">
-              <div className="flex gap-2">
-                <input
-                  name="categoryName"
-                  required
-                  placeholder="Tên danh mục mới"
-                  className="flex-1 rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
-                />
-                <button
-                  type="submit"
-                  className="rounded-lg bg-brand-700 px-3.5 py-2 text-[13px] font-semibold text-white"
-                >
-                  Thêm
-                </button>
-              </div>
-              <input
-                name="categoryNameEn"
-                placeholder="Category name (English, tuỳ chọn)"
-                className="w-full rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
-              />
-              <AutoTranslateButton
-                pairs={[{ viName: "categoryName", enName: "categoryNameEn" }]}
-              />
-            </form>
-          </div>
-
           {/* Form tạo bài viết mới */}
           <div className="rounded-2xl border border-line bg-white p-6">
             <div className="mb-4 text-sm font-semibold text-brand-900">Viết bài mới</div>
@@ -253,9 +193,15 @@ export default async function AdminPostsPage({
                 </div>
               </details>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                  Danh mục
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-ink-soft">Danh mục</label>
+                  <a
+                    href="/admin/danh-muc"
+                    className="text-[11px] font-semibold text-brand-700 hover:underline"
+                  >
+                    Quản lý danh mục
+                  </a>
+                </div>
                 <select
                   name="categoryId"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"

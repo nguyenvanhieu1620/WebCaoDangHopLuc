@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
+import { HeroImageCarousel } from "@/components/site/HeroImageCarousel";
 import { programGradient } from "@/lib/constants";
 import { getFeaturedPrograms, getPrograms } from "@/lib/data/programs";
 import { getHomepageContent } from "@/lib/data/homepage";
 import { getPartners } from "@/lib/data/partners";
 import { getGalleryItems } from "@/lib/data/gallery";
-import { getFacultyList } from "@/lib/data/faculty";
+import { getFacultyList, facultyDisplayName } from "@/lib/data/faculty";
 import { getTestimonials } from "@/lib/data/testimonials";
 import { getLatestPublishedPosts } from "@/lib/data/posts";
 import { getSiteSettings } from "@/lib/data/site-settings";
+import { getHeroBanners } from "@/lib/data/hero-banners";
 import { cn, formatVNDate } from "@/lib/utils";
 
 const QUICK_TOOL_ICONS = {
@@ -51,6 +53,7 @@ export default async function HomePage() {
     testimonials,
     latestPosts,
     settings,
+    heroBanners,
   ] = await Promise.all([
     getFeaturedPrograms(),
     getPrograms(),
@@ -61,6 +64,7 @@ export default async function HomePage() {
     getTestimonials(),
     getLatestPublishedPosts(3),
     getSiteSettings(),
+    getHeroBanners(),
   ]);
   const { stats, features, steps } = content;
 
@@ -130,16 +134,11 @@ export default async function HomePage() {
             <div className="pointer-events-none absolute -inset-5 rounded-[32px] bg-gradient-to-br from-brand-500/25 to-accent-500/20 blur-[30px]" />
             <div className="relative rounded-[28px] border border-white/85 bg-white/60 p-7 shadow-lg2 backdrop-blur-xl">
               <div className="relative h-[340px] overflow-hidden rounded-[18px]">
-                {content.heroImageUrl ? (
-                  <Image
-                    src={content.heroImageUrl}
-                    alt="Sinh viên thực hành lâm sàng"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <ImagePlaceholder label="Ảnh sinh viên thực hành lâm sàng" />
-                )}
+                <HeroImageCarousel
+                  banners={heroBanners}
+                  fallbackImageUrl={content.heroImageUrl}
+                  fallbackAlt="Sinh viên thực hành lâm sàng"
+                />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3.5">
                 <div className="float-y rounded-2xl border border-white/90 bg-white/70 p-4 shadow-md2">
@@ -377,13 +376,20 @@ export default async function HomePage() {
                   <>
                     <div className="relative h-[200px]">
                       {f.photoUrl ? (
-                        <Image src={f.photoUrl} alt={f.name} fill className="object-cover" />
+                        <Image
+                          src={f.photoUrl}
+                          alt={facultyDisplayName(f)}
+                          fill
+                          className="object-cover"
+                        />
                       ) : (
                         <ImagePlaceholder label="Ảnh chân dung" />
                       )}
                     </div>
                     <div className="p-4">
-                      <h4 className="font-display text-base font-semibold text-ink">{f.name}</h4>
+                      <h4 className="font-display text-base font-semibold text-ink">
+                        {facultyDisplayName(f)}
+                      </h4>
                       <div className="mt-0.5 text-[12.5px] text-brand-700">{f.role}</div>
                     </div>
                   </>

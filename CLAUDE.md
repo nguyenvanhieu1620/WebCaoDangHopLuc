@@ -87,7 +87,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 - **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 17 bảng
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 20 bảng
 `admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`
 (có thêm `cover_image_url` — trang tĩnh giờ cũng thêm ảnh được, không chỉ
 text), `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
@@ -95,9 +95,9 @@ text), `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
 (đơn dòng, id `"main"`, có `hero_image_url` + 2 badge nổi
 `hero_badge1/2_value/label`) — nhóm bảng gốc/Giai đoạn 1a. Thêm ở đợt dựng
 lại Trang chủ theo thiết kế mới: `categories` (danh mục bài viết),
-`partners`, `gallery_items`, `faculty` (có thêm `slug`, `bio`, `education`,
-`specialty` — xem mục 5 "Sự kiện, Form Liên hệ thật, FAQ, Trang chi tiết
-giảng viên"), `testimonials` — các bảng có thứ tự hiển thị đều có cột
+`partners`, `gallery_items`, `faculty` (có `slug`, `bio`, `departmentId`,
+`degree`, `academicRank` — xem mục 5 "Cấu trúc lại Giảng viên"; `education`
+cũ không dùng nữa), `testimonials` — các bảng có thứ tự hiển thị đều có cột
 `sort_order` (admin tự nhập số để sắp vị trí hiển thị, không làm kéo-thả).
 Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự trỏ tới
 `nav_items.id` khác — null = danh mục to, có giá trị = danh mục con;
@@ -105,7 +105,10 @@ Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự trỏ tới
 0 = nằm trong nút ☰ "Danh mục khác" — xem `src/lib/data/nav.ts`). Thêm ở
 đợt mở rộng tính năng (không chỉ tuyển sinh): `events` (Sự kiện),
 `contact_messages` (tin nhắn từ form Liên hệ thật), `faqs` (Câu hỏi thường
-gặp).
+gặp), `hero_banners` (banner Trang chủ nhiều ảnh — xem mục 5 "Banner Trang
+chủ nhiều ảnh + nút liên hệ nhanh nổi"), `departments` (Khoa/Bộ môn),
+`faculty_attributes` (Học hàm/Học vị/Chức vụ — xem mục 5 "Sidebar admin
+theo khối thực thể").
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -178,7 +181,7 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - **LMS** (`/lms`) — trang hướng dẫn + nút link tới `site_settings.lmsUrl` (cột mới, quản lý qua `admin/cai-dat`); chưa cấu hình thì tự hiện thông báo "chưa cập nhật" thay vì nút link hỏng
 - Quản lý tuyển sinh (`admin/tuyen-sinh`) — danh sách hồ sơ (có cột CCCD), đổi trạng thái (Mới/Đã xem/Đã liên hệ)
 - API `/api/admissions` — nhận form đăng ký tuyển sinh từ site công khai, lưu DB thật
-- Database: 17 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
+- Database: 20 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 **Tất cả các trang công khai trong SRS Giai đoạn 1 giờ đã có nội dung thật —
@@ -370,6 +373,93 @@ xác nhận admin xem được):
   lại đúng vấn đề này** (nullable trước, hoặc seed backfill trước khi đổi
   sang not-null thật sự nếu cần).
 
+### Banner Trang chủ nhiều ảnh + nút liên hệ nhanh nổi (tham khảo th.hopluchospital.com)
+Người dùng đưa trang bệnh viện cùng hệ thương hiệu Hợp Lực làm tham khảo,
+chốt 2 hạng mục **chức năng** (rõ ràng nói sẽ làm hiệu ứng mượt hơn ở đợt
+sau, đợt này chỉ làm phần chạy được):
+
+- **Banner Trang chủ nhiều ảnh** — bảng `hero_banners` mới (`imageUrl`,
+  `caption`/`captionEn`, `linkUrl` tuỳ chọn, `sortOrder`), quản lý qua
+  `admin/banner-trang-chu`. Hiển thị qua `<HeroImageCarousel>`
+  (`src/components/site/HeroImageCarousel.tsx`, client component) — **chưa
+  thêm banner nào thì tự fallback về `homepage_content.heroImageUrl` cũ**
+  (không phá site đang chạy). Có >1 banner thì tự đổi ảnh mỗi 5s + chấm
+  tròn bấm chuyển tay — **chuyển thẳng (hard cut), cố ý chưa làm hiệu ứng
+  fade/slide mượt** theo đúng yêu cầu "xong hết chức năng mới làm hiệu ứng".
+- **Nút liên hệ nhanh nổi** — `<QuickContactWidget>`
+  (`src/components/site/QuickContactWidget.tsx`) render trong
+  `(site)/layout.tsx`, hiện ở mọi trang công khai. Lấy thẳng từ
+  `site_settings` đã có (hotline/zaloUrl/facebookUrl) — **không thêm bảng
+  DB mới**. Link nào còn giá trị mặc định `"#"` thì tự ẩn (giống pattern đã
+  dùng ở Liên hệ/Footer).
+
+### Cấu trúc lại Giảng viên: Khoa/Bộ môn + Học vị/Học hàm/Chức vụ tách riêng
+Người dùng nhận xét admin Giảng viên "thiết kế chưa chuẩn" — so sánh cyt.edu.vn
+(Cao đẳng Y tế Thanh Hóa) thì họ nhóm giảng viên theo **Bộ môn**, và tách
+riêng Học vị/Chức vụ/Chuyên môn thay vì gộp chung 1 chuỗi. Vấn đề cụ thể ở
+web mình trước đó: tên bị gõ dính học vị ngay trong ô "Họ tên" (VD "ThS.BS
+Nguyễn Văn An"), và "Học vị/bằng cấp" là 1 ô free-text gộp cả trường+ngành,
+không có khái niệm Khoa/Bộ môn nào. Đã sửa:
+
+- **Bảng `departments`** (Khoa/Bộ môn) — danh mục riêng y hệt `categories`
+  (bài viết), quản lý qua `admin/khoa`. `faculty.departmentId` trỏ tới đây
+  (tuỳ chọn — không phải giảng viên nào cũng thuộc 1 khoa, VD Ban Giám hiệu).
+  Xoá 1 khoa **không xoá** giảng viên thuộc khoa đó, chỉ gỡ liên kết (giống
+  cách `deleteCategoryAction` xử lý bài viết mất danh mục).
+- **`faculty.name`** giờ **chỉ chứa họ tên thuần** — học vị (`degree`, VD
+  "ThS.BS") và học hàm (`academicRank`, VD "PGS" — hiếm, tuỳ chọn) tách
+  thành 2 cột riêng. `role` giữ nguyên ý nghĩa "chức vụ" (đã đúng từ trước,
+  không đổi). Hàm `facultyDisplayName()` (`src/lib/data/faculty.ts`) ghép
+  lại `{academicRank} {degree} {name}` để hiển thị — **dùng hàm này ở mọi
+  nơi hiện tên giảng viên công khai** (Trang chủ, danh sách, chi tiết,
+  `<title>`), không tự ghép tay ở từng trang.
+- Cột `education`/`education_en` cũ **để lại không dùng nữa** (rỗng, không
+  xoá cột) — lý do kỹ thuật giống hệt cột `faculty.slug` nullable: bảng đã
+  có dữ liệu, đổi tên cột dễ bị drizzle-kit hiểu nhầm rename ↔ add/drop,
+  từng gây prompt tương tác chặn `db:generate` (xem lịch sử mục 4.2).
+- Trang `/doi-ngu-giang-vien` giờ **nhóm theo Khoa** (mỗi khoa 1 khối, khoa
+  nào không có giảng viên thì không hiện khối rỗng), giảng viên chưa gán
+  khoa gom vào khối "Khác" ở cuối.
+- Seed: backfill dữ liệu mẫu cũ (tên có sẵn "ThS.BS Nguyễn Văn An"...) tách
+  đúng thành `name`/`degree` + gán khoa tương ứng — chỉ áp dụng khi `degree`
+  đang rỗng, không đụng dữ liệu admin đã tự sửa tay.
+
+### Sidebar admin theo khối thực thể + Học hàm/Học vị/Chức vụ thành danh mục
+Người dùng gửi ảnh chụp 1 CMS khác (nhóm "Bác sĩ" có sẵn Danh mục/Loại danh
+mục/Học hàm-Học vị-Chức vụ như các trang con riêng) và nói rõ: áp dụng luôn
+cho Bài viết và các mục khác, không chỉ Giảng viên. Đã làm:
+
+- **`ADMIN_NAV`** (`src/lib/constants.ts`) đổi từ 4 super-category phẳng
+  ("Tổng quan"/"Nội dung"/"Tuyển sinh & Liên hệ"/"Cấu hình") sang **danh
+  sách thực thể** — thực thể nào có ≥2 trang quản lý liên quan mới gom
+  thành khối `children` (thu gọn/mở rộng được); chỉ 1 trang thì để thẳng
+  `href`, không bọc `children` cho khỏi thừa 1 lượt bấm. Hiện có 4 khối:
+  **Bài viết** (Bài viết, Danh mục), **Giảng viên** (Đội ngũ giảng viên,
+  Khoa/Bộ môn, Học hàm/Học vị/Chức vụ), **Trang chủ** (Banner, Thư viện ảnh,
+  Nội dung Trang chủ), **Tuyển sinh & Liên hệ** (Đăng ký tuyển sinh, Tin
+  nhắn liên hệ). **Khi thêm trang admin mới liên quan tới 1 thực thể đã có
+  sẵn ở đây, thêm vào đúng khối đó — đừng tạo entity mới tách rời.**
+- **`AdminSidebar.tsx`** viết lại thành cây 2 cấp: entity không có
+  `children` → link thẳng; có `children` → header là **`<button>` chỉ để
+  đóng/mở** (không phải link — bấm vào không điều hướng đi đâu, đúng mẫu
+  người dùng gửi), children thụt vào bên dưới. Khối chứa route đang mở tự
+  giãn sẵn (tính 1 lần lúc mount qua `useState(() => ...)`, không cần
+  `useEffect`).
+- **"Danh mục" bài viết tách thành trang riêng** `admin/danh-muc` (trước
+  đây quản lý ngay trong `admin/bai-viet`, giờ trang Bài viết chỉ còn
+  dropdown chọn + link "Quản lý danh mục" trỏ sang) — để đúng "1 trang = 1
+  việc quản lý" giống mọi entity khác, không đặc cách bài viết nữa.
+- **Bảng `faculty_attributes`** — Học hàm/Học vị/Chức vụ giờ là danh sách
+  quản lý chung 1 trang (`admin/danh-hieu`, 3 khối trong 1 trang, phân biệt
+  bằng cột `type`: `academic_rank`/`degree`/`position`), thay vì gõ tay tự
+  do như trước (tránh "ThS" và "Th.S" cùng tồn tại). **Vẫn lưu giá trị dạng
+  chuỗi thẳng vào `faculty.degree`/`academicRank`/`role`** (không đổi sang
+  lưu ID tham chiếu) — form Giảng viên chỉ đổi từ `<input>` sang `<select>`
+  lấy option từ bảng này, mọi chỗ đọc/hiển thị dữ liệu Giảng viên (data
+  layer, `facultyDisplayName()`, trang công khai) **không đổi gì** — giữ độ
+  rủi ro thấp, không cần lớp data layer riêng cho `faculty_attributes` vì
+  chỉ dùng trong admin (đúng quy ước #1 mục 6).
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -393,7 +483,11 @@ xác nhận admin xem được):
 2. Upload ảnh thật cho các mục đang seed rỗng (`gallery_items` chưa có ảnh, `heroImageUrl`/`photoUrl`/`avatarUrl` đa số null) — hiện Trang chủ tự hiện placeholder gradient, cần người dùng vào từng trang admin liên quan (`admin/trang-chu`, `admin/thu-vien-trang-chu`, `admin/giang-vien`, `admin/danh-gia`) upload ảnh thật. **Đặc biệt lưu ý riêng 4 trang Công khai** (`admin/trang-tinh`, slug `cong-khai-*`) — nội dung đang là khung placeholder `[điền ...]`, cần xác nhận với nhà trường có bắt buộc áp dụng theo Thông tư 36/2017 không rồi điền số liệu thật trước khi công bố. **Và cấu hình `lmsUrl`** (`admin/cai-dat`) — hiện để `"#"`, trang /lms đang hiện thông báo chưa cập nhật.
 3. ~~Trang quản trị Media~~, ~~Trang quản trị Trang tĩnh~~ (CRUD + đã nối hiển thị), ~~Danh mục bài viết~~, ~~Đối tác~~, ~~Giảng viên~~, ~~Đánh giá cựu SV~~, ~~Thư viện ảnh Trang chủ~~, ~~Menu chính~~ đều đã xong.
 4. Khi các trang xong hết (đã xong) → thực hiện chuyển DB sang PostgreSQL theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c). Đây giờ là hạng mục ưu tiên cao nhất còn lại trước khi đưa web lên mạng cho người dùng thật.
-5. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
+5. **Đợt "hiệu ứng"** — người dùng chủ động nói rõ: **xong hết chức năng mới bắt đầu làm hiệu ứng** (đã tham khảo th.hopluchospital.com). Việc đã cố ý làm "cứng"/đơn giản, chưa làm mượt, để dành đợt này:
+   - `HeroImageCarousel` (`src/components/site/HeroImageCarousel.tsx`) — banner Trang chủ đang chuyển ảnh **thẳng (hard cut)** mỗi 5s, chưa có fade/slide.
+   - Có thể cân nhắc thêm: hiệu ứng cuộn xuất hiện (scroll reveal) cho các section, hover tinh tế hơn ở card, transition mượt khi chuyển trang...
+   - **Trước khi bắt đầu đợt này, hỏi lại người dùng phạm vi cụ thể** (giống cách đã làm ở các đợt tính năng trước) — đừng tự suy đoán "hiệu ứng" nghĩa là gì.
+6. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 
 ---
 

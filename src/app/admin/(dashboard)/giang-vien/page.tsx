@@ -7,6 +7,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
+import { facultyDisplayName } from "@/lib/data/faculty";
 import { upsertFacultyAction, deleteFacultyAction } from "./actions";
 
 export const metadata: Metadata = { title: "Đội ngũ giảng viên" };
@@ -17,22 +18,28 @@ export default async function AdminFacultyPage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
-  const allFaculty = await db.query.faculty.findMany({
-    orderBy: asc(schema.faculty.sortOrder),
-  });
+  const [allFaculty, departments, attributes, mediaImages] = await Promise.all([
+    db.query.faculty.findMany({ orderBy: asc(schema.faculty.sortOrder) }),
+    db.query.departments.findMany({ orderBy: asc(schema.departments.sortOrder) }),
+    db.query.facultyAttributes.findMany({ orderBy: asc(schema.facultyAttributes.sortOrder) }),
+    db.query.mediaItems.findMany({
+      where: eq(schema.mediaItems.type, "image"),
+      orderBy: desc(schema.mediaItems.createdAt),
+    }),
+  ]);
   const editing = edit
     ? await db.query.faculty.findFirst({ where: eq(schema.faculty.id, edit) })
     : null;
-  const mediaImages = await db.query.mediaItems.findMany({
-    where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
-  });
+  const departmentNameById = new Map(departments.map((d) => [d.id, d.name]));
+  const academicRanks = attributes.filter((a) => a.type === "academic_rank");
+  const degrees = attributes.filter((a) => a.type === "degree");
+  const positions = attributes.filter((a) => a.type === "position");
 
   return (
     <div>
       <AdminTopbar
         title="Đội ngũ giảng viên"
-        description="Thẻ giảng viên hiển thị ở Trang chủ"
+        description="Thẻ giảng viên hiển thị ở Trang chủ và /doi-ngu-giang-vien — quản lý Khoa/Bộ môn riêng ở mục Khoa / Bộ môn"
       />
       <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
         <div className="rounded-2xl border border-line bg-white">
@@ -56,9 +63,13 @@ export default async function AdminFacultyPage({
                       )}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-ink">{f.name}</div>
+                      <div className="text-sm font-medium text-ink">{facultyDisplayName(f)}</div>
                       <div className="text-[11.5px] text-ink-faint">
-                        {f.role} · vị trí #{f.sortOrder}
+                        {f.role}
+                        {f.departmentId && departmentNameById.get(f.departmentId)
+                          ? ` · ${departmentNameById.get(f.departmentId)}`
+                          : ""}{" "}
+                        · vị trí #{f.sortOrder}
                       </div>
                     </div>
                   </div>
@@ -103,35 +114,95 @@ export default async function AdminFacultyPage({
           <form key={editing?.id ?? "new"} action={upsertFacultyAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Họ tên</label>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Họ tên (chỉ tên thuần, không gõ học vị vào đây)
+              </label>
               <input
                 name="name"
                 required
                 defaultValue={editing?.name}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="VD: ThS.BS Nguyễn Văn An"
+                placeholder="VD: Nguyễn Văn An"
               />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                  Học vị (tuỳ chọn)
+                </label>
+                <select
+                  name="degree"
+                  defaultValue={editing?.degree ?? ""}
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                >
+                  <option value="">— Không chọn —</option>
+                  {degrees.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                  Học hàm (hiếm, tuỳ chọn)
+                </label>
+                <select
+                  name="academicRank"
+                  defaultValue={editing?.academicRank ?? ""}
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                >
+                  <option value="">— Không chọn —</option>
+                  {academicRanks.map((a) => (
+                    <option key={a.id} value={a.name}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p className="text-[11px] text-ink-faint">
+              Chưa có lựa chọn cần thiết?{" "}
+              <a href="/admin/danh-hieu" className="font-semibold text-brand-700 hover:underline">
+                Thêm ở Học hàm / Học vị / Chức vụ
+              </a>
+              . Hiển thị công khai sẽ tự ghép: {"{Học hàm} {Học vị} {Họ tên}"} — VD &quot;PGS.
+              ThS.BS Nguyễn Văn An&quot;.
+            </p>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chức danh</label>
-              <input
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chức vụ</label>
+              <select
                 name="role"
                 required
-                defaultValue={editing?.role}
+                defaultValue={editing?.role ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="VD: Trưởng khoa Điều dưỡng"
-              />
+              >
+                <option value="" disabled>
+                  — Chọn chức vụ —
+                </option>
+                {positions.map((p) => (
+                  <option key={p.id} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                Học vị/bằng cấp (tuỳ chọn)
+                Khoa / Bộ môn (tuỳ chọn)
               </label>
-              <input
-                name="education"
-                defaultValue={editing?.education ?? ""}
+              <select
+                name="departmentId"
+                defaultValue={editing?.departmentId ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="VD: Thạc sĩ Điều dưỡng, Đại học Y Hà Nội"
-              />
+              >
+                <option value="">— Không thuộc khoa nào —</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
@@ -152,7 +223,7 @@ export default async function AdminFacultyPage({
                 name="bio"
                 rows={5}
                 defaultValue={editing?.bio ?? ""}
-                placeholder="Quá trình công tác, thành tích, kinh nghiệm giảng dạy..."
+                placeholder="Quá trình công tác, nơi đào tạo, thành tích, kinh nghiệm giảng dạy..."
               />
             </div>
             <details className="rounded-lg border border-line p-3">
@@ -163,7 +234,8 @@ export default async function AdminFacultyPage({
                 <AutoTranslateButton
                   pairs={[
                     { viName: "role", enName: "roleEn" },
-                    { viName: "education", enName: "educationEn" },
+                    { viName: "degree", enName: "degreeEn" },
+                    { viName: "academicRank", enName: "academicRankEn" },
                     { viName: "specialty", enName: "specialtyEn" },
                     { viName: "bio", enName: "bioEn" },
                   ]}
@@ -174,12 +246,20 @@ export default async function AdminFacultyPage({
                   placeholder="Role (English) — VD: Head of Nursing Department"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
-                <input
-                  name="educationEn"
-                  defaultValue={editing?.educationEn ?? ""}
-                  placeholder="Education (English)"
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    name="degreeEn"
+                    defaultValue={editing?.degreeEn ?? ""}
+                    placeholder="Degree (English)"
+                    className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  />
+                  <input
+                    name="academicRankEn"
+                    defaultValue={editing?.academicRankEn ?? ""}
+                    placeholder="Academic rank (English)"
+                    className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  />
+                </div>
                 <input
                   name="specialtyEn"
                   defaultValue={editing?.specialtyEn ?? ""}

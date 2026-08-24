@@ -20,55 +20,66 @@ export const SITE = {
  * src/lib/data/nav.ts (page/component không gọi `db` trực tiếp).
  */
 
-export type AdminNavGroup = {
-  label: string;
-  items: { key: string; label: string; href: string }[];
-};
+/**
+ * Menu sidebar khu vực quản trị. Mỗi mục là 1 THỰC THỂ (không phải 1 super-
+ * category chung chung như "Nội dung") — mục nào có từ 2 trang quản lý liên
+ * quan trở lên (VD Bài viết + Danh mục) thì gom vào `children` thành khối
+ * thu gọn/mở rộng được; chỉ 1 trang thì để thẳng `href`, không bọc children
+ * cho khỏi thừa 1 lượt bấm. Theo đúng mẫu "phần nào ra phần đấy" người dùng
+ * yêu cầu — xem CLAUDE.md mục 5 "Cấu trúc lại Giảng viên" + "Sidebar admin
+ * theo khối thực thể".
+ */
+export type AdminNavLeaf = { key: string; label: string; href: string };
+/** Entity có `href` = link thẳng (không có children); entity có `children` = khối thu gọn (header chỉ để bấm mở/đóng, không phải link). */
+export type AdminNavEntity =
+  | (AdminNavLeaf & { children?: undefined })
+  | { key: string; label: string; href?: undefined; children: AdminNavLeaf[] };
 
-/** Menu sidebar khu vực quản trị — khớp với AdminSidebar.dc.html gốc. */
-export const ADMIN_NAV: AdminNavGroup[] = [
+export const ADMIN_NAV: AdminNavEntity[] = [
+  { key: "dashboard", label: "Dashboard", href: "/admin" },
   {
-    label: "Tổng quan",
-    items: [{ key: "dashboard", label: "Dashboard", href: "/admin" }],
+    key: "posts",
+    label: "Bài viết",
+    children: [
+      { key: "posts-list", label: "Bài viết", href: "/admin/bai-viet" },
+      { key: "posts-categories", label: "Danh mục", href: "/admin/danh-muc" },
+    ],
   },
+  { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao" },
   {
-    label: "Nội dung",
-    items: [
-      { key: "posts", label: "Bài viết", href: "/admin/bai-viet" },
-      { key: "menu", label: "Menu chính", href: "/admin/menu" },
-      { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao" },
-      { key: "partners", label: "Đối tác", href: "/admin/doi-tac" },
-      { key: "faculty", label: "Đội ngũ giảng viên", href: "/admin/giang-vien" },
-      { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia" },
-      { key: "events", label: "Sự kiện", href: "/admin/su-kien" },
-      { key: "faq", label: "Câu hỏi thường gặp", href: "/admin/faq" },
+    key: "faculty",
+    label: "Giảng viên",
+    children: [
+      { key: "faculty-list", label: "Đội ngũ giảng viên", href: "/admin/giang-vien" },
+      { key: "departments", label: "Khoa / Bộ môn", href: "/admin/khoa" },
+      { key: "faculty-attributes", label: "Học hàm / Học vị / Chức vụ", href: "/admin/danh-hieu" },
+    ],
+  },
+  { key: "partners", label: "Đối tác", href: "/admin/doi-tac" },
+  { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia" },
+  { key: "events", label: "Sự kiện", href: "/admin/su-kien" },
+  { key: "faq", label: "Câu hỏi thường gặp", href: "/admin/faq" },
+  {
+    key: "homepage",
+    label: "Trang chủ",
+    children: [
+      { key: "hero-banner", label: "Banner Trang chủ", href: "/admin/banner-trang-chu" },
       { key: "gallery", label: "Thư viện ảnh Trang chủ", href: "/admin/thu-vien-trang-chu" },
-      { key: "media", label: "Thư viện media", href: "/admin/media" },
-      { key: "pages", label: "Trang tĩnh", href: "/admin/trang-tinh" },
+      { key: "homepage-content", label: "Nội dung Trang chủ", href: "/admin/trang-chu" },
     ],
   },
+  { key: "media", label: "Thư viện media", href: "/admin/media" },
+  { key: "pages", label: "Trang tĩnh", href: "/admin/trang-tinh" },
+  { key: "menu", label: "Menu chính", href: "/admin/menu" },
   {
+    key: "admissions-contact",
     label: "Tuyển sinh & Liên hệ",
-    items: [
-      {
-        key: "admissions",
-        label: "Đăng ký tuyển sinh",
-        href: "/admin/tuyen-sinh",
-      },
-      {
-        key: "contact-messages",
-        label: "Tin nhắn liên hệ",
-        href: "/admin/lien-he",
-      },
+    children: [
+      { key: "admissions", label: "Đăng ký tuyển sinh", href: "/admin/tuyen-sinh" },
+      { key: "contact-messages", label: "Tin nhắn liên hệ", href: "/admin/lien-he" },
     ],
   },
-  {
-    label: "Cấu hình",
-    items: [
-      { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat" },
-      { key: "homepage", label: "Nội dung Trang chủ", href: "/admin/trang-chu" },
-    ],
-  },
+  { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat" },
 ];
 
 /**

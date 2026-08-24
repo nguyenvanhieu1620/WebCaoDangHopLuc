@@ -11,12 +11,15 @@ export async function upsertFacultyAction(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   const name = String(formData.get("name") || "").trim();
   const role = String(formData.get("role") || "").trim();
-  const education = String(formData.get("education") || "").trim();
+  const departmentId = String(formData.get("departmentId") || "").trim();
+  const degree = String(formData.get("degree") || "").trim();
+  const academicRank = String(formData.get("academicRank") || "").trim();
   const specialty = String(formData.get("specialty") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
   const roleEn = String(formData.get("roleEn") || "").trim();
-  const educationEn = String(formData.get("educationEn") || "").trim();
+  const degreeEn = String(formData.get("degreeEn") || "").trim();
+  const academicRankEn = String(formData.get("academicRankEn") || "").trim();
   const specialtyEn = String(formData.get("specialtyEn") || "").trim();
   const bioEn = String(formData.get("bioEn") || "").trim();
 
@@ -27,19 +30,24 @@ export async function upsertFacultyAction(formData: FormData) {
     : null;
   const photoUrl = await resolveImageUrl(formData, "photo", "photoExisting", current?.photoUrl ?? null);
 
-  const [roleEnFinal, educationEnFinal, specialtyEnFinal, bioEnFinal] = await autoFillTranslations([
-    { vi: role, en: roleEn },
-    { vi: education, en: educationEn },
-    { vi: specialty, en: specialtyEn },
-    { vi: bio, en: bioEn },
-  ]);
+  const [roleEnFinal, degreeEnFinal, academicRankEnFinal, specialtyEnFinal, bioEnFinal] =
+    await autoFillTranslations([
+      { vi: role, en: roleEn },
+      { vi: degree, en: degreeEn },
+      { vi: academicRank, en: academicRankEn },
+      { vi: specialty, en: specialtyEn },
+      { vi: bio, en: bioEn },
+    ]);
 
   const values = {
     name,
     role,
     roleEn: roleEnFinal || null,
-    education: education || null,
-    educationEn: educationEnFinal || null,
+    departmentId: departmentId || null,
+    degree: degree || null,
+    degreeEn: degreeEnFinal || null,
+    academicRank: academicRank || null,
+    academicRankEn: academicRankEnFinal || null,
     specialty: specialty || null,
     specialtyEn: specialtyEnFinal || null,
     bio: bio || null,

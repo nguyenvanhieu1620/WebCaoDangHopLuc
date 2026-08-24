@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { QuickContactWidget } from "@/components/site/QuickContactWidget";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getNavTree } from "@/lib/data/nav";
 import { getLocale } from "@/lib/locale";
@@ -24,6 +25,7 @@ export default async function SiteGroupLayout({
       <SiteHeader settings={settings} navTree={navTree} locale={locale} />
       <main>{children}</main>
       <SiteFooter settings={settings} />
+      <QuickContactWidget settings={settings} />
     </div>
   );
 }
