@@ -91,6 +91,17 @@ export default async function AdminSiteSettingsPage() {
               </div>
             </div>
           </div>
+          <div className="border-t border-line pt-4">
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              Link cổng LMS VNPT (để trống = &quot;#&quot;, trang /lms sẽ hiện thông báo chưa cập nhật)
+            </label>
+            <input
+              name="lmsUrl"
+              defaultValue={settings.lmsUrl}
+              placeholder="https://lms.vnpt.vn/..."
+              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+            />
+          </div>
           <button
             type="submit"
             className="rounded-lg bg-gradient-to-br from-accent-600 to-accent-500 px-6 py-2.5 text-sm font-bold text-white shadow-red"

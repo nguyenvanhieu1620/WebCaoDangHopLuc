@@ -122,6 +122,8 @@ export const siteSettings = sqliteTable("site_settings", {
   facebookUrl: text("facebook_url").notNull().default("#"),
   zaloUrl: text("zalo_url").notNull().default("#"),
   youtubeUrl: text("youtube_url").notNull().default("#"),
+  /** Link cổng LMS VNPT — hiện ở trang /lms. Để trống ("#") tới khi trường cung cấp link thật. */
+  lmsUrl: text("lms_url").notNull().default("#"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -231,6 +233,8 @@ export const admissionSubmissions = sqliteTable("admission_submissions", {
     .$defaultFn(() => crypto.randomUUID()),
   fullName: text("full_name").notNull(),
   phone: text("phone").notNull(),
+  /** Số CCCD — khoá dùng để tra cứu kết quả xét tuyển công khai ở /tra-cuu-ket-qua. */
+  idNumber: text("id_number"),
   email: text("email"),
   program: text("program").notNull(),
   note: text("note"),

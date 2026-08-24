@@ -1,14 +1,44 @@
 import type { Metadata } from "next";
-import { PageStub } from "@/components/ui/PageStub";
+import Image from "next/image";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { getGalleryItems } from "@/lib/data/gallery";
 
 export const metadata: Metadata = { title: "Thư viện ảnh & video" };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const items = await getGalleryItems();
+
   return (
-    <PageStub
-      eyebrow="Thư viện"
-      title="Thư viện ảnh & video"
-      description="Hình ảnh, video hoạt động đào tạo và đời sống sinh viên tại trường."
-    />
+    <section className="px-6 py-20 sm:px-8">
+      <div className="mx-auto max-w-[1220px]">
+        <SectionHeading
+          eyebrow="Thư viện"
+          title="Thư viện ảnh & video"
+          description="Hình ảnh, video hoạt động đào tạo và đời sống sinh viên tại trường."
+        />
+
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
+            Chưa có ảnh nào — quản lý qua admin/thu-vien-trang-chu.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((item) => (
+              <figure
+                key={item.id}
+                className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2"
+              >
+                <div className="relative h-[180px]">
+                  <Image src={item.imageUrl} alt={item.caption} fill className="object-cover" />
+                </div>
+                <figcaption className="px-4 py-3 text-[13px] font-semibold text-ink">
+                  {item.caption}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

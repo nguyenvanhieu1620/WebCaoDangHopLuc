@@ -12,6 +12,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
   const facebookUrl = String(formData.get("facebookUrl") || "").trim() || "#";
   const zaloUrl = String(formData.get("zaloUrl") || "").trim() || "#";
   const youtubeUrl = String(formData.get("youtubeUrl") || "").trim() || "#";
+  const lmsUrl = String(formData.get("lmsUrl") || "").trim() || "#";
 
   if (!hotline || !email || !address || !announcement) return;
 
@@ -25,10 +26,12 @@ export async function updateSiteSettingsAction(formData: FormData) {
       facebookUrl,
       zaloUrl,
       youtubeUrl,
+      lmsUrl,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(schema.siteSettings.id, "main"));
 
   revalidatePath("/", "layout");
+  revalidatePath("/lms");
   revalidatePath("/admin/cai-dat");
 }

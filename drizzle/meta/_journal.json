@@ -15,6 +15,13 @@
       "when": 1787282251326,
       "tag": "0001_equal_malice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787366986848,
+      "tag": "0002_nebulous_wolfpack",
+      "breakpoints": true
     }
   ]
 }

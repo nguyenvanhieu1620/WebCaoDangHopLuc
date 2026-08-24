@@ -1,5 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 import { db } from "./client";
 import {
   adminUsers,
@@ -76,13 +77,27 @@ async function main() {
   const existingSubmissions = await db.query.admissionSubmissions.findMany();
   if (existingSubmissions.length === 0) {
     await db.insert(admissionSubmissions).values([
-      { fullName: "Nguyễn Thị Mai", phone: "0901234567", program: "Điều dưỡng", status: "new" },
-      { fullName: "Trần Văn Nam", phone: "0912345678", program: "Dược", status: "reviewed" },
-      { fullName: "Lê Thị Hoa", phone: "0923456789", program: "Xét nghiệm Y học", status: "new" },
+      { fullName: "Nguyễn Thị Mai", phone: "0901234567", idNumber: "038201001234", program: "Điều dưỡng", status: "new" },
+      { fullName: "Trần Văn Nam", phone: "0912345678", idNumber: "038201005678", program: "Dược", status: "reviewed" },
+      { fullName: "Lê Thị Hoa", phone: "0923456789", idNumber: "038201009012", program: "Xét nghiệm Y học", status: "new" },
     ]);
     console.log("✓ Tạo 3 hồ sơ đăng ký tuyển sinh mẫu");
   } else {
     console.log("• Đã có hồ sơ đăng ký, bỏ qua.");
+    // Backfill idNumber cho dữ liệu mẫu tạo trước khi có cột này (bảng cũ hơn schema)
+    const demoIdNumbers: Record<string, string> = {
+      "Nguyễn Thị Mai": "038201001234",
+      "Trần Văn Nam": "038201005678",
+      "Lê Thị Hoa": "038201009012",
+    };
+    for (const s of existingSubmissions) {
+      if (!s.idNumber && demoIdNumbers[s.fullName]) {
+        await db
+          .update(admissionSubmissions)
+          .set({ idNumber: demoIdNumbers[s.fullName] })
+          .where(eq(admissionSubmissions.id, s.id));
+      }
+    }
   }
 
   // Danh sách ngành đào tạo mặc định

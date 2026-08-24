@@ -41,6 +41,7 @@ export default async function AdminAdmissionsPage() {
                 <tr>
                   <th className="px-6 py-3 font-semibold">Họ tên</th>
                   <th className="px-6 py-3 font-semibold">Điện thoại</th>
+                  <th className="px-6 py-3 font-semibold">CCCD</th>
                   <th className="px-6 py-3 font-semibold">Ngành quan tâm</th>
                   <th className="px-6 py-3 font-semibold">Trạng thái</th>
                   <th className="px-6 py-3 font-semibold">Cập nhật</th>
@@ -51,6 +52,7 @@ export default async function AdminAdmissionsPage() {
                   <tr key={s.id}>
                     <td className="px-6 py-3.5 font-medium text-ink">{s.fullName}</td>
                     <td className="px-6 py-3.5 text-ink-soft">{s.phone}</td>
+                    <td className="px-6 py-3.5 font-mono text-[12.5px] text-ink-soft">{s.idNumber ?? "—"}</td>
                     <td className="px-6 py-3.5 text-ink-soft">{s.program}</td>
                     <td className="px-6 py-3.5">
                       <span

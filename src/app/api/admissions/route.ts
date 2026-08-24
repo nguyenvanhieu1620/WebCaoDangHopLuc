@@ -9,6 +9,7 @@ import { db, schema } from "@/lib/db";
 type AdmissionPayload = {
   fullName: string;
   phone: string;
+  idNumber: string;
   email?: string;
   program: string;
   note?: string;
@@ -17,9 +18,9 @@ type AdmissionPayload = {
 export async function POST(request: Request) {
   const body = (await request.json()) as Partial<AdmissionPayload>;
 
-  if (!body.fullName || !body.phone || !body.program) {
+  if (!body.fullName || !body.phone || !body.idNumber || !body.program) {
     return NextResponse.json(
-      { ok: false, error: "Thiếu thông tin bắt buộc (họ tên, số điện thoại, ngành)." },
+      { ok: false, error: "Thiếu thông tin bắt buộc (họ tên, số điện thoại, CCCD, ngành)." },
       { status: 400 }
     );
   }
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     .values({
       fullName: body.fullName,
       phone: body.phone,
+      idNumber: body.idNumber,
       email: body.email || null,
       program: body.program,
       note: body.note || null,
