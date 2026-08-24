@@ -34,6 +34,10 @@ export async function updateHomepageContentAction(formData: FormData) {
   const heroBadge2LabelEn = field(formData, "heroBadge2LabelEn");
   const ctaTitleEn = field(formData, "ctaTitleEn");
   const ctaDescriptionEn = field(formData, "ctaDescriptionEn");
+  const missionText = field(formData, "missionText");
+  const missionTextEn = field(formData, "missionTextEn");
+  const visionText = field(formData, "visionText");
+  const visionTextEn = field(formData, "visionTextEn");
 
   if (
     !heroBadge ||
@@ -98,6 +102,8 @@ export async function updateHomepageContentAction(formData: FormData) {
     { vi: heroBadge2Label, en: heroBadge2LabelEn },
     { vi: ctaTitle, en: ctaTitleEn },
     { vi: ctaDescription, en: ctaDescriptionEn },
+    { vi: missionText, en: missionTextEn },
+    { vi: visionText, en: visionTextEn },
   ];
   const statsPairs = stats.map((s, i) => ({ vi: s.label, en: statsEn[i].label }));
   const featuresPairs = features.flatMap((f, i) => [
@@ -125,6 +131,8 @@ export async function updateHomepageContentAction(formData: FormData) {
   const heroBadge2LabelEnFinal = translated[i++];
   const ctaTitleEnFinal = translated[i++];
   const ctaDescriptionEnFinal = translated[i++];
+  const missionTextEnFinal = translated[i++];
+  const visionTextEnFinal = translated[i++];
   const statsEnFinal = stats.map(() => ({ label: translated[i++] }));
   const featuresEnFinal = features.map(() => ({ title: translated[i++], desc: translated[i++] }));
   const stepsEnFinal = steps.map(() => ({ title: translated[i++], desc: translated[i++] }));
@@ -157,6 +165,10 @@ export async function updateHomepageContentAction(formData: FormData) {
       ctaTitleEn: ctaTitleEnFinal || null,
       ctaDescription,
       ctaDescriptionEn: ctaDescriptionEnFinal || null,
+      missionText: missionText || null,
+      missionTextEn: missionTextEnFinal || null,
+      visionText: visionText || null,
+      visionTextEn: visionTextEnFinal || null,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(schema.homepageContent.id, "main"));

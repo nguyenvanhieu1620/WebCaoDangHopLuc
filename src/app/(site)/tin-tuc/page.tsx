@@ -6,23 +6,42 @@ import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { getAllPublishedPosts } from "@/lib/data/posts";
 import { formatVNDate } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Tin tức & sự kiện" };
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+  const { category } = await searchParams;
+  return { title: category === "hoc-bong" ? "Học bổng" : "Tin tức" };
+}
 
-export default async function NewsPage() {
-  const posts = await getAllPublishedPosts();
+export default async function NewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category } = await searchParams;
+  const posts = await getAllPublishedPosts(category);
+  const isScholarship = category === "hoc-bong";
 
   return (
     <section className="px-6 py-20 sm:px-8">
       <div className="mx-auto max-w-[1220px]">
         <SectionHeading
-          eyebrow="Tin tức & sự kiện"
-          title="Hoạt động đào tạo, tuyển sinh mới nhất"
-          description="Thông báo, sự kiện và hoạt động của nhà trường."
+          eyebrow={isScholarship ? "Học bổng" : "Tin tức"}
+          title={isScholarship ? "Học bổng & chính sách hỗ trợ học phí" : "Hoạt động đào tạo, tuyển sinh mới nhất"}
+          description={
+            isScholarship
+              ? "Thông tin học bổng, ưu đãi và hỗ trợ học phí dành cho sinh viên."
+              : "Thông báo, sự kiện và hoạt động của nhà trường."
+          }
         />
 
         {posts.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
-            Chưa có bài viết nào được đăng.
+            {isScholarship
+              ? "Chưa có bài viết học bổng nào được đăng."
+              : "Chưa có bài viết nào được đăng."}
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

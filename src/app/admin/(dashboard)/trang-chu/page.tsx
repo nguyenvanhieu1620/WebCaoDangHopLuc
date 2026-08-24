@@ -73,6 +73,8 @@ export default async function AdminHomepagePage() {
     ]),
     { viName: "ctaTitle", enName: "ctaTitleEn" },
     { viName: "ctaDescription", enName: "ctaDescriptionEn" },
+    { viName: "missionText", enName: "missionTextEn" },
+    { viName: "visionText", enName: "visionTextEn" },
   ];
 
   return (
@@ -221,6 +223,56 @@ export default async function AdminHomepagePage() {
                     className={inputClass}
                   />
                 </div>
+              </div>
+            </details>
+          </FormSection>
+
+          <FormSection title="Sứ mệnh - Tầm nhìn (tuỳ chọn — để trống thì ẩn cả khối này ở Trang chủ)">
+            <div>
+              <label className={labelClass}>Sứ mệnh</label>
+              <textarea
+                name="missionText"
+                rows={3}
+                defaultValue={row.missionText ?? ""}
+                className={inputClass}
+                placeholder="VD: Đào tạo nguồn nhân lực y dược chất lượng cao, gắn lý thuyết với thực hành lâm sàng..."
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Tầm nhìn</label>
+              <textarea
+                name="visionText"
+                rows={3}
+                defaultValue={row.visionText ?? ""}
+                className={inputClass}
+                placeholder="VD: Trở thành trường cao đẳng y dược hàng đầu khu vực Bắc Trung Bộ vào năm 2030..."
+              />
+            </div>
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
+              </summary>
+              <div className="mt-3 space-y-3">
+                <AutoTranslateButton
+                  pairs={[
+                    { viName: "missionText", enName: "missionTextEn" },
+                    { viName: "visionText", enName: "visionTextEn" },
+                  ]}
+                />
+                <textarea
+                  name="missionTextEn"
+                  rows={3}
+                  defaultValue={row.missionTextEn ?? ""}
+                  placeholder="Mission (English)"
+                  className={inputClass}
+                />
+                <textarea
+                  name="visionTextEn"
+                  rows={3}
+                  defaultValue={row.visionTextEn ?? ""}
+                  placeholder="Vision (English)"
+                  className={inputClass}
+                />
               </div>
             </details>
           </FormSection>

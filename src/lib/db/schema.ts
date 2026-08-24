@@ -174,6 +174,11 @@ export const homepageContent = sqliteTable("homepage_content", {
   ctaTitleEn: text("cta_title_en"),
   ctaDescription: text("cta_description").notNull(),
   ctaDescriptionEn: text("cta_description_en"),
+  /** Sứ mệnh/Tầm nhìn tóm tắt hiện ở Trang chủ — tuỳ chọn, để trống thì ẩn cả khối. */
+  missionText: text("mission_text"),
+  missionTextEn: text("mission_text_en"),
+  visionText: text("vision_text"),
+  visionTextEn: text("vision_text_en"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),

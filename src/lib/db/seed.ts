@@ -293,10 +293,30 @@ async function main() {
       ctaTitle: "Sẵn sàng cho hành trình y dược của bạn?",
       ctaDescription:
         "Nộp hồ sơ xét tuyển ngay hôm nay — đội ngũ tư vấn sẵn sàng hỗ trợ 24/7.",
+      missionText:
+        "Đào tạo đội ngũ Điều dưỡng, Dược sĩ, Kỹ thuật viên xét nghiệm và các ngành y tế khác vững chuyên môn, giàu y đức, đáp ứng nhu cầu nhân lực ngành y tế trong nước và khu vực.",
+      visionText:
+        "Trở thành trường cao đẳng y dược uy tín hàng đầu khu vực Bắc Trung Bộ, gắn đào tạo với thực hành lâm sàng thực chiến ngay từ năm nhất.",
     });
     console.log("✓ Tạo nội dung Trang chủ mặc định");
   } else {
     console.log("• Đã có nội dung Trang chủ, bỏ qua.");
+  }
+
+  // Backfill Sứ mệnh/Tầm nhìn (idempotent) — cột mới thêm sau khi đã có dữ liệu
+  const homepageMissionRow = await db.query.homepageContent.findFirst({
+    where: (h, { eq }) => eq(h.id, "main"),
+  });
+  if (homepageMissionRow && !homepageMissionRow.missionText) {
+    await db
+      .update(homepageContent)
+      .set({
+        missionText:
+          "Đào tạo đội ngũ Điều dưỡng, Dược sĩ, Kỹ thuật viên xét nghiệm và các ngành y tế khác vững chuyên môn, giàu y đức, đáp ứng nhu cầu nhân lực ngành y tế trong nước và khu vực.",
+        visionText:
+          "Trở thành trường cao đẳng y dược uy tín hàng đầu khu vực Bắc Trung Bộ, gắn đào tạo với thực hành lâm sàng thực chiến ngay từ năm nhất.",
+      })
+      .where(eq(homepageContent.id, "main"));
   }
 
   // Backfill bản tiếng Anh cho nội dung Trang chủ (idempotent)
@@ -356,6 +376,18 @@ async function main() {
     console.log("✓ Tạo 4 danh mục bài viết mẫu");
   } else {
     console.log("• Đã có danh mục bài viết, bỏ qua.");
+  }
+
+  // Danh mục "Học bổng" — thêm riêng vì tạo sau đợt seed 4 danh mục đầu
+  // (tận dụng Danh mục bài viết có sẵn thay vì làm bảng riêng cho Học bổng).
+  const existingScholarshipCategory = await db.query.categories.findFirst({
+    where: (c, { eq }) => eq(c.slug, "hoc-bong"),
+  });
+  if (!existingScholarshipCategory) {
+    await db.insert(categories).values({ name: "Học bổng", nameEn: "Scholarships", slug: "hoc-bong" });
+    console.log("✓ Tạo danh mục Học bổng");
+  } else {
+    console.log("• Đã có danh mục Học bổng, bỏ qua.");
   }
 
   // Backfill bản tiếng Anh cho danh mục bài viết (idempotent)
@@ -615,6 +647,22 @@ async function main() {
     console.log("✓ Tạo mục menu Câu hỏi thường gặp");
   } else {
     console.log("• Đã có mục menu Câu hỏi thường gặp, bỏ qua.");
+  }
+
+  const existingScholarshipNav = await db.query.navItems.findFirst({
+    where: (n, { eq }) => eq(n.href, "/tin-tuc?category=hoc-bong"),
+  });
+  if (!existingScholarshipNav) {
+    await db.insert(navItems).values({
+      label: "Học bổng",
+      labelEn: "Scholarships",
+      href: "/tin-tuc?category=hoc-bong",
+      isPrimary: 0,
+      sortOrder: 13,
+    });
+    console.log("✓ Tạo mục menu Học bổng");
+  } else {
+    console.log("• Đã có mục menu Học bổng, bỏ qua.");
   }
 
   // Sự kiện mẫu

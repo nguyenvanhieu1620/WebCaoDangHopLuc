@@ -460,6 +460,34 @@ cho Bài viết và các mục khác, không chỉ Giảng viên. Đã làm:
   rủi ro thấp, không cần lớp data layer riêng cho `faculty_attributes` vì
   chỉ dùng trong admin (đúng quy ước #1 mục 6).
 
+### Trang chủ đầy đủ hơn (tham khảo hmu.edu.vn)
+So sánh với hmu.edu.vn (Đại học Y Hà Nội), phát hiện đã xây xong Sự kiện
+(trang + admin) ở đợt trước nhưng **quên đưa lên Trang chủ** — tự sửa luôn.
+Cộng thêm 3 hạng mục người dùng chọn từ nghiên cứu:
+
+- **Sự kiện sắp diễn ra ở Trang chủ** — section mới trước khối Tin tức,
+  lọc 3 sự kiện gần nhất có `start_at >= hiện tại` qua hàm thường
+  `upcomingEvents()` (không phải trong thân component — lý do giống hệt
+  `splitUpcomingPast()` ở `/su-kien`, xem mục 5 "Sự kiện, Form Liên hệ
+  thật..."). Khối "Tin tức" đổi tên từ "Tin tức & sự kiện" thành "Tin tức"
+  cho khỏi trùng ý.
+- **Sứ mệnh - Tầm nhìn** — 2 cột `mission_text`/`vision_text` (+ `_en`)
+  thêm vào `homepage_content`, **nullable** (khác các field Hero/CTA khác
+  trong bảng này vốn `notNull`) — cố ý để tuỳ chọn, admin để trống thì
+  Trang chủ tự ẩn cả khối, không bắt buộc điền ngay.
+- **Học bổng** — **không** tạo bảng riêng, tận dụng luôn hệ thống Danh mục
+  bài viết có sẵn: seed thêm danh mục `hoc-bong`, `getAllPublishedPosts()`
+  (`src/lib/data/posts.ts`) nhận thêm tham số `categorySlug` tuỳ chọn để
+  lọc, trang `/tin-tuc` đọc `?category=` từ `searchParams` để hiện đúng
+  tiêu đề/mô tả "Học bổng" khi lọc theo danh mục này. Mục menu "Học bổng"
+  trỏ thẳng `/tin-tuc?category=hoc-bong`. **Khi cần thêm 1 "chuyên mục" tin
+  bài mới tương tự (không phải nội dung có cấu trúc riêng), làm theo đúng
+  pattern này — thêm danh mục + query filter, đừng vội tạo bảng mới.**
+- **Banner "Công khai theo quy định"** ở cuối Trang chủ (trước CTA band) —
+  dải link tĩnh trỏ `/cong-khai`, không cần dữ liệu DB (mục Công khai vốn
+  đã ẩn khá sâu trong nút ☰, banner này tăng khả năng nhìn thấy trên Trang
+  chủ mà không cần đổi cấu trúc menu).
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới

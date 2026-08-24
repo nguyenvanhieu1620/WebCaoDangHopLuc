@@ -21,6 +21,8 @@ export type HomepageContent = {
   steps: StepItem[];
   ctaTitle: string;
   ctaDescription: string;
+  missionText: string | null;
+  visionText: string | null;
 };
 
 /**
@@ -78,5 +80,7 @@ export async function getHomepageContent(): Promise<HomepageContent> {
     steps: mergeArray<StepItem>(row.stepsJson, row.stepsJsonEn, locale),
     ctaTitle: pickLocale(row.ctaTitle, row.ctaTitleEn, locale),
     ctaDescription: pickLocale(row.ctaDescription, row.ctaDescriptionEn, locale),
+    missionText: row.missionText ? pickLocale(row.missionText, row.missionTextEn, locale) : null,
+    visionText: row.visionText ? pickLocale(row.visionText, row.visionTextEn, locale) : null,
   };
 }

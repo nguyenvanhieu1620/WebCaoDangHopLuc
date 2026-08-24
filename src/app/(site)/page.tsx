@@ -15,7 +15,15 @@ import { getTestimonials } from "@/lib/data/testimonials";
 import { getLatestPublishedPosts } from "@/lib/data/posts";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getHeroBanners } from "@/lib/data/hero-banners";
-import { cn, formatVNDate } from "@/lib/utils";
+import { getEvents } from "@/lib/data/events";
+import { cn, formatVNDate, formatVNDateTime } from "@/lib/utils";
+import type { Event } from "@/lib/db/schema";
+
+/** Lọc + cắt 3 sự kiện sắp diễn ra — hàm thường (không phải component) nên gọi Date.now() ở đây được. */
+function upcomingEvents(allEvents: Event[]): Event[] {
+  const now = Date.now();
+  return allEvents.filter((e) => new Date(e.startAt).getTime() >= now).slice(0, 3);
+}
 
 const QUICK_TOOL_ICONS = {
   admission: (
@@ -54,6 +62,7 @@ export default async function HomePage() {
     latestPosts,
     settings,
     heroBanners,
+    allEvents,
   ] = await Promise.all([
     getFeaturedPrograms(),
     getPrograms(),
@@ -65,8 +74,10 @@ export default async function HomePage() {
     getLatestPublishedPosts(3),
     getSiteSettings(),
     getHeroBanners(),
+    getEvents(),
   ]);
   const { stats, features, steps } = content;
+  const nextEvents = upcomingEvents(allEvents);
 
   const quickTools = [
     {
@@ -214,6 +225,30 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ============ SỨ MỆNH - TẦM NHÌN ============ */}
+      {(content.missionText || content.visionText) && (
+        <section className="px-6 pt-24 sm:px-8">
+          <div className="mx-auto grid max-w-[1320px] gap-5 sm:grid-cols-2">
+            {content.missionText && (
+              <div className="rounded-2xl border border-line bg-white p-8 shadow-sm2">
+                <Eyebrow tone="blue" className="mb-4">
+                  Sứ mệnh
+                </Eyebrow>
+                <p className="text-[15px] leading-relaxed text-ink-soft">{content.missionText}</p>
+              </div>
+            )}
+            {content.visionText && (
+              <div className="rounded-2xl border border-line bg-white p-8 shadow-sm2">
+                <Eyebrow tone="red" className="mb-4">
+                  Tầm nhìn
+                </Eyebrow>
+                <p className="text-[15px] leading-relaxed text-ink-soft">{content.visionText}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ============ FEATURES ============ */}
       <section className="px-6 py-24 sm:px-8">
@@ -443,13 +478,57 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ============ SỰ KIỆN SẮP DIỄN RA ============ */}
+      {nextEvents.length > 0 && (
+        <section className="bg-paper-alt px-6 py-24 sm:px-8">
+          <div className="mx-auto max-w-[1320px]">
+            <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
+              <h2 className="font-display text-[34px] font-semibold text-brand-900">
+                Sự kiện sắp diễn ra
+              </h2>
+              <Link
+                href="/su-kien"
+                className="text-sm font-bold text-brand-700 hover:text-accent-600"
+              >
+                Xem tất cả →
+              </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-3">
+              {nextEvents.map((e) => (
+                <div
+                  key={e.id}
+                  className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2"
+                >
+                  <div className="relative h-[150px]">
+                    {e.coverImageUrl ? (
+                      <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover" />
+                    ) : (
+                      <ImagePlaceholder label="Ảnh sự kiện" />
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-accent-600">
+                      {formatVNDateTime(e.startAt)}
+                      {e.location ? ` · ${e.location}` : ""}
+                    </div>
+                    <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
+                      {e.title}
+                    </h4>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ============ TIN TỨC ============ */}
       {latestPosts.length > 0 && (
         <section className="px-6 py-24 sm:px-8">
           <div className="mx-auto max-w-[1320px]">
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
               <h2 className="font-display text-[34px] font-semibold text-brand-900">
-                Tin tức &amp; sự kiện
+                Tin tức
               </h2>
               <Link
                 href="/tin-tuc"
@@ -487,6 +566,33 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ============ BANNER CÔNG KHAI ============ */}
+      <section className="px-6 pb-2 sm:px-8">
+        <Link
+          href="/cong-khai"
+          className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white px-7 py-5 shadow-sm2 transition-colors hover:border-brand-500"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/10 text-brand-700">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path
+                  d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div className="text-[14px] font-bold text-ink">Công khai theo quy định</div>
+              <div className="text-[12.5px] text-ink-faint">
+                Tài chính, cơ sở vật chất, chương trình đào tạo, đội ngũ giảng viên
+              </div>
+            </div>
+          </div>
+          <span className="text-sm font-semibold text-brand-700">Xem chi tiết →</span>
+        </Link>
+      </section>
 
       {/* ============ CTA BAND ============ */}
       <section className="px-6 pb-24 sm:px-8">

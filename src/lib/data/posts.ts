@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getLocale, pickLocale } from "@/lib/locale";
 
 export type PublishedPostPreview = {
@@ -50,9 +50,37 @@ export async function getLatestPublishedPosts(limit: number): Promise<PublishedP
   }));
 }
 
-/** Toàn bộ bài viết đã đăng, mới nhất trước — dùng cho trang danh sách /tin-tuc. */
-export async function getAllPublishedPosts(): Promise<PublishedPostPreview[]> {
-  return getLatestPublishedPosts(Number.MAX_SAFE_INTEGER);
+/**
+ * Toàn bộ bài viết đã đăng, mới nhất trước — dùng cho trang danh sách
+ * /tin-tuc. Có `categorySlug` (VD "hoc-bong") thì chỉ lấy bài thuộc đúng
+ * danh mục đó — dùng cho mục Học bổng (tận dụng hệ thống Danh mục có sẵn,
+ * không cần bảng riêng).
+ */
+export async function getAllPublishedPosts(categorySlug?: string): Promise<PublishedPostPreview[]> {
+  if (!categorySlug) return getLatestPublishedPosts(Number.MAX_SAFE_INTEGER);
+
+  const category = await db.query.categories.findFirst({
+    where: eq(schema.categories.slug, categorySlug),
+  });
+  if (!category) return [];
+
+  const [rows, locale] = await Promise.all([
+    db.query.posts.findMany({
+      where: and(eq(schema.posts.status, "published"), eq(schema.posts.categoryId, category.id)),
+      orderBy: desc(schema.posts.publishedAt),
+    }),
+    getLocale(),
+  ]);
+
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    title: pickLocale(r.title, r.titleEn, locale),
+    excerpt: r.excerpt ? pickLocale(r.excerpt, r.excerptEn, locale) : r.excerpt,
+    coverImageUrl: r.coverImageUrl,
+    categoryName: pickLocale(category.name, category.nameEn, locale),
+    publishedAt: r.publishedAt,
+  }));
 }
 
 /** 1 bài viết đã đăng theo slug — dùng cho trang chi tiết /tin-tuc/[slug]. Trả về null nếu không có hoặc chưa đăng. */
