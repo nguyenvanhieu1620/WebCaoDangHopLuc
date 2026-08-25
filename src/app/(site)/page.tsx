@@ -6,6 +6,8 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { HeroImageCarousel } from "@/components/site/HeroImageCarousel";
 import { Reveal } from "@/components/site/Reveal";
+import { ParallaxBlur } from "@/components/site/ParallaxBlur";
+import { ProgramCard } from "@/components/site/ProgramCard";
 import { CountUp } from "@/components/site/CountUp";
 import { programGradient } from "@/lib/constants";
 import { getFeaturedPrograms, getPrograms } from "@/lib/data/programs";
@@ -117,8 +119,14 @@ export default async function HomePage() {
     <>
       {/* ============ HERO ============ */}
       <section className="relative overflow-hidden px-6 pb-24 pt-16 sm:px-8 sm:pt-20">
-        <div className="pointer-events-none absolute -top-44 -left-32 h-[560px] w-[560px] rounded-full bg-brand-500/20 blur-[60px]" />
-        <div className="pointer-events-none absolute -bottom-56 -right-40 h-[600px] w-[600px] rounded-full bg-accent-500/15 blur-[60px]" />
+        <ParallaxBlur
+          speed={0.15}
+          className="pointer-events-none absolute -top-44 -left-32 h-[560px] w-[560px] rounded-full bg-brand-500/20 blur-[60px]"
+        />
+        <ParallaxBlur
+          speed={-0.15}
+          className="pointer-events-none absolute -bottom-56 -right-40 h-[600px] w-[600px] rounded-full bg-accent-500/15 blur-[60px]"
+        />
 
         <Reveal className="relative mx-auto grid max-w-[1320px] items-center gap-14 lg:grid-cols-2">
           <div>
@@ -298,27 +306,7 @@ export default async function HomePage() {
           </Reveal>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featuredPrograms.map((p, i) => (
-              <Reveal key={p.slug} delay={i * 80}>
-                <Link
-                  href={`/nganh-dao-tao/${p.slug}`}
-                  className={cn(
-                    "group relative block overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 transition-transform hover:-translate-y-1.5",
-                    programGradient(i)
-                  )}
-                >
-                  <div className="pointer-events-none absolute -bottom-10 -right-10 h-[150px] w-[150px] rounded-full bg-white/10" />
-                  <div className="relative font-mono text-[10.5px] uppercase tracking-wider text-white/85">
-                    {p.code}
-                  </div>
-                  <h3 className="relative mt-3.5 font-display text-[22px] font-bold">{p.name}</h3>
-                  <p className="relative mt-2.5 max-w-[220px] text-[13px] leading-relaxed text-white/90">
-                    {p.summary}
-                  </p>
-                  <span className="relative mt-4 inline-block text-[13px] font-bold">
-                    Chi tiết →
-                  </span>
-                </Link>
-              </Reveal>
+              <ProgramCard key={p.slug} program={p} gradientClass={programGradient(i)} delay={i * 80} />
             ))}
           </div>
         </div>
@@ -351,7 +339,10 @@ export default async function HomePage() {
 
       {/* ============ THƯ VIỆN (BENTO) ============ */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-900 to-brand-700 px-6 py-24 sm:px-8">
-        <div className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-accent-500/25 blur-[50px]" />
+        <ParallaxBlur
+          speed={0.18}
+          className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-accent-500/25 blur-[50px]"
+        />
         <Reveal className="relative mx-auto max-w-[1320px]">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
             <div>

@@ -928,6 +928,42 @@ không phải cảm giác "mượt theo tay cuộn" thật sự.
   CTA) — 2 hướng đã đề xuất nhưng chưa triển khai, cân nhắc làm tiếp nếu
   người dùng vẫn muốn thêm sau khi xem 2 hướng đã làm.
 
+### 2 hướng hiệu ứng còn lại — parallax + tương tác rê chuột (XONG)
+Người dùng xác nhận làm nốt cả 2 hướng đã đề xuất ở trên trước khi chuyển
+sang PostgreSQL:
+
+- **`src/components/site/ParallaxBlur.tsx`** (mới) — bọc 1 khối blur trang
+  trí để nó di chuyển LỆCH TỐC ĐỘ so với nội dung khi cuộn (tạo chiều sâu
+  nhẹ). Cùng cơ chế hiệu năng với `Reveal.tsx`: `IntersectionObserver` chỉ
+  bật/tắt 1 scroll listener khi khối đang gần khung nhìn, throttle qua
+  `requestAnimationFrame`, tôn trọng `prefers-reduced-motion`. Đã áp dụng
+  cho 2 khối blur trong `DecorativeSection.tsx` (dùng chung 18 trang con)
+  + 3 khối blur riêng của Trang chủ (Hero 2 khối, Thư viện bento 1 khối).
+- **`src/components/site/ProgramCard.tsx`** (mới) — gộp markup thẻ ngành
+  đào tạo từng lặp lại gần giống hệt ở Trang chủ và `/nganh-dao-tao` thành
+  1 component dùng chung, đồng thời thêm hiệu ứng **spotlight** theo con
+  trỏ chuột (`onMouseMove` cập nhật CSS custom property `--spot-x`/`--spot-y`,
+  1 lớp phủ `radial-gradient` chỉ CSS thuần hiện khi hover). Phải là Client
+  Component (`"use client"`) vì cần gắn `onMouseMove` — Server Component
+  không gắn được sự kiện DOM. **Lưu ý**: Trang chủ trước đây dùng bản thẻ
+  RÚT GỌN hơn (không hiện thời lượng/chỉ tiêu), `/nganh-dao-tao` dùng bản
+  ĐẦY ĐỦ — gộp chung theo bản đầy đủ (chấp nhận Trang chủ hiện thêm 2 dòng
+  thông tin, đổi lấy không trùng lặp code).
+- **`src/components/ui/Button.tsx`** — biến thể `primary` (dùng cho mọi
+  CTA chính, VD "Đăng ký xét tuyển") thêm hiệu ứng **quét sáng chéo** khi
+  hover — thuần CSS qua pseudo-element `::before` (`before:content-['']`
+  + `before:-skew-x-[20deg]` + `hover:before:translate-x-[350%]`), không
+  cần JS. Vệt sáng bán trong suốt (`bg-white/30`) đi qua cả chữ là hiệu
+  ứng CHỦ ĐÍCH (giống hiệu ứng "sheen" hay thấy ở nút CTA cao cấp), không
+  phải lỗi z-index cần sửa.
+- **Hạn chế test giống hệt Reveal/CSP trước đó**: sandbox không composite
+  khung hình nên `ParallaxBlur` không tự mắt verify được chuyển động thật
+  lúc cuộn — chỉ verify được: build sạch, không lỗi console, thẻ ngành
+  render đúng đủ 6 mục, spotlight CSS var cập nhật đúng khi giả lập
+  `mousemove` qua JS (`--spot-x`/`--spot-y` đổi giá trị theo toạ độ), nút
+  CTA có đủ class quét sáng. Cần người dùng tự xem cảm giác cuộn/hover
+  thật trên trình duyệt thật.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới

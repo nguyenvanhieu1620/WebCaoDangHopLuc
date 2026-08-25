@@ -5,8 +5,10 @@ import type { ReactNode } from "react";
 type Variant = "primary" | "outline" | "ghostLight";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
+  // Vệt sáng chéo quét qua khi hover — thuần CSS qua pseudo-element ::before
+  // (before:content-[''] before:absolute...), không cần JS.
   primary:
-    "bg-gradient-to-br from-accent-600 to-accent-500 text-white shadow-red hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(196,30,36,0.34)]",
+    "relative overflow-hidden bg-gradient-to-br from-accent-600 to-accent-500 text-white shadow-red hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(196,30,36,0.34)] before:pointer-events-none before:absolute before:inset-y-0 before:left-[-40%] before:w-1/3 before:-skew-x-[20deg] before:bg-white/30 before:transition-transform before:duration-700 before:ease-out before:content-[''] hover:before:translate-x-[350%]",
   outline:
     "bg-transparent border-[1.5px] border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white hover:-translate-y-0.5",
   ghostLight:

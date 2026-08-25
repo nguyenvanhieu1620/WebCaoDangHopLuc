@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
+import { ParallaxBlur } from "./ParallaxBlur";
 
 type DecorativeSectionProps = {
   children: React.ReactNode;
@@ -21,12 +22,21 @@ type DecorativeSectionProps = {
  * mặc định (VD `bg-paper-alt`) — `cn()` trong dự án chỉ nối chuỗi thuần,
  * không gộp thông minh như tailwind-merge, nên 2 class cùng thuộc tính
  * (VD `py-20` với `py-24`) sẽ áp dụng không rõ class nào thắng.
+ *
+ * 2 khối blur trang trí giờ có `ParallaxBlur` (di chuyển lệch tốc độ nhẹ so
+ * với nội dung khi cuộn, tạo chiều sâu) — xem CLAUDE.md mục 5.
  */
 export function DecorativeSection({ children, className, contentClassName }: DecorativeSectionProps) {
   return (
     <section className={cn("relative overflow-hidden px-6 py-20 sm:px-8", className)}>
-      <div className="pointer-events-none absolute -top-40 -left-28 h-[420px] w-[420px] rounded-full bg-brand-500/15 blur-[60px]" />
-      <div className="pointer-events-none absolute -bottom-40 -right-28 h-[420px] w-[420px] rounded-full bg-accent-500/10 blur-[60px]" />
+      <ParallaxBlur
+        speed={0.12}
+        className="pointer-events-none absolute -top-40 -left-28 h-[420px] w-[420px] rounded-full bg-brand-500/15 blur-[60px]"
+      />
+      <ParallaxBlur
+        speed={-0.12}
+        className="pointer-events-none absolute -bottom-40 -right-28 h-[420px] w-[420px] rounded-full bg-accent-500/10 blur-[60px]"
+      />
       <Reveal className={cn("relative", contentClassName)}>{children}</Reveal>
     </section>
   );
