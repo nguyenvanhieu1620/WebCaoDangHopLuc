@@ -31,6 +31,7 @@ export function AdmissionForm({ programs }: AdmissionFormProps) {
       email: String(formData.get("email") || "").trim(),
       program: String(formData.get("program") || "").trim(),
       note: String(formData.get("note") || "").trim(),
+      website: String(formData.get("website") || "").trim(),
     };
 
     try {
@@ -80,6 +81,11 @@ export function AdmissionForm({ programs }: AdmissionFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Honeypot chống bot — ẩn khỏi mắt/tab người dùng thật, bot điền form tự động thường vẫn điền vào. */}
+      <div className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden" aria-hidden="true">
+        <label htmlFor="website">Để trống trường này</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
       <div>
         <label className={labelClass}>Họ và tên *</label>
         <input name="fullName" required className={inputClass} placeholder="Nguyễn Văn A" />

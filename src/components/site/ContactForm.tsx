@@ -25,6 +25,7 @@ export function ContactForm() {
       phone: String(formData.get("phone") || "").trim(),
       email: String(formData.get("email") || "").trim(),
       message: String(formData.get("message") || "").trim(),
+      website: String(formData.get("website") || "").trim(),
     };
 
     try {
@@ -67,6 +68,10 @@ export function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden" aria-hidden="true">
+        <label htmlFor="website">Để trống trường này</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
       <div>
         <label className={labelClass}>Họ và tên *</label>
         <input name="name" required className={inputClass} placeholder="Nguyễn Văn A" />

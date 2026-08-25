@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertPartnerAction, deletePartnerAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Đối tác" };
 
@@ -13,6 +14,7 @@ export default async function AdminPartnersPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("partners");
   const { edit } = await searchParams;
   const allPartners = await db.query.partners.findMany({
     orderBy: asc(schema.partners.sortOrder),

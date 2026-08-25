@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertFaqAction, deleteFaqAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Câu hỏi thường gặp" };
 
@@ -13,6 +14,7 @@ export default async function AdminFaqPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("faq");
   const { edit } = await searchParams;
   const allFaqs = await db.query.faqs.findMany({ orderBy: asc(schema.faqs.sortOrder) });
   const editing = edit

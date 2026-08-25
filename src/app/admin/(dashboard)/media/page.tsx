@@ -6,6 +6,7 @@ import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
 import { uploadMediaAction, deleteMediaAction } from "./actions";
 import { cn } from "@/lib/utils";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Thư viện media" };
 
@@ -25,6 +26,7 @@ export default async function AdminMediaPage({
 }: {
   searchParams: Promise<{ type?: string }>;
 }) {
+  await requirePermission("media");
   const { type } = await searchParams;
   const activeType = type === "image" || type === "video" ? type : "all";
 

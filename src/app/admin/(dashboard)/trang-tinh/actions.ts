@@ -6,8 +6,10 @@ import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { autoFillTranslations } from "@/lib/translate";
 import { resolveImageUrl } from "@/lib/media";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertPageAction(formData: FormData) {
+  await requirePermission("pages");
   const id = String(formData.get("id") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const content = String(formData.get("content") || "").trim();
@@ -68,6 +70,7 @@ export async function upsertPageAction(formData: FormData) {
 }
 
 export async function deletePageAction(pageId: string) {
+  await requirePermission("pages");
   await db.delete(schema.pages).where(eq(schema.pages.id, pageId));
   revalidatePath("/admin/trang-tinh");
 }

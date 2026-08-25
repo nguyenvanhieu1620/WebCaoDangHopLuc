@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
 import type { FacultyAttribute } from "@/lib/db/schema";
 import { createFacultyAttributeAction, deleteFacultyAttributeAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Học hàm / Học vị / Chức vụ" };
 
@@ -75,6 +76,7 @@ function AttributeSection({
 }
 
 export default async function AdminFacultyAttributesPage() {
+  await requirePermission("faculty");
   const all = await db.query.facultyAttributes.findMany({
     orderBy: asc(schema.facultyAttributes.sortOrder),
   });

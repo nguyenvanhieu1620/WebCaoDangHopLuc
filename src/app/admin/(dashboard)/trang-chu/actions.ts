@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 const STAT_COUNT = 4;
 const FEATURE_COUNT = 3;
@@ -15,6 +16,7 @@ function field(formData: FormData, name: string): string {
 }
 
 export async function updateHomepageContentAction(formData: FormData) {
+  await requirePermission("homepage");
   const heroBadge = field(formData, "heroBadge");
   const heroTitleLine1 = field(formData, "heroTitleLine1");
   const heroTitleLine2 = field(formData, "heroTitleLine2");

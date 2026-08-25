@@ -16,10 +16,17 @@ import crypto from "crypto";
 const SESSION_COOKIE_NAME = "hopluc_admin_session";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 ngày
 
+const PLACEHOLDER_SECRET = "doi-chuoi-nay-thanh-ngau-nhien-that-dai-khi-deploy";
+
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
     throw new Error("Thiếu biến môi trường SESSION_SECRET (xem .env.example)");
+  }
+  if (process.env.NODE_ENV === "production" && secret === PLACEHOLDER_SECRET) {
+    throw new Error(
+      "SESSION_SECRET vẫn là giá trị mẫu trong .env.example — đổi thành chuỗi ngẫu nhiên thật trước khi chạy production, nếu không session admin có thể bị giả mạo."
+    );
   }
   return secret;
 }

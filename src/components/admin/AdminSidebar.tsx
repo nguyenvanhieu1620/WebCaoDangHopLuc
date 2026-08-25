@@ -10,6 +10,8 @@ import { logoutAction } from "@/lib/actions/auth-actions";
 
 type AdminSidebarProps = {
   userName: string;
+  /** Danh sách module được phép truy cập — `null` = toàn quyền (hiện hết). */
+  permissions: string[] | null;
 };
 
 /**
@@ -17,16 +19,22 @@ type AdminSidebarProps = {
  * Mỗi mục trong ADMIN_NAV là 1 thực thể — có `children` thì hiện dạng khối
  * thu gọn/mở rộng được (header chỉ để bấm đóng/mở, không phải link), không
  * có `children` thì là link thẳng. Khối chứa trang đang mở tự động mở sẵn.
+ * "Dashboard" luôn hiện (mọi tài khoản đăng nhập đều xem được) — các mục
+ * còn lại lọc theo `permissions` (xem `src/lib/admin-auth.ts`).
  */
-export function AdminSidebar({ userName }: AdminSidebarProps) {
+export function AdminSidebar({ userName, permissions }: AdminSidebarProps) {
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
+  const visibleNav = ADMIN_NAV.filter(
+    (entity) => entity.key === "dashboard" || permissions === null || permissions.includes(entity.key)
+  );
+
   const [openKeys, setOpenKeys] = useState<Set<string>>(
     () =>
       new Set(
-        ADMIN_NAV.filter((entity) => entity.children?.some((c) => isActive(c.href))).map(
+        visibleNav.filter((entity) => entity.children?.some((c) => isActive(c.href))).map(
           (entity) => entity.key
         )
       )
@@ -73,7 +81,7 @@ export function AdminSidebar({ userName }: AdminSidebarProps) {
       </Link>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        {ADMIN_NAV.map((entity) => {
+        {visibleNav.map((entity) => {
           if (!entity.children) {
             const active = isActive(entity.href);
             return (

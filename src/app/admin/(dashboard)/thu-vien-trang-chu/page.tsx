@@ -7,6 +7,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertGalleryItemAction, deleteGalleryItemAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Thư viện ảnh Trang chủ" };
 
@@ -15,6 +16,7 @@ export default async function AdminGalleryPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("homepage");
   const { edit } = await searchParams;
   const allItems = await db.query.galleryItems.findMany({
     orderBy: asc(schema.galleryItems.sortOrder),

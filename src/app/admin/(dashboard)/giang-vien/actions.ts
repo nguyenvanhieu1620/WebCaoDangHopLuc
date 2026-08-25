@@ -6,8 +6,10 @@ import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { slugify } from "@/lib/utils";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertFacultyAction(formData: FormData) {
+  await requirePermission("faculty");
   const id = String(formData.get("id") || "").trim();
   const name = String(formData.get("name") || "").trim();
   const role = String(formData.get("role") || "").trim();
@@ -76,6 +78,7 @@ export async function upsertFacultyAction(formData: FormData) {
 }
 
 export async function deleteFacultyAction(facultyId: string) {
+  await requirePermission("faculty");
   await db.delete(schema.faculty).where(eq(schema.faculty.id, facultyId));
   revalidatePath("/admin/giang-vien");
   revalidatePath("/");

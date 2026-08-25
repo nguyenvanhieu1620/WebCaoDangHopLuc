@@ -1,10 +1,11 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { verifyPassword, signSession, SESSION_COOKIE_NAME, SESSION_TTL_MS } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export type LoginState = { error?: string };
 
@@ -18,6 +19,18 @@ export async function loginAction(
 
   if (!email || !password) {
     return { error: "Vui lòng nhập đầy đủ tài khoản và mật khẩu." };
+  }
+
+  // Chặn dò mật khẩu (brute-force) — giới hạn theo IP lẫn theo email, vì
+  // chỉ chặn theo IP thì 1 người dùng chung mạng (VD văn phòng) có thể vô
+  // tình bị khoá lây khi người khác gõ sai nhiều lần.
+  const headerStore = await headers();
+  const ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (
+    !checkRateLimit(`login-ip:${ip}`, 20, 10 * 60 * 1000) ||
+    !checkRateLimit(`login-email:${email}`, 5, 10 * 60 * 1000)
+  ) {
+    return { error: "Bạn thử sai quá nhiều lần, vui lòng đợi ít phút rồi thử lại." };
   }
 
   const user = await db.query.adminUsers.findFirst({

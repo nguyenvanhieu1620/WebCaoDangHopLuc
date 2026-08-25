@@ -9,6 +9,7 @@ import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { facultyDisplayName } from "@/lib/data/faculty";
 import { upsertFacultyAction, deleteFacultyAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Đội ngũ giảng viên" };
 
@@ -17,6 +18,7 @@ export default async function AdminFacultyPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("faculty");
   const { edit } = await searchParams;
   const [allFaculty, departments, attributes, mediaImages] = await Promise.all([
     db.query.faculty.findMany({ orderBy: asc(schema.faculty.sortOrder) }),

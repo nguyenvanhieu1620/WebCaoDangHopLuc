@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertHeroBannerAction(formData: FormData) {
+  await requirePermission("homepage");
   const id = String(formData.get("id") || "").trim();
   const caption = String(formData.get("caption") || "").trim();
   const linkUrl = String(formData.get("linkUrl") || "").trim();
@@ -41,6 +43,7 @@ export async function upsertHeroBannerAction(formData: FormData) {
 }
 
 export async function deleteHeroBannerAction(bannerId: string) {
+  await requirePermission("homepage");
   await db.delete(schema.heroBanners).where(eq(schema.heroBanners.id, bannerId));
   revalidatePath("/admin/banner-trang-chu");
   revalidatePath("/");

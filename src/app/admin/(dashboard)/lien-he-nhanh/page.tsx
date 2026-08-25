@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertQuickContactAction, deleteQuickContactAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Liên hệ nhanh" };
 
@@ -31,6 +32,7 @@ export default async function AdminQuickContactsPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("admissions-contact");
   const { edit } = await searchParams;
   const all = await db.query.quickContacts.findMany({ orderBy: asc(schema.quickContacts.sortOrder) });
   const editing = edit

@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertTestimonialAction(formData: FormData) {
+  await requirePermission("testimonials");
   const id = String(formData.get("id") || "").trim();
   const quote = String(formData.get("quote") || "").trim();
   const name = String(formData.get("name") || "").trim();
@@ -57,6 +59,7 @@ export async function upsertTestimonialAction(formData: FormData) {
 }
 
 export async function deleteTestimonialAction(testimonialId: string) {
+  await requirePermission("testimonials");
   await db.delete(schema.testimonials).where(eq(schema.testimonials.id, testimonialId));
   revalidatePath("/admin/danh-gia");
   revalidatePath("/");

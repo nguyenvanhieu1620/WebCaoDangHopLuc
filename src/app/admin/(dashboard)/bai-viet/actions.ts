@@ -6,8 +6,10 @@ import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function createPostAction(formData: FormData) {
+  await requirePermission("posts");
   const title = String(formData.get("title") || "").trim();
   const excerpt = String(formData.get("excerpt") || "").trim();
   const content = String(formData.get("content") || "").trim();
@@ -56,6 +58,7 @@ export async function createPostAction(formData: FormData) {
 }
 
 export async function togglePublishAction(postId: string, nextStatus: "draft" | "published") {
+  await requirePermission("posts");
   await db
     .update(schema.posts)
     .set({
@@ -70,6 +73,7 @@ export async function togglePublishAction(postId: string, nextStatus: "draft" | 
 }
 
 export async function deletePostAction(postId: string) {
+  await requirePermission("posts");
   await db.delete(schema.posts).where(eq(schema.posts.id, postId));
   revalidatePath("/admin/bai-viet");
   revalidatePath("/admin");

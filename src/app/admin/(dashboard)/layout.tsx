@@ -1,24 +1,24 @@
-import { cookies } from "next/headers";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { getCurrentAdminUser, getUserPermissions } from "@/lib/admin-auth";
 
 /**
  * Layout cho toàn bộ khu vực quản trị đã đăng nhập (route group "(dashboard)").
  * Trang đăng nhập (/admin/dang-nhap) nằm ngoài nhóm này nên không bị bọc sidebar.
  * Việc bắt buộc đăng nhập đã xử lý ở src/proxy.ts (chạy trước layout này) —
- * ở đây chỉ đọc session để hiển thị tên người dùng, không cần validate lại.
+ * ở đây đọc user đầy đủ (qua `getCurrentAdminUser`, có cache theo request) để
+ * lấy tên hiển thị + quyền, dùng lọc bớt mục sidebar mà tài khoản không có quyền.
  */
 export default async function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const session = verifySession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+  const user = await getCurrentAdminUser();
+  const permissions = user ? getUserPermissions(user) : [];
 
   return (
     <div className="flex min-h-screen bg-paper">
-      <AdminSidebar userName={session?.name ?? "Quản trị viên"} />
+      <AdminSidebar userName={user?.name ?? "Quản trị viên"} permissions={permissions} />
       <div className="flex-1">{children}</div>
     </div>
   );

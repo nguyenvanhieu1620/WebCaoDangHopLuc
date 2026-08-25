@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertNavItemAction(formData: FormData) {
+  await requirePermission("menu");
   const id = String(formData.get("id") || "").trim();
   const label = String(formData.get("label") || "").trim();
   const href = String(formData.get("href") || "").trim();
@@ -39,6 +41,7 @@ export async function upsertNavItemAction(formData: FormData) {
 }
 
 export async function deleteNavItemAction(navItemId: string) {
+  await requirePermission("menu");
   // Xoá cascade: xoá luôn mọi danh mục con thuộc danh mục to này (nếu có).
   const children = await db.query.navItems.findMany({
     where: eq(schema.navItems.parentId, navItemId),

@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertDepartmentAction(formData: FormData) {
+  await requirePermission("faculty");
   const id = String(formData.get("id") || "").trim();
   const name = String(formData.get("name") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
@@ -30,6 +32,7 @@ export async function upsertDepartmentAction(formData: FormData) {
 }
 
 export async function deleteDepartmentAction(departmentId: string) {
+  await requirePermission("faculty");
   // Xoá khoa không xoá giảng viên thuộc khoa đó — chỉ gỡ liên kết (departmentId về null).
   await db
     .update(schema.faculty)

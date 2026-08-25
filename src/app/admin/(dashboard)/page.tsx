@@ -5,7 +5,12 @@ import { desc, eq } from "drizzle-orm";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ khong_co_quyen?: string }>;
+}) {
+  const { khong_co_quyen } = await searchParams;
   const [allPosts, publishedPosts, newAdmissions, newContactMessages, recentPosts] = await Promise.all([
     db.query.posts.findMany(),
     db.query.posts.findMany({ where: eq(schema.posts.status, "published") }),
@@ -24,6 +29,11 @@ export default async function AdminDashboardPage() {
   return (
     <div>
       <AdminTopbar title="Dashboard" description="Tổng quan hệ thống website" />
+      {khong_co_quyen && (
+        <div className="mx-8 mt-6 rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
+          Tài khoản của bạn không có quyền truy cập mục vừa chọn.
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-5 p-8 sm:grid-cols-2 lg:grid-cols-4">
         {KPIS.map((k) => (
           <div key={k.label} className="rounded-2xl border border-line bg-white p-5">

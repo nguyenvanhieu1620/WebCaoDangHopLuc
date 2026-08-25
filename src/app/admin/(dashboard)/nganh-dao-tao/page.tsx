@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertProgramAction, deleteProgramAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Quản lý ngành đào tạo" };
 
@@ -13,6 +14,7 @@ export default async function AdminProgramsPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("programs");
   const { edit } = await searchParams;
   const allPrograms = await db.query.programs.findMany({
     orderBy: asc(schema.programs.createdAt),

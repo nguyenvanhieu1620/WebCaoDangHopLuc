@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertProgramAction(formData: FormData) {
+  await requirePermission("programs");
   const id = String(formData.get("id") || "").trim();
   const code = String(formData.get("code") || "").trim();
   const name = String(formData.get("name") || "").trim();
@@ -75,6 +77,7 @@ export async function upsertProgramAction(formData: FormData) {
 }
 
 export async function deleteProgramAction(programId: string) {
+  await requirePermission("programs");
   await db.delete(schema.programs).where(eq(schema.programs.id, programId));
   revalidatePath("/admin/nganh-dao-tao");
   revalidatePath("/");

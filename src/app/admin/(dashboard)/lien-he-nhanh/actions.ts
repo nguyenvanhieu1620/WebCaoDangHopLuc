@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 const VALID_TYPES = ["hotline", "zalo", "facebook", "message", "chatbot", "custom"];
 
 export async function upsertQuickContactAction(formData: FormData) {
+  await requirePermission("admissions-contact");
   const id = String(formData.get("id") || "").trim();
   const type = String(formData.get("type") || "").trim();
   const label = String(formData.get("label") || "").trim();
@@ -39,6 +41,7 @@ export async function upsertQuickContactAction(formData: FormData) {
 }
 
 export async function deleteQuickContactAction(id: string) {
+  await requirePermission("admissions-contact");
   await db.delete(schema.quickContacts).where(eq(schema.quickContacts.id, id));
   revalidatePath("/admin/lien-he-nhanh");
   revalidatePath("/", "layout");

@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertGalleryItemAction(formData: FormData) {
+  await requirePermission("homepage");
   const id = String(formData.get("id") || "").trim();
   const caption = String(formData.get("caption") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
@@ -42,6 +44,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
 }
 
 export async function deleteGalleryItemAction(itemId: string) {
+  await requirePermission("homepage");
   await db.delete(schema.galleryItems).where(eq(schema.galleryItems.id, itemId));
   revalidatePath("/admin/thu-vien-trang-chu");
   revalidatePath("/");

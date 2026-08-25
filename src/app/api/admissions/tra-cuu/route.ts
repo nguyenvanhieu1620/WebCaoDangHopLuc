@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 /**
  * API tra cứu kết quả xét tuyển công khai ở /tra-cuu-ket-qua — nhập CCCD,
@@ -15,6 +16,15 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
+  // Giới hạn lỏng hơn form gửi dữ liệu vì tra cứu là thao tác đọc hợp lệ có
+  // thể lặp lại, nhưng vẫn cần chặn dò quét số CCCD hàng loạt.
+  if (!checkRateLimit(`lookup:${getClientIp(request)}`, 20, 10 * 60 * 1000)) {
+    return NextResponse.json(
+      { ok: false, error: "Bạn tra cứu quá nhiều lần, vui lòng thử lại sau ít phút." },
+      { status: 429 }
+    );
+  }
+
   const body = (await request.json()) as { idNumber?: string };
   const idNumber = (body.idNumber || "").trim();
 

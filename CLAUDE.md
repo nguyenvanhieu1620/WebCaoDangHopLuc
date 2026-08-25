@@ -551,6 +551,87 @@ bảng riêng:
   ở nơi khác (header, footer) — chỉ riêng widget nổi góc màn hình là đổi
   sang đọc từ `quick_contacts`.
 
+### Rà soát trước khi đưa web lên mạng thật — bảo mật/SEO cơ bản
+Người dùng yêu cầu đánh giá tổng thể xem site "đã ổn chưa" trước khi công
+bố — đã xử lý 5 hạng mục ưu tiên cao tìm được (nội dung/ảnh thật vẫn chờ
+người dùng tự điền, xem mục 7 mục 2):
+
+- **Chống spam form công khai** — `src/lib/rate-limit.ts` (bộ đếm trong bộ
+  nhớ theo IP, không cần Redis) áp dụng cho `/api/admissions` (5 lần/10
+  phút), `/api/contact` (5 lần/10 phút), `/api/admissions/tra-cuu` (20
+  lần/10 phút — lỏng hơn vì tra cứu là thao tác đọc hợp lệ lặp lại được,
+  nhưng vẫn cần chặn dò quét CCCD hàng loạt). Kèm **honeypot** field ẩn
+  (`website`) ở `AdmissionForm`/`ContactForm` — bot tự động điền form
+  thường điền cả field ẩn này, server nhận diện rồi giả vờ thành công
+  (không lộ cho bot biết bị chặn) mà không ghi gì vào DB.
+- **SEO cơ bản** — `src/app/robots.ts` + `src/app/sitemap.ts` (tự sinh từ
+  DB: bài viết/ngành đào tạo/giảng viên/trang Công khai, không cần cập
+  nhật tay), `src/app/opengraph-image.tsx` (ảnh chia sẻ Facebook/Zalo,
+  dựng bằng `next/og` — không cần thiết kế ảnh tĩnh riêng), thêm
+  `openGraph`/`twitter`/`metadataBase` vào `src/app/layout.tsx`. Cần biến
+  môi trường mới **`NEXT_PUBLIC_SITE_URL`** (xem `.env.example`) — domain
+  thật, **nhớ set trước khi deploy** (mặc định tạm `localhost` lúc dev).
+- **Header bảo mật cơ bản** — `next.config.js` thêm
+  X-Frame-Options/X-Content-Type-Options/Referrer-Policy/Permissions-Policy
+  cho mọi route. **Cố ý chưa thêm CSP** (Content-Security-Policy) — cấu
+  hình sai dễ tự làm vỡ site (chặn nhầm Google Fonts, inline style
+  Tailwind...) hơn là lợi ích thực tế ở quy mô 1 trường, để dành làm sau
+  nếu cần, kỹ hơn và có test đầy đủ.
+- **Chặn chạy production với `SESSION_SECRET` mẫu** — `src/lib/auth.ts`
+  `getSecret()` giờ throw lỗi rõ ràng nếu `NODE_ENV=production` mà secret
+  vẫn đúng y chuỗi mẫu trong `.env.example` — tránh quên đổi rồi session
+  admin bị giả mạo được.
+- **Chặn dò mật khẩu đăng nhập admin** — phát hiện ở lượt rà soát lại lần 2
+  (sau khi đã có nhiều tài khoản qua `admin/nguoi-dung`, form đăng nhập vẫn
+  không giới hạn số lần thử): `loginAction`
+  (`src/lib/actions/auth-actions.ts`) dùng lại `checkRateLimit` — giới hạn
+  theo **cả IP lẫn email** riêng (5 lần/10 phút theo email, 20 lần/10 phút
+  theo IP) để 1 người gõ sai nhiều lần không khoá lây người khác chung
+  mạng. Đã test qua trình duyệt thật: 4 lần sai đầu hiện "Sai tài khoản
+  hoặc mật khẩu", lần 5-6 chuyển sang thông báo chặn tạm thời.
+
+### Phân quyền admin theo module (`admin_users.permissions`)
+Site sẽ có nhiều người dùng cùng vào khu vực quản trị — người dùng yêu cầu
+rõ cần tạo tài khoản + phân quyền, chọn phương án **chi tiết theo từng
+module** (không phải 2-3 cấp vai trò cố định):
+
+- **`admin_users.permissions`**: cột mới, mảng JSON các module key (VD
+  `["posts","faculty"]`). **`NULL` = toàn quyền** — mọi tài khoản tạo
+  trước khi có tính năng này (kể cả tài khoản seed) giữ nguyên `NULL` qua
+  migration, không tự nhiên bị khoá quyền khi nâng cấp lên bản có phân
+  quyền. Tài khoản tạo mới qua `admin/nguoi-dung` luôn có mảng cụ thể.
+- **Danh sách module = `PERMISSION_MODULES`** (`src/lib/constants.ts`) —
+  lấy thẳng từ `ADMIN_NAV` (trừ `dashboard`, ai đăng nhập cũng thấy) nên
+  luôn khớp 1-1 với sidebar, **không khai báo trùng danh sách module ở 2
+  nơi**. Thêm 1 entity mới vào `ADMIN_NAV` là tự động có thêm 1 module để
+  phân quyền, không cần sửa gì thêm.
+- **`src/lib/admin-auth.ts`** — lớp phân quyền dùng chung:
+  `getCurrentAdminUser()` (bọc `cache()` của React — 1 request dù gọi ở cả
+  layout lẫn page cũng chỉ query DB đúng 1 lần), `hasPermission(user, key)`,
+  và `requirePermission(key)` — gọi ở **đầu MỌI `page.tsx` VÀ MỌI hàm
+  trong `actions.ts` cần giới hạn quyền** (chặn ở cả 2 lớp: render trang
+  lẫn gọi thẳng Server Action, vì Server Action gọi được độc lập không chỉ
+  qua render trang). Đã áp dụng cho toàn bộ 20 trang admin hiện có +
+  tương ứng actions.ts (trừ `admin/page.tsx` Dashboard và trang đăng
+  nhập — ai đăng nhập cũng xem được Dashboard).
+- **`AdminSidebar.tsx`** lọc `ADMIN_NAV` theo `permissions` nhận từ layout
+  (`admin/(dashboard)/layout.tsx` gọi `getCurrentAdminUser()` 1 lần, truyền
+  xuống) — mục nào không có quyền thì **không hiện trong sidebar**, đồng
+  thời `requirePermission()` vẫn chặn nếu cố vào thẳng URL.
+- **`admin/nguoi-dung`** (module key `users`) — CRUD tài khoản, checkbox
+  chọn từng module. Có 2 lớp chống tự khoá quyền của chính mình: (1) form
+  luôn ép quyền `users` phải còn trong danh sách khi tự sửa tài khoản đang
+  đăng nhập (server-side, không tin ô checkbox bị disable ở client vì input
+  `disabled` không được gửi lên trong `FormData`), (2) không cho xoá tài
+  khoản `users` cuối cùng còn lại trong hệ thống, không cho tự xoá chính
+  mình.
+- **Không phải mọi dữ liệu nhạy cảm được che 100%** — Dashboard (mọi tài
+  khoản đăng nhập đều xem) vẫn hiện số lượng hồ sơ tuyển sinh/tin nhắn mới
+  dạng con số tổng (không phải chi tiết CCCD/tên) — chấp nhận được vì đây
+  là số liệu tổng hợp thông thường của 1 khối KPI, dữ liệu chi tiết thật sự
+  nhạy cảm vẫn nằm sau `requirePermission("admissions-contact")` ở
+  `admin/tuyen-sinh`/`admin/lien-he`.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -565,6 +646,12 @@ bảng riêng:
 8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ).
 9. **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file.
 10. **Danh sách có thứ tự hiển thị** (`partners`, `gallery_items`, `faculty`, `testimonials`): dùng cột `sortOrder` nhập tay, sort bằng `asc(schema.<table>.sortOrder)` ở data layer — không thêm thư viện kéo-thả.
+11. **Trang admin mới cần phân quyền**: thêm entity vào `ADMIN_NAV`
+    (`src/lib/constants.ts`, tự trở thành 1 module chọn được ở
+    `admin/nguoi-dung`), rồi gọi `await requirePermission("<key>")` ở dòng
+    đầu tiên trong thân **cả `page.tsx` lẫn mọi hàm trong `actions.ts`**
+    tương ứng (2 lớp — chặn cả lúc render trang lẫn lúc gọi thẳng Server
+    Action) — xem mục 5 "Phân quyền admin theo module".
 
 ---
 
@@ -576,6 +663,14 @@ bảng riêng:
 4. Khi các trang xong hết (đã xong) → thực hiện chuyển DB sang PostgreSQL theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c). Đây giờ là hạng mục ưu tiên cao nhất còn lại trước khi đưa web lên mạng cho người dùng thật.
 5. ~~Đợt "hiệu ứng"~~ — **XONG 4/4 hạng mục đã chốt** (xem mục 5 "Đợt 'hiệu ứng' Trang chủ"): banner crossfade, scroll reveal, count-up số liệu, nút liên hệ nhanh xoè/thu. Còn có thể cân nhắc thêm sau nếu người dùng muốn: hover tinh tế hơn ở card, transition mượt khi chuyển trang (View Transitions API) — **hỏi lại phạm vi cụ thể trước khi làm thêm**, đừng tự suy đoán.
 6. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
+7. ~~Rà soát bảo mật/SEO trước khi public + Phân quyền admin~~ — **XONG**
+   (xem mục 5 "Rà soát trước khi đưa web lên mạng thật" + "Phân quyền admin
+   theo module"): chống spam form, robots/sitemap/OG image, header bảo
+   mật cơ bản, chặn chạy production với `SESSION_SECRET` mẫu, tạo tài
+   khoản + phân quyền theo module qua `admin/nguoi-dung`. Còn thiếu (mục 2
+   ở trên, cần người dùng tự làm): nội dung/ảnh thật, điền số liệu "3 công
+   khai". Cân nhắc thêm sau nếu cần: CSP, email thông báo khi có hồ sơ/tin
+   nhắn mới, Google Analytics.
 
 ---
 
@@ -602,6 +697,19 @@ npm run dev
 Email:    admin@hopluc.edu.vn
 Mật khẩu: HopLuc@2026
 ```
+Tài khoản này giữ `permissions = NULL` (toàn quyền, xem mục 5 "Phân quyền
+admin theo module") — tạo thêm tài khoản khác qua `admin/nguoi-dung` khi
+có nhiều người cùng vào quản trị, mỗi tài khoản tự chọn được truy cập
+module nào.
+
+### Trước khi deploy production — đừng quên
+- Đổi `SESSION_SECRET` sang chuỗi ngẫu nhiên thật (`getSecret()` ở
+  `src/lib/auth.ts` sẽ tự throw lỗi nếu quên, chặn chạy production với
+  giá trị mẫu).
+- Set `NEXT_PUBLIC_SITE_URL` thành domain thật (dùng cho sitemap/robots/Open
+  Graph — xem `.env.example`).
+- Đổi mật khẩu tài khoản admin demo ở trên (hoặc tạo tài khoản mới qua
+  `admin/nguoi-dung` rồi xoá tài khoản demo).
 
 ### Các lệnh khác
 ```bash

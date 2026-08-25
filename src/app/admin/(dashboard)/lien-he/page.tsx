@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
 import { formatVNDateTime } from "@/lib/utils";
 import { markContactMessageAction, deleteContactMessageAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Tin nhắn liên hệ" };
 
@@ -19,6 +20,7 @@ export default async function AdminContactMessagesPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requirePermission("admissions-contact");
   const { status } = await searchParams;
   const activeStatus = status === "new" || status === "read" ? status : "all";
 

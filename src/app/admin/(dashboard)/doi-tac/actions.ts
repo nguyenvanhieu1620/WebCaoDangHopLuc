@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertPartnerAction(formData: FormData) {
+  await requirePermission("partners");
   const id = String(formData.get("id") || "").trim();
   const name = String(formData.get("name") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
@@ -29,6 +31,7 @@ export async function upsertPartnerAction(formData: FormData) {
 }
 
 export async function deletePartnerAction(partnerId: string) {
+  await requirePermission("partners");
   await db.delete(schema.partners).where(eq(schema.partners.id, partnerId));
   revalidatePath("/admin/doi-tac");
   revalidatePath("/");

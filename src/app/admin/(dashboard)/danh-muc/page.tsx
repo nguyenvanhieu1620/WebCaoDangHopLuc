@@ -5,10 +5,12 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
 import { createCategoryAction, deleteCategoryAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Danh mục bài viết" };
 
 export default async function AdminCategoriesPage() {
+  await requirePermission("posts");
   const categories = await db.query.categories.findMany({ orderBy: asc(schema.categories.name) });
 
   return (

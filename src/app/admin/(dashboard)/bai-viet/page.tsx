@@ -7,6 +7,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { createPostAction, togglePublishAction, deletePostAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Quản lý bài viết" };
 
@@ -21,6 +22,7 @@ export default async function AdminPostsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
+  await requirePermission("posts");
   const { q, status } = await searchParams;
   const activeStatus = status === "published" || status === "draft" ? status : "all";
 

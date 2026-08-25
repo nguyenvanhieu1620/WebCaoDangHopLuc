@@ -4,10 +4,12 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { updateSiteSettingsAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Cài đặt chung" };
 
 export default async function AdminSiteSettingsPage() {
+  await requirePermission("site-settings");
   const settings = await db.query.siteSettings.findFirst({
     where: eq(schema.siteSettings.id, "main"),
   });

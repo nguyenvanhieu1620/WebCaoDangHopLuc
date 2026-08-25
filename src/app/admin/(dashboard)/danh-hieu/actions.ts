@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export type FacultyAttributeType = "academic_rank" | "degree" | "position";
 
 export async function createFacultyAttributeAction(formData: FormData) {
+  await requirePermission("faculty");
   const type = String(formData.get("type") || "").trim() as FacultyAttributeType;
   const name = String(formData.get("name") || "").trim();
   if (!name || !["academic_rank", "degree", "position"].includes(type)) return;
@@ -29,6 +31,7 @@ export async function createFacultyAttributeAction(formData: FormData) {
 }
 
 export async function deleteFacultyAttributeAction(id: string) {
+  await requirePermission("faculty");
   await db.delete(schema.facultyAttributes).where(eq(schema.facultyAttributes.id, id));
   revalidatePath("/admin/danh-hieu");
   revalidatePath("/admin/giang-vien");

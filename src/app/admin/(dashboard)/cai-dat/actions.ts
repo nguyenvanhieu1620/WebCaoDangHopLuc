@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function updateSiteSettingsAction(formData: FormData) {
+  await requirePermission("site-settings");
   const hotline = String(formData.get("hotline") || "").trim();
   const email = String(formData.get("email") || "").trim();
   const address = String(formData.get("address") || "").trim();

@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { desc, eq } from "drizzle-orm";
 import { updateHomepageContentAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 type ArrayItem = Record<string, string>;
 
@@ -35,6 +36,7 @@ function FormSection({ title, children }: { title: string; children: React.React
 }
 
 export default async function AdminHomepagePage() {
+  await requirePermission("homepage");
   const [row, mediaImages] = await Promise.all([
     db.query.homepageContent.findFirst({ where: eq(schema.homepageContent.id, "main") }),
     db.query.mediaItems.findMany({

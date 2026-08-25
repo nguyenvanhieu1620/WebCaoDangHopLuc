@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertDepartmentAction, deleteDepartmentAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Khoa / Bộ môn" };
 
@@ -13,6 +14,7 @@ export default async function AdminDepartmentsPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("faculty");
   const { edit } = await searchParams;
   const [allDepartments, allFaculty] = await Promise.all([
     db.query.departments.findMany({ orderBy: asc(schema.departments.sortOrder) }),

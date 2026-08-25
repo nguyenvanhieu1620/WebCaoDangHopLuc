@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertFaqAction(formData: FormData) {
+  await requirePermission("faq");
   const id = String(formData.get("id") || "").trim();
   const question = String(formData.get("question") || "").trim();
   const answer = String(formData.get("answer") || "").trim();
@@ -46,6 +48,7 @@ export async function upsertFaqAction(formData: FormData) {
 }
 
 export async function deleteFaqAction(faqId: string) {
+  await requirePermission("faq");
   await db.delete(schema.faqs).where(eq(schema.faqs.id, faqId));
   revalidatePath("/admin/faq");
   revalidatePath("/faq");

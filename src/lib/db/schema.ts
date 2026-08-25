@@ -23,6 +23,15 @@ export const adminUsers = sqliteTable("admin_users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
+  /**
+   * Mảng JSON các module được phép truy cập (VD `["posts","programs"]`) —
+   * xem danh sách module ở `PERMISSION_MODULES` trong `src/lib/constants.ts`.
+   * `NULL` = toàn quyền (mọi tài khoản tạo trước khi có tính năng phân quyền
+   * đều giữ nguyên `NULL` qua migration, tự động không bị khoá quyền truy cập
+   * khi nâng cấp) — tài khoản mới tạo qua admin/nguoi-dung luôn có mảng cụ
+   * thể, không bao giờ để `NULL`.
+   */
+  permissions: text("permissions"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),

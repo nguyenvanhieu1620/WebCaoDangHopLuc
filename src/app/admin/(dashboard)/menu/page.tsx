@@ -5,6 +5,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import { upsertNavItemAction, deleteNavItemAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Menu chính" };
 
@@ -13,6 +14,7 @@ export default async function AdminMenuPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("menu");
   const { edit } = await searchParams;
   const allItems = await db.query.navItems.findMany({
     orderBy: asc(schema.navItems.sortOrder),

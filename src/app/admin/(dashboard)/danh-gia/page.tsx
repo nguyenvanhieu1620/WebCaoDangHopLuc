@@ -7,6 +7,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertTestimonialAction, deleteTestimonialAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Đánh giá cựu sinh viên" };
 
@@ -15,6 +16,7 @@ export default async function AdminTestimonialsPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("testimonials");
   const { edit } = await searchParams;
   const allTestimonials = await db.query.testimonials.findMany({
     orderBy: asc(schema.testimonials.sortOrder),

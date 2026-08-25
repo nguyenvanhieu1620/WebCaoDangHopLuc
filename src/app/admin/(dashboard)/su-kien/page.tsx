@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { formatVNDateTime } from "@/lib/utils";
 import { upsertEventAction, deleteEventAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Sự kiện" };
 
@@ -24,6 +25,7 @@ export default async function AdminEventsPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("events");
   const { edit } = await searchParams;
   const allEvents = await db.query.events.findMany({ orderBy: desc(schema.events.startAt) });
   const editing = edit

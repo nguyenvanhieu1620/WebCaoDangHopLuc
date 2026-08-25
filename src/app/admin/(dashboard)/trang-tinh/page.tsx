@@ -7,6 +7,7 @@ import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertPageAction, deletePageAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Quản lý trang tĩnh" };
 
@@ -15,6 +16,7 @@ export default async function AdminPagesPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("pages");
   const { edit } = await searchParams;
   const allPages = await db.query.pages.findMany({
     orderBy: asc(schema.pages.title),

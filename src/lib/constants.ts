@@ -15,6 +15,16 @@ export const SITE = {
 };
 
 /**
+ * Domain thật để sinh sitemap/robots/Open Graph — đọc từ biến môi trường
+ * `NEXT_PUBLIC_SITE_URL` (xem `.env.example`). Chưa cấu hình thì tạm dùng
+ * localhost, KHÔNG đúng cho production — nhớ set biến này khi deploy thật.
+ */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
+  /\/$/,
+  ""
+);
+
+/**
  * Menu chính của website công khai giờ quản lý qua bảng `nav_items` trong DB
  * (CMS admin/menu) — KHÔNG còn mảng tĩnh ở đây. Lấy dữ liệu qua
  * src/lib/data/nav.ts (page/component không gọi `db` trực tiếp).
@@ -81,7 +91,17 @@ export const ADMIN_NAV: AdminNavEntity[] = [
     ],
   },
   { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat" },
+  { key: "users", label: "Người dùng", href: "/admin/nguoi-dung" },
 ];
+
+/**
+ * Danh sách module để tick chọn khi phân quyền 1 tài khoản (xem
+ * `admin/nguoi-dung`) — lấy thẳng từ `ADMIN_NAV` (trừ Dashboard, ai đăng
+ * nhập cũng thấy) nên luôn khớp 1-1 với sidebar, không cần khai báo trùng.
+ */
+export const PERMISSION_MODULES: { key: string; label: string }[] = ADMIN_NAV.filter(
+  (entity) => entity.key !== "dashboard"
+).map((entity) => ({ key: entity.key, label: entity.label }));
 
 /**
  * Danh sách ngành đào tạo giờ quản lý qua bảng `programs` trong DB (CMS

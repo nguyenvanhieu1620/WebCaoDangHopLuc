@@ -3,6 +3,7 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
 import { updateAdmissionStatusAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Đăng ký tuyển sinh" };
 
@@ -30,6 +31,7 @@ export default async function AdminAdmissionsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
+  await requirePermission("admissions-contact");
   const { q, status } = await searchParams;
   const activeStatus =
     status === "new" || status === "reviewed" || status === "contacted" ? status : "all";

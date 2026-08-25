@@ -7,6 +7,7 @@ import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertHeroBannerAction, deleteHeroBannerAction } from "./actions";
+import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Banner Trang chủ" };
 
@@ -15,6 +16,7 @@ export default async function AdminHeroBannerPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await requirePermission("homepage");
   const { edit } = await searchParams;
   const allBanners = await db.query.heroBanners.findMany({
     orderBy: asc(schema.heroBanners.sortOrder),

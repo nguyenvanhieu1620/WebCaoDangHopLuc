@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
+import { requirePermission } from "@/lib/admin-auth";
 
 export async function upsertEventAction(formData: FormData) {
+  await requirePermission("events");
   const id = String(formData.get("id") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
@@ -59,6 +61,7 @@ export async function upsertEventAction(formData: FormData) {
 }
 
 export async function deleteEventAction(eventId: string) {
+  await requirePermission("events");
   await db.delete(schema.events).where(eq(schema.events.id, eventId));
   revalidatePath("/admin/su-kien");
   revalidatePath("/su-kien");
