@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { sendEmail, escapeHtml } from "@/lib/email";
 
 /**
  * API route cho form "Liên hệ" ở trang /lien-he.
@@ -46,6 +47,24 @@ export async function POST(request: Request) {
       message: body.message,
     })
     .returning();
+
+  const settings = await db.query.siteSettings.findFirst({
+    where: (s, { eq }) => eq(s.id, "main"),
+  });
+  if (settings?.email) {
+    await sendEmail({
+      to: settings.email,
+      subject: `Tin nhắn liên hệ mới — ${created.name}`,
+      html: `<p><strong>Có tin nhắn liên hệ mới từ website:</strong></p>
+        <ul>
+          <li>Họ tên: ${escapeHtml(created.name)}</li>
+          <li>Số điện thoại: ${created.phone ? escapeHtml(created.phone) : "(không có)"}</li>
+          <li>Email: ${created.email ? escapeHtml(created.email) : "(không có)"}</li>
+        </ul>
+        <p>Nội dung: ${escapeHtml(created.message)}</p>
+        <p>Xem chi tiết tại admin/lien-he.</p>`,
+    });
+  }
 
   return NextResponse.json({ ok: true, message: "Đã gửi liên hệ.", id: created.id });
 }

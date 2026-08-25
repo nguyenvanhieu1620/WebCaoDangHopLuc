@@ -3,6 +3,7 @@ import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SITE, SITE_URL } from "@/lib/constants";
 import { getLocale } from "@/lib/locale";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 const fraunces = Fraunces({
   subsets: ["latin", "vietnamese"],
@@ -57,9 +58,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const locale = await getLocale();
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   return (
     <html lang={locale} className={`${fraunces.variable} ${inter.variable} ${plexMono.variable}`}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        {gaId && <GoogleAnalytics measurementId={gaId} />}
+      </body>
     </html>
   );
 }

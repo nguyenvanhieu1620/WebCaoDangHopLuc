@@ -11,10 +11,11 @@ import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isLoginPage = pathname === "/admin/dang-nhap";
+  const PUBLIC_ADMIN_PATHS = ["/admin/dang-nhap", "/admin/quen-mat-khau", "/admin/dat-lai-mat-khau"];
+  const isPublicAdminPage = PUBLIC_ADMIN_PATHS.includes(pathname);
   const isAdminArea = pathname.startsWith("/admin");
 
-  if (isAdminArea && !isLoginPage) {
+  if (isAdminArea && !isPublicAdminPage) {
     const cookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     const session = verifySession(cookie);
 

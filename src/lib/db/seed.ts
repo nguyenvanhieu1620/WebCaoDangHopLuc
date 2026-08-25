@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "./client";
 import { slugify } from "../utils";
+import { autoFillTranslations } from "../translate";
 import {
   adminUsers,
   posts,
@@ -213,6 +214,112 @@ async function main() {
     if (row && !row.nameEn) {
       await db.update(programs).set(t).where(eq(programs.id, row.id));
     }
+  }
+
+  // Nội dung chi tiết ngành đào tạo (cho trang /nganh-dao-tao/[slug]) —
+  // nội dung THAM KHẢO/DEMO mô tả chương trình học nói chung (không phải
+  // số liệu/cam kết chính thức của trường), backfill idempotent (chỉ set
+  // khi `content` đang trống, không ghi đè nếu admin đã tự nhập).
+  const programContent: Record<string, string> = {
+    "dieu-duong": `## Mục tiêu đào tạo
+Đào tạo Điều dưỡng viên có kiến thức chuyên môn vững, kỹ năng chăm sóc người bệnh toàn diện, thành thạo quy trình điều dưỡng và có khả năng làm việc độc lập lẫn phối hợp trong nhóm chăm sóc sức khoẻ.
+
+## Nội dung chương trình
+- Giải phẫu — sinh lý, Dược lý, Bệnh học cơ sở
+- Điều dưỡng cơ bản, Điều dưỡng nội khoa, ngoại khoa, sản — nhi
+- Kỹ năng giao tiếp và chăm sóc người bệnh
+- Quản lý điều dưỡng, kiểm soát nhiễm khuẩn
+
+## Thực hành lâm sàng
+Thực tập tại các khoa lâm sàng của bệnh viện đối tác ngay từ năm 2, dưới sự hướng dẫn của điều dưỡng trưởng và giảng viên lâm sàng.
+
+## Cơ hội nghề nghiệp
+Làm việc tại các khoa lâm sàng bệnh viện công/tư, phòng khám, trung tâm y tế, hoặc tiếp tục học liên thông lên Đại học Điều dưỡng.`,
+    duoc: `## Mục tiêu đào tạo
+Đào tạo Dược sĩ trình độ Cao đẳng nắm vững kiến thức bào chế, quản lý dược và tư vấn sử dụng thuốc an toàn, hợp lý cho người dân.
+
+## Nội dung chương trình
+- Hoá dược, Dược liệu, Bào chế và sinh dược học
+- Dược lý, Dược lâm sàng, Quản lý và kinh tế dược
+- Pháp chế dược, Đảm bảo chất lượng thuốc
+
+## Thực hành nghề nghiệp
+Thực tập tại nhà thuốc, khoa dược bệnh viện và cơ sở sản xuất dược phẩm — rèn kỹ năng tư vấn, cấp phát và quản lý thuốc thực tế.
+
+## Cơ hội nghề nghiệp
+Làm việc tại nhà thuốc, khoa dược bệnh viện, công ty dược phẩm (sản xuất, phân phối, trình dược), hoặc học liên thông lên Đại học Dược.`,
+    "xet-nghiem-y-hoc": `## Mục tiêu đào tạo
+Đào tạo Kỹ thuật viên xét nghiệm y học thành thạo các kỹ thuật xét nghiệm huyết học, sinh hoá, vi sinh, giải phẫu bệnh phục vụ chẩn đoán và điều trị.
+
+## Nội dung chương trình
+- Hoá sinh, Vi sinh, Huyết học — truyền máu
+- Kỹ thuật xét nghiệm cơ bản và chuyên sâu
+- Kiểm soát chất lượng xét nghiệm, An toàn sinh học phòng xét nghiệm
+
+## Thực hành lâm sàng
+Thực tập tại khoa xét nghiệm các bệnh viện, làm quen với hệ thống máy móc xét nghiệm hiện đại đang sử dụng trong thực tế.
+
+## Cơ hội nghề nghiệp
+Làm việc tại khoa xét nghiệm bệnh viện, trung tâm y tế dự phòng, phòng xét nghiệm tư nhân, hoặc học liên thông lên Đại học Kỹ thuật Y học.`,
+    "ho-sinh": `## Mục tiêu đào tạo
+Đào tạo Hộ sinh viên có năng lực chăm sóc sức khoẻ sinh sản phụ nữ, theo dõi thai kỳ và hỗ trợ sinh nở an toàn cho mẹ và bé.
+
+## Nội dung chương trình
+- Sản phụ khoa, Chăm sóc sức khoẻ sinh sản
+- Kỹ năng đỡ đẻ, chăm sóc sơ sinh
+- Kế hoạch hoá gia đình, Giáo dục sức khoẻ cộng đồng
+
+## Thực hành lâm sàng
+Thực tập tại khoa sản các bệnh viện, trực tiếp tham gia hỗ trợ theo dõi thai sản dưới sự giám sát của hộ sinh và bác sĩ hướng dẫn.
+
+## Cơ hội nghề nghiệp
+Làm việc tại khoa sản bệnh viện, trạm y tế, trung tâm chăm sóc sức khoẻ sinh sản, hoặc học liên thông lên Đại học Hộ sinh.`,
+    "phuc-hoi-chuc-nang": `## Mục tiêu đào tạo
+Đào tạo Kỹ thuật viên Phục hồi chức năng có khả năng đánh giá, xây dựng và thực hiện chương trình vật lý trị liệu — phục hồi vận động cho người bệnh.
+
+## Nội dung chương trình
+- Giải phẫu vận động, Vật lý trị liệu đại cương
+- Phục hồi chức năng thần kinh, cơ — xương — khớp
+- Dụng cụ chỉnh hình, hỗ trợ vận động
+
+## Thực hành lâm sàng
+Thực tập tại khoa Phục hồi chức năng bệnh viện, trực tiếp hỗ trợ tập luyện cho người bệnh sau chấn thương, phẫu thuật, đột quỵ.
+
+## Cơ hội nghề nghiệp
+Làm việc tại khoa Phục hồi chức năng bệnh viện, trung tâm vật lý trị liệu, hoặc học liên thông lên Đại học Kỹ thuật Phục hồi chức năng.`,
+    "y-si-da-khoa": `## Mục tiêu đào tạo
+Đào tạo Y sĩ đa khoa có khả năng khám, chẩn đoán và điều trị các bệnh thông thường, xử trí ban đầu cấp cứu tại tuyến y tế cơ sở.
+
+## Nội dung chương trình
+- Giải phẫu — sinh lý, Bệnh học nội — ngoại — sản — nhi
+- Chẩn đoán và điều trị bệnh thông thường
+- Sơ cấp cứu, Y học cộng đồng
+
+## Thực hành lâm sàng
+Thực tập tại các khoa lâm sàng bệnh viện và trạm y tế xã/phường, làm quen với thực tế khám chữa bệnh tại tuyến cơ sở.
+
+## Cơ hội nghề nghiệp
+Làm việc tại trạm y tế xã/phường, phòng khám đa khoa, hoặc học liên thông lên Đại học Y.`,
+  };
+  const programContentPairs: { slug: string; vi: string }[] = [];
+  for (const [slug, content] of Object.entries(programContent)) {
+    const row = await db.query.programs.findFirst({ where: (p, { eq }) => eq(p.slug, slug) });
+    if (row && !row.content) programContentPairs.push({ slug, vi: content });
+  }
+  if (programContentPairs.length > 0) {
+    const translatedContents = await autoFillTranslations(
+      programContentPairs.map((p) => ({ vi: p.vi, en: "" }))
+    );
+    for (let i = 0; i < programContentPairs.length; i++) {
+      const { slug, vi } = programContentPairs[i];
+      await db
+        .update(programs)
+        .set({ content: vi, contentEn: translatedContents[i] || null })
+        .where(eq(programs.slug, slug));
+    }
+    console.log(`✓ Backfill nội dung chi tiết cho ${programContentPairs.length} ngành đào tạo`);
+  } else {
+    console.log("• Ngành đào tạo đã có nội dung chi tiết, bỏ qua backfill.");
   }
 
   // Cài đặt chung của site (hotline, email, địa chỉ, banner, mạng xã hội)

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { sendEmail, escapeHtml } from "@/lib/email";
 
 /**
  * API route cho form "Đăng ký xét tuyển" ở trang /tuyen-sinh.
@@ -52,6 +53,26 @@ export async function POST(request: Request) {
       note: body.note || null,
     })
     .returning();
+
+  const settings = await db.query.siteSettings.findFirst({
+    where: (s, { eq }) => eq(s.id, "main"),
+  });
+  if (settings?.email) {
+    await sendEmail({
+      to: settings.email,
+      subject: `Hồ sơ tuyển sinh mới — ${created.fullName}`,
+      html: `<p><strong>Có hồ sơ đăng ký xét tuyển mới từ website:</strong></p>
+        <ul>
+          <li>Họ tên: ${escapeHtml(created.fullName)}</li>
+          <li>Số điện thoại: ${escapeHtml(created.phone)}</li>
+          <li>Số CCCD: ${created.idNumber ? escapeHtml(created.idNumber) : "(không có)"}</li>
+          <li>Email: ${created.email ? escapeHtml(created.email) : "(không có)"}</li>
+          <li>Ngành quan tâm: ${escapeHtml(created.program)}</li>
+          ${created.note ? `<li>Ghi chú: ${escapeHtml(created.note)}</li>` : ""}
+        </ul>
+        <p>Xem chi tiết tại admin/tuyen-sinh.</p>`,
+    });
+  }
 
   return NextResponse.json({ ok: true, message: "Đã nhận hồ sơ đăng ký.", id: created.id });
 }

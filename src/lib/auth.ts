@@ -81,4 +81,44 @@ export function verifySession(cookieValue: string | undefined): SessionPayload |
   }
 }
 
+const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 phút — đủ dùng, không để link reset sống quá lâu
+
+export type ResetTokenPayload = { userId: string; exp: number };
+
+/**
+ * Token đặt lại mật khẩu — cùng cơ chế HMAC như session nhưng KHÔNG dùng
+ * chung với session (namespace riêng qua tiền tố "reset:" khi ký) để 1 token
+ * loại này không thể bị hiểu nhầm/dùng thay session hay ngược lại.
+ */
+export function signResetToken(userId: string): string {
+  const payload: ResetTokenPayload = { userId, exp: Date.now() + RESET_TOKEN_TTL_MS };
+  const json = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = crypto.createHmac("sha256", getSecret()).update(`reset:${json}`).digest("hex");
+  return `${json}.${signature}`;
+}
+
+export function verifyResetToken(token: string): ResetTokenPayload | null {
+  const [json, signature] = token.split(".");
+  if (!json || !signature) return null;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", getSecret())
+    .update(`reset:${json}`)
+    .digest("hex");
+
+  const sigBuf = Buffer.from(signature);
+  const expBuf = Buffer.from(expectedSignature);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(json, "base64url").toString()) as ResetTokenPayload;
+    if (payload.exp < Date.now()) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export { SESSION_COOKIE_NAME, SESSION_TTL_MS };

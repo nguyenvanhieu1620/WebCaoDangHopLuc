@@ -737,6 +737,95 @@ xuống thấp:
   sang trang chi tiết ngành** — giờ trang chi tiết đã có thật (mục đầu
   tiên ở trên), đã thêm link tên ngành trỏ `/nganh-dao-tao/{slug}`.
 
+### Nội dung demo + nhóm nâng cấp nhỏ đã hoãn (404/lỗi, CSP, email, GA)
+Sau khi rà soát xong, người dùng yêu cầu tiếp 2 việc: (1) tự lấy dữ liệu
+demo cho các phần đang trống, và (2) làm nốt nhóm nâng cấp nhỏ từng nêu
+nhưng cố tình hoãn ở đợt rà soát bảo mật đầu tiên.
+
+**Dữ liệu demo — chỉ làm phần nội dung chữ, KHÔNG làm phần ảnh:**
+- Backfill `content`/`content_en` cho cả 6 ngành đào tạo (mục tiêu đào
+  tạo, nội dung chương trình, thực hành lâm sàng, cơ hội nghề nghiệp) —
+  `src/lib/db/seed.ts`, idempotent (chỉ set khi `content` đang trống),
+  dùng `autoFillTranslations` để tự dịch. Nội dung THAM KHẢO/DEMO, không
+  phải chương trình đào tạo chính thức đã phê duyệt.
+- **Đã THỬ và BỎ tìm ảnh minh hoạ từ Wikimedia Commons** (nguồn ảnh miễn
+  phí bản quyền, không cần API key) — kết quả không dùng được: phần lớn là
+  ảnh tư liệu lịch sử (có cả ảnh y tế quân đội Mỹ thời chiến tranh Việt Nam
+  1960-70s khi tìm "Vietnam hospital nurse"), hoặc ảnh sự kiện thật của tổ
+  chức/người khác (VD đội y tế Hải quân Mỹ tại 1 trường tiểu học) — dùng
+  làm ảnh minh hoạ cho trường này sẽ **gây hiểu lầm** (trông như xác nhận
+  sự kiện/con người có thật liên quan tới trường, trong khi không phải).
+  **Quyết định: KHÔNG ép dùng ảnh sai ngữ cảnh** — giữ nguyên
+  `ImagePlaceholder` gradient hiện tại (đã thiết kế đẹp, đúng thương hiệu,
+  không phải trông "hỏng"). Muốn có ảnh thật, 2 hướng: (a) người dùng tự
+  upload ảnh thật của trường qua `admin/media`, hoặc (b) nếu có tài khoản
+  Pexels/Unsplash API (cần đăng ký lấy key, khác Wikimedia Commons) thì có
+  thể lấy ảnh minh hoạ chung chung (không gắn với sự kiện/người có thật cụ
+  thể) an toàn hơn nhiều.
+
+**Trang 404/lỗi tuỳ chỉnh theo thương hiệu:**
+- `src/app/(site)/not-found.tsx` — 404 có Header/Footer (Next.js tự dùng
+  file này cho `notFound()` gọi từ trang con trong `(site)`, VD bài
+  viết/ngành/giảng viên không tồn tại).
+- `src/app/not-found.tsx` — 404 gốc, dùng khi URL không khớp route nào
+  trong toàn app (gõ nhầm địa chỉ) — **cố ý đứng độc lập, không gọi
+  data layer/DB**, phải luôn hiển thị được kể cả khi tầng dữ liệu có sự cố.
+- `src/app/error.tsx` — error boundary gốc bắt lỗi runtime không lường
+  trước, bắt buộc là Client Component theo yêu cầu Next.js, có nút "Thử
+  lại" (`reset()`) và "Về trang chủ".
+
+**CSP (Content-Security-Policy) — bật thật, đã test kỹ thay vì để trống
+như lần trước:**
+- `next.config.js` — CSP chặt: `script-src`/`style-src` giữ
+  `'unsafe-inline'` (Next.js App Router tự chèn `<script>` inline không
+  nonce để hydrate RSC streaming — không tránh được nếu không dựng hẳn
+  cơ chế nonce qua proxy.ts, việc lớn hơn để dành sau), còn lại (`img-src`,
+  `font-src`, `connect-src`, `frame-ancestors`, `object-src`...) đều giới
+  hạn `'self'`. An toàn để làm vậy vì site **không dùng
+  `dangerouslySetInnerHTML` hay embed iframe ở đâu cả**.
+- `'unsafe-eval'` trong `script-src` **chỉ thêm khi
+  `NODE_ENV !== "production"`** — phát hiện khi test: React dev mode dùng
+  `eval()` để dựng stack trace debug (React tự khẳng định không bao giờ
+  dùng ở production), thiếu dòng này thì console dev đầy cảnh báo vô hại
+  nhưng gây nhiễu.
+- **next.config.js đổi KHÔNG tự áp dụng qua HMR** — phải tắt hẳn rồi chạy
+  lại `npm run dev` mới thấy header mới, đã gặp thật lúc test (phải nhắc
+  người dùng restart 2 lần).
+- Đã test qua trình duyệt thật (tab mới, tránh nhiễu console cũ): Trang
+  chủ, trang 404, đăng nhập admin (Server Action POST), Dashboard — không
+  còn cảnh báo CSP nào. **Chưa test được với `npm run build` production
+  thật** (sandbox này không chạy build được — xem mục 9 "Lưu ý môi trường
+  phát triển đặc biệt") — nên xác nhận lại 1 lần bằng build thật + mở
+  DevTools Console trước khi yên tâm hoàn toàn.
+
+**Hạ tầng gửi email — Resend (miễn phí, không thẻ tín dụng, cùng tinh
+thần với DeepL):**
+- `src/lib/email.ts` — `sendEmail()` + `escapeHtml()` (dữ liệu người dùng
+  nhập chèn thẳng vào email HTML, phải escape). Thiếu `RESEND_API_KEY` thì
+  im lặng bỏ qua, không throw — không được để thiếu cấu hình email làm
+  hỏng luồng chính (đăng ký/liên hệ/quên mật khẩu).
+- **Email báo hồ sơ/tin nhắn mới** — `api/admissions/route.ts` và
+  `api/contact/route.ts` gửi email tới `site_settings.email` ngay sau khi
+  lưu DB thành công.
+- **"Quên mật khẩu" cho admin** (`admin/quen-mat-khau` →
+  `admin/dat-lai-mat-khau`) — `src/lib/actions/password-reset-actions.ts`.
+  Token đặt lại dùng lại đúng cơ chế HMAC như session
+  (`signResetToken`/`verifyResetToken` trong `auth.ts`) nhưng **namespace
+  riêng** (tiền tố `"reset:"` khi ký) để không lẫn với session thật, hết
+  hạn sau 30 phút. Bước 1 **luôn trả về đúng 1 thông điệp chung** dù email
+  có tồn tại hay không (chặn user enumeration — đã test cả 2 trường hợp
+  cho ra cùng 1 câu). Có rate-limit theo IP lẫn email giống `loginAction`.
+  `proxy.ts` phải thêm 2 route này vào danh sách không cần đăng nhập
+  (`PUBLIC_ADMIN_PATHS`), không thì tự redirect vòng về đăng nhập.
+
+**Google Analytics — chỉ gắn code, người dùng tự tạo tài khoản (xem hướng
+dẫn ở mục 9):**
+- `src/components/GoogleAnalytics.tsx` (`next/script`) — chỉ render khi có
+  `NEXT_PUBLIC_GA_MEASUREMENT_ID`. `next.config.js` chỉ nới CSP cho
+  domain `googletagmanager.com`/`google-analytics.com` **khi biến này có
+  giá trị** — chưa gắn GA thì CSP không tự mở domain ngoài cho tính năng
+  chưa dùng.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -762,20 +851,15 @@ xuống thấp:
 
 ## 7. Việc cần làm tiếp theo (theo thứ tự ưu tiên gợi ý)
 
-1. ~~Hoàn thiện các trang công khai còn là `PageStub`~~ — **XONG TOÀN BỘ**: Ngành đào tạo, Giới thiệu, Liên hệ, Tin tức, Công khai, Tuyển sinh, Tra cứu kết quả, Thư viện, LMS đều đã có nội dung/chức năng thật (xem mục 5).
-2. Upload ảnh thật cho các mục đang seed rỗng (`gallery_items` chưa có ảnh, `heroImageUrl`/`photoUrl`/`avatarUrl` đa số null) — hiện Trang chủ tự hiện placeholder gradient, cần người dùng vào từng trang admin liên quan (`admin/trang-chu`, `admin/thu-vien-trang-chu`, `admin/giang-vien`, `admin/danh-gia`) upload ảnh thật. **Đặc biệt lưu ý riêng 4 trang Công khai** (`admin/trang-tinh`, slug `cong-khai-*`) — nội dung đang là khung placeholder `[điền ...]`, cần xác nhận với nhà trường có bắt buộc áp dụng theo Thông tư 36/2017 không rồi điền số liệu thật trước khi công bố. **Và cấu hình `lmsUrl`** (`admin/cai-dat`) — hiện để `"#"`, trang /lms đang hiện thông báo chưa cập nhật.
-3. ~~Trang quản trị Media~~, ~~Trang quản trị Trang tĩnh~~ (CRUD + đã nối hiển thị), ~~Danh mục bài viết~~, ~~Đối tác~~, ~~Giảng viên~~, ~~Đánh giá cựu SV~~, ~~Thư viện ảnh Trang chủ~~, ~~Menu chính~~ đều đã xong.
-4. Khi các trang xong hết (đã xong) → thực hiện chuyển DB sang PostgreSQL theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c). Đây giờ là hạng mục ưu tiên cao nhất còn lại trước khi đưa web lên mạng cho người dùng thật.
-5. ~~Đợt "hiệu ứng"~~ — **XONG 4/4 hạng mục đã chốt** (xem mục 5 "Đợt 'hiệu ứng' Trang chủ"): banner crossfade, scroll reveal, count-up số liệu, nút liên hệ nhanh xoè/thu. Còn có thể cân nhắc thêm sau nếu người dùng muốn: hover tinh tế hơn ở card, transition mượt khi chuyển trang (View Transitions API) — **hỏi lại phạm vi cụ thể trước khi làm thêm**, đừng tự suy đoán.
-6. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
-7. ~~Rà soát bảo mật/SEO trước khi public + Phân quyền admin~~ — **XONG**
-   (xem mục 5 "Rà soát trước khi đưa web lên mạng thật" + "Phân quyền admin
-   theo module"): chống spam form, robots/sitemap/OG image, header bảo
-   mật cơ bản, chặn chạy production với `SESSION_SECRET` mẫu, tạo tài
-   khoản + phân quyền theo module qua `admin/nguoi-dung`. Còn thiếu (mục 2
-   ở trên, cần người dùng tự làm): nội dung/ảnh thật, điền số liệu "3 công
-   khai". Cân nhắc thêm sau nếu cần: CSP, email thông báo khi có hồ sơ/tin
-   nhắn mới, Google Analytics.
+1. ~~Hoàn thiện các trang công khai còn là `PageStub`~~ — **XONG TOÀN BỘ** (kể cả `/nganh-dao-tao` — từng bị sót, vá ở lượt rà soát lần 2, xem mục 5).
+2. ~~Trang quản trị Media/Trang tĩnh/Danh mục bài viết/Đối tác/Giảng viên/Đánh giá cựu SV/Thư viện ảnh Trang chủ/Menu chính~~ — **XONG**.
+3. ~~Đợt "hiệu ứng"~~ — **XONG 4/4 hạng mục đã chốt** (xem mục 5 "Đợt 'hiệu ứng' Trang chủ"). Còn có thể cân nhắc thêm sau nếu người dùng muốn: hover tinh tế hơn ở card, transition mượt khi chuyển trang (View Transitions API) — **hỏi lại phạm vi cụ thể trước khi làm thêm**, đừng tự suy đoán.
+4. ~~Rà soát bảo mật/SEO trước khi public + Phân quyền admin~~ — **XONG** (xem mục 5 "Rà soát trước khi đưa web lên mạng thật" + "Phân quyền admin theo module").
+5. ~~Rà soát lần 2 (admin + web công khai)~~ — **XONG** (xem mục 5 "Rà soát admin + web công khai lần 2") — vá 8 vấn đề.
+6. ~~Nhóm nâng cấp nhỏ đã hoãn~~ — **XONG** (xem mục 5 "Nội dung demo + nhóm nâng cấp nhỏ đã hoãn"): 404/error page tuỳ chỉnh, CSP thật (đã test kỹ), hạ tầng gửi email qua Resend + "Quên mật khẩu" cho admin, Google Analytics (code sẵn, chờ người dùng điền Measurement ID), nội dung demo cho 6 ngành đào tạo.
+7. **Còn lại, cần người dùng tự làm** (không phải việc kỹ thuật): ảnh thật cho các mục đang trống (`gallery_items`/`heroImageUrl`/`photoUrl`/`avatarUrl` — đã thử tự lấy demo từ Wikimedia Commons nhưng không dùng được, xem mục 5 lý do), số liệu "3 công khai" thật (4 trang `admin/trang-tinh` slug `cong-khai-*`, xác nhận với trường có bắt buộc theo Thông tư 36/2017 không), cấu hình `lmsUrl` (`admin/cai-dat`), tạo tài khoản Resend/Google Analytics rồi điền key/Measurement ID vào `.env` (xem mục 9).
+8. **Chuyển DB sang PostgreSQL** theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c) — hạng mục kiến trúc lớn nhất còn lại, tạm dừng để làm 2 đợt rà soát + nhóm nâng cấp nhỏ ở trên, giờ có thể quay lại làm tiếp. **Đây là ưu tiên cao nhất còn lại** trước khi đưa web lên mạng cho người dùng thật.
+9. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 
 ---
 
@@ -815,6 +899,27 @@ module nào.
   Graph — xem `.env.example`).
 - Đổi mật khẩu tài khoản admin demo ở trên (hoặc tạo tài khoản mới qua
   `admin/nguoi-dung` rồi xoá tài khoản demo).
+- Set `RESEND_API_KEY` (+ xác minh domain trên Resend rồi đổi
+  `RESEND_FROM_EMAIL`) nếu muốn email báo hồ sơ/tin nhắn mới và "Quên mật
+  khẩu" hoạt động thật — để trống vẫn chạy được, chỉ là không gửi email.
+
+### Hướng dẫn tạo tài khoản Google Analytics (để lấy Measurement ID)
+Việc này cần tài khoản Google của bạn — không tự làm thay được. Các bước:
+1. Vào https://analytics.google.com, đăng nhập bằng tài khoản Google.
+2. Bấm "Bắt đầu đo lường" (Start measuring) → đặt tên tài khoản (VD "Hợp
+   Lực"), bỏ qua các mục chia sẻ dữ liệu nếu không cần.
+3. Tạo "Thuộc tính" (Property) → đặt tên (VD "Website Hợp Lực"), chọn múi
+   giờ "Việt Nam (GMT+7)", đơn vị tiền tệ VND.
+4. Ở bước "Luồng dữ liệu" (Data stream) → chọn "Web" → điền URL website
+   thật (VD `https://hopluc.edu.vn`) → đặt tên luồng.
+5. Sau khi tạo xong, Google hiện "Mã đo lường" (Measurement ID) dạng
+   `G-XXXXXXXXXX` — copy mã này.
+6. Dán vào biến `NEXT_PUBLIC_GA_MEASUREMENT_ID` trong `.env`, khởi động lại
+   `npm run dev`/deploy lại — site tự gắn Google Analytics, không cần sửa
+   code gì thêm (xem `src/components/GoogleAnalytics.tsx`).
+
+Có dữ liệu truy cập thường mất vài giờ mới hiện trong Google Analytics
+sau khi gắn mã lần đầu — đừng lo nếu bấm vào xem ngay chưa thấy số liệu.
 
 ### Các lệnh khác
 ```bash
