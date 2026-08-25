@@ -850,6 +850,84 @@ Người dùng tự xem giao diện với dữ liệu demo, phát hiện 2 vấn
     cũ trước migration, dù thực tế luôn có slug qua backfill).
   - Thêm `/su-kien/{slug}` vào `sitemap.ts`.
 
+### Mở rộng hiệu ứng + trang trí ra toàn bộ trang con (hết "rời rạc")
+Người dùng hỏi thẳng "web có rời rạc không" — rà soát code xác nhận **có
+thật**: Trang chủ có đầy đủ hiệu ứng cuộn (`Reveal`) + gradient blur trang
+trí phía sau, nhưng toàn bộ 18 trang con khác (Ngành đào tạo, Tin tức, Sự
+kiện, Giới thiệu, Liên hệ, FAQ, Thư viện, Tuyển sinh, Tra cứu, Công khai,
+Đội ngũ giảng viên, Chính sách bảo mật, LMS — cả danh sách lẫn chi tiết)
+**hoàn toàn tĩnh, không hiệu ứng, không trang trí gì** — đúng là lệch hẳn
+độ hoàn thiện thị giác so với Trang chủ.
+
+- **`src/components/site/DecorativeSection.tsx`** (mới) — khung dùng
+  chung cho MỌI trang con: `<section relative overflow-hidden px-6 py-20
+  sm:px-8>` + 2 khối gradient blur góc (`bg-brand-500/15`/`bg-accent-500/10`,
+  `blur-[60px]`, đúng công thức Hero Trang chủ đang dùng) + bọc nội dung
+  trong `<Reveal className="relative ...">` (bắt buộc thêm `relative` để
+  nội dung tĩnh nổi lên trên các khối blur `absolute` — thiếu dòng này nội
+  dung sẽ bị blur đè lên, đã tái hiện đúng lỗi CSS stacking này lúc làm).
+- Áp dụng cho toàn bộ 18 trang con — thay `<section className="px-6 py-20
+  sm:px-8"><div className="mx-auto max-w-...">...</div></section>` bằng
+  `<DecorativeSection contentClassName="mx-auto max-w-...">...</DecorativeSection>`.
+  **Không dùng `className` để đổi `py-*`** (VD `lms/page.tsx` cũ có
+  `py-24` khác các trang khác) — `cn()` trong dự án chỉ nối chuỗi thuần,
+  2 class cùng thuộc tính cùng áp dụng không rõ class nào thắng trên CSS
+  sinh ra (khác `tailwind-merge`) — chấp nhận đồng bộ về `py-20` chung
+  luôn, đơn giản hơn và tăng tính nhất quán.
+- **Khi thêm trang công khai mới trong `(site)`, luôn dùng
+  `DecorativeSection` làm khung ngoài cùng** thay vì tự viết
+  `<section className="px-6 py-20 sm:px-8">` trần — trừ Trang chủ (đã có
+  bố cục riêng nhiều khối, tự quản blur/Reveal theo từng khối).
+
+### "Vẫn đơn điệu" — Reveal đổi sang mượt liên tục theo cuộn + so le từng thẻ
+Sau khi mở rộng hiệu ứng ra trang con, người dùng vẫn thấy đơn điệu — đúng,
+vì `Reveal` bản đầu chỉ có **1 kiểu** (mờ/trượt) và bật/tắt **nhị phân**
+(chưa thấy = ẩn hẳn, vừa thấy = hiện hẳn), dùng giống hệt nhau ở mọi nơi —
+không phải cảm giác "mượt theo tay cuộn" thật sự.
+
+- **`Reveal.tsx` viết lại theo cơ chế mượt liên tục**: thay vì
+  `IntersectionObserver` bật 1 state boolean, giờ tính `progress` (0→1)
+  liên tục dựa trên `getBoundingClientRect()` thật của phần tử so với
+  khung nhìn — mờ dần/trượt lên bám sát ĐÚNG vị trí cuộn hiện tại, không
+  còn giật theo bậc. Để tránh mỗi `Reveal` (có hàng chục cái/trang) đều có
+  1 scroll listener chạy suốt vòng đời trang (tốn hiệu năng),
+  `IntersectionObserver` giờ CHỈ dùng để bật/tắt 1 scroll listener khi
+  phần tử đang ở gần khung nhìn (`rootMargin: "15% 0px 15% 0px"`) — scroll
+  listener throttle qua `requestAnimationFrame`, tắt hẳn khi phần tử ra
+  khỏi vùng gần khung nhìn hoặc đã hiện đủ 100%.
+- **`delay` (ms) đổi ý nghĩa** — trước là `transitionDelay` CSS thuần, giờ
+  KHÔNG còn CSS `transition` nào cả (progress bám 1:1 theo scroll, không
+  qua transition) nên `delay` được quy đổi thành khoảng cách cuộn cần đi
+  thêm (`delayPx = delay * 0.35`) — dùng để **so le nhiều thẻ trong 1
+  lưới/danh sách** (VD `delay={i * 80}` cho từng thẻ ngành đào tạo) mà độ
+  so le vẫn khớp đúng tốc độ tay cuộn thật, không phải hẹn giờ tách rời
+  khỏi cuộn.
+- **Tôn trọng `prefers-reduced-motion`** — kiểm tra trong effect (không
+  đọc `window.matchMedia` lúc render vì SSR không có `window`, dễ gây
+  hydration mismatch), tắt hẳn hiệu ứng nếu người dùng bật cờ này trong hệ
+  điều hành.
+- **Đã áp dụng so le cho mọi khối lưới/danh sách nhiều mục** — mỗi thẻ bọc
+  riêng `<Reveal delay={i * Nms}>` thay vì cả khối bọc chung 1 `Reveal`
+  (khác cách cũ khiến cả khối bật lên cùng lúc, đơn điệu): Trang chủ (Ngành
+  đào tạo, Đối tác, 4 chỉ số, 3 điểm mạnh, 4 bước quy trình, Thư viện
+  bento, Giảng viên, Đánh giá cựu SV, Sự kiện, Tin tức) + 6 trang con
+  (`/nganh-dao-tao`, `/doi-ngu-giang-vien`, `/thu-vien`, `/faq`,
+  `/tin-tuc`, `/su-kien`). Reveal lồng trong Reveal (khối cha vẫn bọc
+  Reveal cho tiêu đề, khối con mỗi thẻ 1 Reveal riêng) hoạt động bình
+  thường — mỗi Reveal độc lập, không xung đột.
+- **Hạn chế đã biết**: sandbox môi trường code không composite khung hình
+  (`document.visibilityState === "hidden"`, xem mục 9) nên
+  `IntersectionObserver` không bao giờ bắn được trong lúc test —
+  **không tự mắt kiểm tra được cảm giác mượt-theo-cuộn thật sự trong
+  sandbox này**, chỉ verify được: build sạch, không lỗi console, và cơ chế
+  hẹn giờ dự phòng 2s vẫn hoạt động đúng (test được vì không phụ thuộc
+  compositing). Cần người dùng tự xem trên trình duyệt thật.
+- **Còn chưa làm** (người dùng chưa chọn ở lượt hỏi phạm vi): hiệu ứng
+  chiều sâu khi cuộn (parallax nhẹ cho khối blur trang trí) và tương tác
+  khi rê chuột (spotlight theo con trỏ trên thẻ, hiệu ứng quét sáng nút
+  CTA) — 2 hướng đã đề xuất nhưng chưa triển khai, cân nhắc làm tiếp nếu
+  người dùng vẫn muốn thêm sau khi xem 2 hướng đã làm.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -870,6 +948,11 @@ Người dùng tự xem giao diện với dữ liệu demo, phát hiện 2 vấn
     đầu tiên trong thân **cả `page.tsx` lẫn mọi hàm trong `actions.ts`**
     tương ứng (2 lớp — chặn cả lúc render trang lẫn lúc gọi thẳng Server
     Action) — xem mục 5 "Phân quyền admin theo module".
+12. **Trang công khai mới trong `(site)` (trừ Trang chủ) luôn bọc nội dung
+    trong `<DecorativeSection>`** (`src/components/site/DecorativeSection.tsx`)
+    thay vì tự viết `<section className="px-6 py-20 sm:px-8">` trần — giữ
+    đồng bộ hiệu ứng cuộn + trang trí gradient blur với các trang con khác
+    (xem mục 5 "Mở rộng hiệu ứng + trang trí ra toàn bộ trang con").
 
 ---
 

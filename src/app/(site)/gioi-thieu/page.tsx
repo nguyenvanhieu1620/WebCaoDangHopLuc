@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PageStub } from "@/components/ui/PageStub";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getPageBySlug } from "@/lib/data/pages";
 
 export const metadata: Metadata = { title: "Giới thiệu" };
@@ -21,8 +22,7 @@ export default async function AboutPage() {
   }
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Eyebrow tone="blue" className="mb-6">
           Giới thiệu
         </Eyebrow>
@@ -35,7 +35,6 @@ export default async function AboutPage() {
           </div>
         )}
         <MarkdownContent content={page.content} className="mt-8" />
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

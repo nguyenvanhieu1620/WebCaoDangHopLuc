@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getPageBySlug } from "@/lib/data/pages";
 
 export async function generateMetadata({
@@ -26,8 +27,7 @@ export default async function CongKhaiDetailPage({
   if (!page) notFound();
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Link
           href="/cong-khai"
           className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
@@ -46,7 +46,6 @@ export default async function CongKhaiDetailPage({
           </div>
         )}
         <MarkdownContent content={page.content} className="mt-8" />
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { LookupForm } from "@/components/site/LookupForm";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 
 export const metadata: Metadata = { title: "Tra cứu kết quả xét tuyển" };
 
 export default function AdmissionsLookupPage() {
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-2xl text-center">
+    <DecorativeSection contentClassName="mx-auto max-w-2xl text-center">
         <Eyebrow tone="blue" className="mb-6">
           Tra cứu kết quả
         </Eyebrow>
@@ -21,7 +21,6 @@ export default function AdmissionsLookupPage() {
         <div className="mt-10 text-left">
           <LookupForm />
         </div>
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

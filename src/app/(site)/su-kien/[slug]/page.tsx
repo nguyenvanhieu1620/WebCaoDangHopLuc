@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getEventBySlug } from "@/lib/data/events";
 import { formatVNDateTime } from "@/lib/utils";
 
@@ -28,8 +29,7 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Link
           href="/su-kien"
           className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
@@ -53,7 +53,6 @@ export default async function EventDetailPage({
         </div>
 
         {event.description && <MarkdownContent content={event.description} className="mt-8" />}
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

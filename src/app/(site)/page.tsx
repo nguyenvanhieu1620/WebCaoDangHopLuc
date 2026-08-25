@@ -200,34 +200,32 @@ export default async function HomePage() {
       {/* ============ ĐỐI TÁC ============ */}
       {partners.length > 0 && (
         <section className="border-y border-line bg-white px-6 py-9 sm:px-8">
-          <Reveal className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-8">
-            {partners.map((p) => (
-              <span
-                key={p.id}
-                className="font-display text-[15px] font-semibold text-ink-faint"
-              >
-                {p.name}
-              </span>
+          <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-8">
+            {partners.map((p, i) => (
+              <Reveal key={p.id} delay={i * 50}>
+                <span className="font-display text-[15px] font-semibold text-ink-faint">
+                  {p.name}
+                </span>
+              </Reveal>
             ))}
-          </Reveal>
+          </div>
         </section>
       )}
 
       {/* ============ STATS ============ */}
       <section className="px-6 pt-24 sm:px-8">
-        <Reveal className="mx-auto grid max-w-[1320px] grid-cols-2 gap-5 lg:grid-cols-4">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl border border-line bg-white p-7 text-center shadow-sm2"
-            >
-              <div className="font-mono text-4xl font-semibold text-brand-700">
-                <CountUp value={s.value} />
+        <div className="mx-auto grid max-w-[1320px] grid-cols-2 gap-5 lg:grid-cols-4">
+          {stats.map((s, i) => (
+            <Reveal key={s.label} delay={i * 90}>
+              <div className="rounded-2xl border border-line bg-white p-7 text-center shadow-sm2">
+                <div className="font-mono text-4xl font-semibold text-brand-700">
+                  <CountUp value={s.value} />
+                </div>
+                <div className="mt-1.5 text-[13.5px] text-ink-soft">{s.label}</div>
               </div>
-              <div className="mt-1.5 text-[13.5px] text-ink-soft">{s.label}</div>
-            </div>
+            </Reveal>
           ))}
-        </Reveal>
+        </div>
       </section>
 
       {/* ============ SỨ MỆNH - TẦM NHÌN ============ */}
@@ -256,32 +254,33 @@ export default async function HomePage() {
 
       {/* ============ FEATURES ============ */}
       <section className="px-6 py-24 sm:px-8">
-        <Reveal className="mx-auto max-w-[1320px]">
-          <SectionHeading
-            eyebrow="Vì sao chọn Hợp Lực"
-            title="Đào tạo thực chiến, đồng hành đến khi có việc làm"
-          />
+        <div className="mx-auto max-w-[1320px]">
+          <Reveal>
+            <SectionHeading
+              eyebrow="Vì sao chọn Hợp Lực"
+              title="Đào tạo thực chiến, đồng hành đến khi có việc làm"
+            />
+          </Reveal>
           <div className="grid gap-6 sm:grid-cols-3">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-[22px] border border-white/90 bg-white/70 p-8 shadow-md2 backdrop-blur-md transition-transform hover:-translate-y-1.5"
-              >
-                <div className="mb-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-gradient-to-br from-brand-700 to-brand-500 shadow-blue">
-                  <div className="h-5 w-5 rounded-md bg-white" />
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 90}>
+                <div className="rounded-[22px] border border-white/90 bg-white/70 p-8 shadow-md2 backdrop-blur-md transition-transform hover:-translate-y-1.5">
+                  <div className="mb-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-gradient-to-br from-brand-700 to-brand-500 shadow-blue">
+                    <div className="h-5 w-5 rounded-md bg-white" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold text-ink">{f.title}</h3>
+                  <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">{f.desc}</p>
                 </div>
-                <h3 className="font-display text-lg font-semibold text-ink">{f.title}</h3>
-                <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">{f.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
-        </Reveal>
+        </div>
       </section>
 
       {/* ============ PROGRAMS ============ */}
       <section className="bg-paper-alt px-6 py-24 sm:px-8">
-        <Reveal className="mx-auto max-w-[1320px]">
-          <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
+        <div className="mx-auto max-w-[1320px]">
+          <Reveal className="mb-11 flex flex-wrap items-end justify-between gap-6">
             <div>
               <Eyebrow tone="blue" className="mb-3">
                 Ngành đào tạo
@@ -296,32 +295,33 @@ export default async function HomePage() {
             >
               Xem tất cả →
             </Link>
-          </div>
+          </Reveal>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featuredPrograms.map((p, i) => (
-              <Link
-                key={p.slug}
-                href={`/nganh-dao-tao/${p.slug}`}
-                className={cn(
-                  "group relative overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 transition-transform hover:-translate-y-1.5",
-                  programGradient(i)
-                )}
-              >
-                <div className="pointer-events-none absolute -bottom-10 -right-10 h-[150px] w-[150px] rounded-full bg-white/10" />
-                <div className="relative font-mono text-[10.5px] uppercase tracking-wider text-white/85">
-                  {p.code}
-                </div>
-                <h3 className="relative mt-3.5 font-display text-[22px] font-bold">{p.name}</h3>
-                <p className="relative mt-2.5 max-w-[220px] text-[13px] leading-relaxed text-white/90">
-                  {p.summary}
-                </p>
-                <span className="relative mt-4 inline-block text-[13px] font-bold">
-                  Chi tiết →
-                </span>
-              </Link>
+              <Reveal key={p.slug} delay={i * 80}>
+                <Link
+                  href={`/nganh-dao-tao/${p.slug}`}
+                  className={cn(
+                    "group relative block overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 transition-transform hover:-translate-y-1.5",
+                    programGradient(i)
+                  )}
+                >
+                  <div className="pointer-events-none absolute -bottom-10 -right-10 h-[150px] w-[150px] rounded-full bg-white/10" />
+                  <div className="relative font-mono text-[10.5px] uppercase tracking-wider text-white/85">
+                    {p.code}
+                  </div>
+                  <h3 className="relative mt-3.5 font-display text-[22px] font-bold">{p.name}</h3>
+                  <p className="relative mt-2.5 max-w-[220px] text-[13px] leading-relaxed text-white/90">
+                    {p.summary}
+                  </p>
+                  <span className="relative mt-4 inline-block text-[13px] font-bold">
+                    Chi tiết →
+                  </span>
+                </Link>
+              </Reveal>
             ))}
           </div>
-        </Reveal>
+        </div>
       </section>
 
       {/* ============ PROCESS ============ */}
@@ -337,13 +337,13 @@ export default async function HomePage() {
               }}
             />
             {steps.map((s, i) => (
-              <div key={s.title} className="relative text-center">
+              <Reveal key={s.title} delay={i * 90} className="relative text-center">
                 <div className="relative z-10 mx-auto mb-5 flex h-[52px] w-[52px] items-center justify-center rounded-full border-2 border-brand-700 bg-white font-mono text-[13px] font-semibold text-brand-700 shadow-sm2">
                   {String(i + 1).padStart(2, "0")}
                 </div>
                 <h4 className="font-display text-base font-semibold text-ink">{s.title}</h4>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{s.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </Reveal>
@@ -368,8 +368,9 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-2 grid-rows-2 gap-4 sm:grid-cols-4">
             {Array.from({ length: 5 }, (_, i) => galleryItems[i]).map((item, i) => (
-              <div
+              <Reveal
                 key={item?.id ?? i}
+                delay={i * 90}
                 className={cn(
                   "relative h-[160px] overflow-hidden rounded-[18px]",
                   i === 0 && "col-span-2 row-span-2 h-full",
@@ -385,7 +386,7 @@ export default async function HomePage() {
                     }
                   />
                 )}
-              </div>
+              </Reveal>
             ))}
           </div>
         </Reveal>
@@ -410,7 +411,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {facultyList.slice(0, 4).map((f) => {
+              {facultyList.slice(0, 4).map((f, i) => {
                 const card = (
                   <>
                     <div className="relative h-[200px]">
@@ -434,15 +435,17 @@ export default async function HomePage() {
                   </>
                 );
                 const className =
-                  "overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
-                return f.slug ? (
-                  <Link key={f.id} href={`/doi-ngu-giang-vien/${f.slug}`} className={className}>
-                    {card}
-                  </Link>
-                ) : (
-                  <div key={f.id} className={className}>
-                    {card}
-                  </div>
+                  "block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
+                return (
+                  <Reveal key={f.id} delay={i * 90}>
+                    {f.slug ? (
+                      <Link href={`/doi-ngu-giang-vien/${f.slug}`} className={className}>
+                        {card}
+                      </Link>
+                    ) : (
+                      <div className={className}>{card}</div>
+                    )}
+                  </Reveal>
                 );
               })}
             </div>
@@ -456,9 +459,10 @@ export default async function HomePage() {
           <Reveal className="mx-auto max-w-[1000px] text-center">
             <SectionHeading eyebrow="Cựu sinh viên nói gì" title="Câu chuyện thành công" />
             <div className="grid gap-6 text-left sm:grid-cols-2">
-              {testimonials.map((t) => (
-                <div
+              {testimonials.map((t, i) => (
+                <Reveal
                   key={t.id}
+                  delay={i * 90}
                   className="rounded-[22px] border border-line bg-white p-8 shadow-md2"
                 >
                   <p className="font-display text-[17px] italic leading-relaxed text-ink">
@@ -475,7 +479,7 @@ export default async function HomePage() {
                       <div className="text-[12.5px] text-ink-soft">{t.role}</div>
                     </div>
                   </div>
-                </div>
+                </Reveal>
               ))}
             </div>
           </Reveal>
@@ -498,7 +502,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-3">
-              {nextEvents.map((e) => {
+              {nextEvents.map((e, i) => {
                 const card = (
                   <>
                     <div className="relative h-[150px]">
@@ -520,15 +524,17 @@ export default async function HomePage() {
                   </>
                 );
                 const className =
-                  "overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
-                return e.slug ? (
-                  <Link key={e.id} href={`/su-kien/${e.slug}`} className={className}>
-                    {card}
-                  </Link>
-                ) : (
-                  <div key={e.id} className={className}>
-                    {card}
-                  </div>
+                  "block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
+                return (
+                  <Reveal key={e.id} delay={i * 90}>
+                    {e.slug ? (
+                      <Link href={`/su-kien/${e.slug}`} className={className}>
+                        {card}
+                      </Link>
+                    ) : (
+                      <div className={className}>{card}</div>
+                    )}
+                  </Reveal>
                 );
               })}
             </div>
@@ -552,29 +558,30 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-3">
-              {latestPosts.map((n) => (
-                <Link
-                  key={n.id}
-                  href={`/tin-tuc/${n.slug}`}
-                  className="block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1.5"
-                >
-                  <div className="relative h-[170px]">
-                    {n.coverImageUrl ? (
-                      <Image src={n.coverImageUrl} alt={n.title} fill className="object-cover" />
-                    ) : (
-                      <ImagePlaceholder label="Ảnh bài viết" />
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
-                      {formatVNDate(n.publishedAt)}
-                      {n.categoryName ? ` · ${n.categoryName}` : ""}
+              {latestPosts.map((n, i) => (
+                <Reveal key={n.id} delay={i * 90}>
+                  <Link
+                    href={`/tin-tuc/${n.slug}`}
+                    className="block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1.5"
+                  >
+                    <div className="relative h-[170px]">
+                      {n.coverImageUrl ? (
+                        <Image src={n.coverImageUrl} alt={n.title} fill className="object-cover" />
+                      ) : (
+                        <ImagePlaceholder label="Ảnh bài viết" />
+                      )}
                     </div>
-                    <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
-                      {n.title}
-                    </h4>
-                  </div>
-                </Link>
+                    <div className="p-5">
+                      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
+                        {formatVNDate(n.publishedAt)}
+                        {n.categoryName ? ` · ${n.categoryName}` : ""}
+                      </div>
+                      <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
+                        {n.title}
+                      </h4>
+                    </div>
+                  </Link>
+                </Reveal>
               ))}
             </div>
           </Reveal>

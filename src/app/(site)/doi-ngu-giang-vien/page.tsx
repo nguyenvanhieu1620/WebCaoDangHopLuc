@@ -3,13 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { Reveal } from "@/components/site/Reveal";
 import { getFacultyList, facultyDisplayName } from "@/lib/data/faculty";
 import { getDepartments } from "@/lib/data/departments";
 import type { Faculty } from "@/lib/db/schema";
 
 export const metadata: Metadata = { title: "Đội ngũ giảng viên" };
 
-function FacultyCard({ faculty }: { faculty: Faculty }) {
+function FacultyCard({ faculty, index }: { faculty: Faculty; index: number }) {
   const displayName = facultyDisplayName(faculty);
   const card = (
     <>
@@ -27,13 +29,17 @@ function FacultyCard({ faculty }: { faculty: Faculty }) {
     </>
   );
   const className =
-    "overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
-  return faculty.slug ? (
-    <Link href={`/doi-ngu-giang-vien/${faculty.slug}`} className={className}>
-      {card}
-    </Link>
-  ) : (
-    <div className={className}>{card}</div>
+    "block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
+  return (
+    <Reveal delay={index * 80}>
+      {faculty.slug ? (
+        <Link href={`/doi-ngu-giang-vien/${faculty.slug}`} className={className}>
+          {card}
+        </Link>
+      ) : (
+        <div className={className}>{card}</div>
+      )}
+    </Reveal>
   );
 }
 
@@ -48,8 +54,7 @@ export default async function FacultyPage() {
   );
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-[1220px]">
+    <DecorativeSection contentClassName="mx-auto max-w-[1220px]">
         <SectionHeading
           eyebrow="Đội ngũ giảng viên"
           title="Đội ngũ giảng viên giàu kinh nghiệm lâm sàng"
@@ -68,8 +73,8 @@ export default async function FacultyPage() {
                   {department.name}
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {members.map((f) => (
-                    <FacultyCard key={f.id} faculty={f} />
+                  {members.map((f, i) => (
+                    <FacultyCard key={f.id} faculty={f} index={i} />
                   ))}
                 </div>
               </div>
@@ -83,15 +88,14 @@ export default async function FacultyPage() {
                   </div>
                 )}
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {noDepartment.map((f) => (
-                    <FacultyCard key={f.id} faculty={f} />
+                  {noDepartment.map((f, i) => (
+                    <FacultyCard key={f.id} faculty={f} index={i} />
                   ))}
                 </div>
               </div>
             )}
           </div>
         )}
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

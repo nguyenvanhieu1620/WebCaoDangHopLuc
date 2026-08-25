@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Button } from "@/components/ui/Button";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getSiteSettings } from "@/lib/data/site-settings";
 
 export const metadata: Metadata = { title: "Cổng LMS VNPT" };
@@ -10,8 +11,7 @@ export default async function LmsPage() {
   const hasRealLink = settings.lmsUrl && settings.lmsUrl !== "#";
 
   return (
-    <section className="px-6 py-24 sm:px-8">
-      <div className="mx-auto max-w-2xl text-center">
+    <DecorativeSection contentClassName="mx-auto max-w-2xl text-center">
         <Eyebrow tone="blue" className="mb-6">
           Học trực tuyến
         </Eyebrow>
@@ -32,7 +32,6 @@ export default async function LmsPage() {
             </div>
           )}
         </div>
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getFacultyBySlug, facultyDisplayName } from "@/lib/data/faculty";
 import { getDepartments } from "@/lib/data/departments";
 
@@ -31,8 +32,7 @@ export default async function FacultyDetailPage({
   const displayName = facultyDisplayName(faculty);
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Link
           href="/doi-ngu-giang-vien"
           className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
@@ -66,7 +66,6 @@ export default async function FacultyDetailPage({
         </div>
 
         {faculty.bio && <MarkdownContent content={faculty.bio} className="mt-10" />}
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

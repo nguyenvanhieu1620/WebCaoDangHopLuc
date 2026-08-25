@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getPagesBySlugPrefix } from "@/lib/data/pages";
 
 export const metadata: Metadata = { title: "Công khai" };
@@ -13,8 +14,7 @@ export default async function CongKhaiPage() {
   const pages = await getPagesBySlugPrefix("cong-khai-");
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Eyebrow tone="blue" className="mb-6">
           Công khai
         </Eyebrow>
@@ -47,7 +47,6 @@ export default async function CongKhaiPage() {
             ))}
           </ul>
         )}
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

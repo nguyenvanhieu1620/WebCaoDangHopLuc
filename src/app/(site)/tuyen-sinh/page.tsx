@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { AdmissionForm } from "@/components/site/AdmissionForm";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getPrograms } from "@/lib/data/programs";
 
 export const metadata: Metadata = { title: "Tuyển sinh" };
@@ -10,8 +11,7 @@ export default async function AdmissionsPage() {
   const programs = await getPrograms();
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto grid max-w-[1100px] gap-12 lg:grid-cols-[1fr_1.1fr]">
+    <DecorativeSection contentClassName="mx-auto grid max-w-[1100px] gap-12 lg:grid-cols-[1fr_1.1fr]">
         <div>
           <Eyebrow tone="red" className="mb-6">
             Tuyển sinh 2026
@@ -52,13 +52,12 @@ export default async function AdmissionsPage() {
           )}
         </div>
 
-        <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-md2">
+        <div id="dang-ky" className="h-fit scroll-mt-6 rounded-2xl border border-line bg-white p-7 shadow-md2">
           <div className="mb-5 font-display text-lg font-semibold text-ink">
             Đăng ký xét tuyển
           </div>
           <AdmissionForm programs={programs} />
         </div>
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

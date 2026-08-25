@@ -6,6 +6,7 @@ import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { ContactForm } from "@/components/site/ContactForm";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 
 export const metadata: Metadata = { title: "Liên hệ" };
 
@@ -29,8 +30,7 @@ export default async function ContactPage() {
   ].filter((s) => s.href && s.href !== "#");
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto grid max-w-4xl gap-10 lg:grid-cols-[1.3fr_1fr]">
+    <DecorativeSection contentClassName="mx-auto grid max-w-4xl gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>
           <Eyebrow tone="blue" className="mb-6">
             Liên hệ
@@ -85,7 +85,6 @@ export default async function ContactPage() {
             </div>
           )}
         </div>
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

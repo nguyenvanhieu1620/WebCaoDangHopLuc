@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PageStub } from "@/components/ui/PageStub";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getPageBySlug } from "@/lib/data/pages";
 
 export const metadata: Metadata = { title: "Chính sách bảo mật" };
@@ -20,8 +21,7 @@ export default async function PrivacyPolicyPage() {
   }
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Eyebrow tone="blue" className="mb-6">
           Chính sách bảo mật
         </Eyebrow>
@@ -29,7 +29,6 @@ export default async function PrivacyPolicyPage() {
           {page.title}
         </h1>
         <MarkdownContent content={page.content} className="mt-8" />
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

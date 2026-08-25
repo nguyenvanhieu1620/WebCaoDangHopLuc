@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Button } from "@/components/ui/Button";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { getAllProgramSlugs, getProgramBySlug } from "@/lib/data/programs";
 
 export async function generateStaticParams() {
@@ -31,8 +32,7 @@ export default async function ProgramDetailPage({
   if (!program) notFound();
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <Link
           href="/nganh-dao-tao"
           className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
@@ -80,7 +80,6 @@ export default async function ProgramDetailPage({
             Xem các ngành khác
           </Button>
         </div>
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }

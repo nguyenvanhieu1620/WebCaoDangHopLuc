@@ -4,6 +4,8 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { Reveal } from "@/components/site/Reveal";
 import { getEvents } from "@/lib/data/events";
 import { formatVNDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/db/schema";
@@ -24,8 +26,7 @@ export default async function EventsPage() {
   const { upcoming, past } = splitUpcomingPast(allEvents);
 
   return (
-    <section className="px-6 py-20 sm:px-8">
-      <div className="mx-auto max-w-[1000px]">
+    <DecorativeSection contentClassName="mx-auto max-w-[1000px]">
         <SectionHeading
           eyebrow="Sự kiện"
           title="Sự kiện & hoạt động của trường"
@@ -44,8 +45,8 @@ export default async function EventsPage() {
                   Sắp diễn ra
                 </div>
                 <div className="space-y-5">
-                  {upcoming.map((e) => (
-                    <EventCard key={e.id} event={e} />
+                  {upcoming.map((e, i) => (
+                    <EventCard key={e.id} event={e} index={i} />
                   ))}
                 </div>
               </div>
@@ -56,24 +57,25 @@ export default async function EventsPage() {
                   Đã diễn ra
                 </div>
                 <div className="space-y-5">
-                  {past.map((e) => (
-                    <EventCard key={e.id} event={e} muted />
+                  {past.map((e, i) => (
+                    <EventCard key={e.id} event={e} index={i} muted />
                   ))}
                 </div>
               </div>
             )}
           </div>
         )}
-      </div>
-    </section>
+    </DecorativeSection>
   );
 }
 
 function EventCard({
   event,
+  index,
   muted,
 }: {
   event: Awaited<ReturnType<typeof getEvents>>[number];
+  index: number;
   muted?: boolean;
 }) {
   const content = (
@@ -100,15 +102,19 @@ function EventCard({
       </div>
     </>
   );
-  const className = `overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 sm:flex ${
+  const className = `block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 sm:flex ${
     muted ? "opacity-70" : "transition-transform hover:-translate-y-1"
   }`;
 
-  return event.slug ? (
-    <Link href={`/su-kien/${event.slug}`} className={className}>
-      {content}
-    </Link>
-  ) : (
-    <div className={className}>{content}</div>
+  return (
+    <Reveal delay={index * 70}>
+      {event.slug ? (
+        <Link href={`/su-kien/${event.slug}`} className={className}>
+          {content}
+        </Link>
+      ) : (
+        <div className={className}>{content}</div>
+      )}
+    </Reveal>
   );
 }
