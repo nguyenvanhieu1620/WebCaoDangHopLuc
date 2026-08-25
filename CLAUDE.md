@@ -87,7 +87,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 - **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 20 bảng
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 21 bảng
 `admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`
 (có thêm `cover_image_url` — trang tĩnh giờ cũng thêm ảnh được, không chỉ
 text), `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
@@ -108,7 +108,9 @@ Thêm ở đợt làm menu cha/con: `nav_items` (`parent_id` tự trỏ tới
 gặp), `hero_banners` (banner Trang chủ nhiều ảnh — xem mục 5 "Banner Trang
 chủ nhiều ảnh + nút liên hệ nhanh nổi"), `departments` (Khoa/Bộ môn),
 `faculty_attributes` (Học hàm/Học vị/Chức vụ — xem mục 5 "Sidebar admin
-theo khối thực thể").
+theo khối thực thể"). Thêm ở đợt tách nút liên hệ nhanh khỏi
+`site_settings`: `quick_contacts` (xem mục 5 "Nút liên hệ nhanh quản lý
+qua admin").
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -181,7 +183,7 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - **LMS** (`/lms`) — trang hướng dẫn + nút link tới `site_settings.lmsUrl` (cột mới, quản lý qua `admin/cai-dat`); chưa cấu hình thì tự hiện thông báo "chưa cập nhật" thay vì nút link hỏng
 - Quản lý tuyển sinh (`admin/tuyen-sinh`) — danh sách hồ sơ (có cột CCCD), đổi trạng thái (Mới/Đã xem/Đã liên hệ)
 - API `/api/admissions` — nhận form đăng ký tuyển sinh từ site công khai, lưu DB thật
-- Database: 20 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
+- Database: 21 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 **Tất cả các trang công khai trong SRS Giai đoạn 1 giờ đã có nội dung thật —
@@ -488,6 +490,67 @@ Cộng thêm 3 hạng mục người dùng chọn từ nghiên cứu:
   đã ẩn khá sâu trong nút ☰, banner này tăng khả năng nhìn thấy trên Trang
   chủ mà không cần đổi cấu trúc menu).
 
+### Đợt "hiệu ứng" Trang chủ — 4 hiệu ứng, thuần CSS/JS không thêm thư viện
+Sau khi hỏi lại phạm vi cụ thể (đúng quy trình đã ghi ở mục 7), người dùng
+chọn cả 4:
+
+- **`src/components/site/Reveal.tsx`** — bọc 1 khối để mờ/trượt nhẹ lên khi
+  cuộn tới lần đầu (IntersectionObserver thuần). Đã bọc quanh gần như mọi
+  section ở `(site)/page.tsx`. **Có hẹn giờ dự phòng 2s**: observer không
+  bao giờ bắn (VD tab mở nền chưa từng hiện) thì tự hiện — bắt buộc phải có
+  bước này, nếu không nội dung có thể bị kẹt vô hình vĩnh viễn (đã tái hiện
+  đúng rủi ro này lúc test trong sandbox: trang ở trạng thái
+  `document.visibilityState === "hidden"` khiến observer không bắn được).
+- **`src/components/site/CountUp.tsx`** — đếm tăng dần tới giá trị thật (VD
+  "12+", "8.500+", "96%") khi vào tầm nhìn, tách số/hậu tố bằng regex, dùng
+  `toLocaleString("vi-VN")` để giữ dấu chấm phân cách nghìn kiểu Việt Nam.
+  Dùng ở 4 chỉ số thống kê + 2 badge nổi Hero. **Cũng có hẹn giờ dự phòng
+  2s** — lý do giống hệt `Reveal`, quan trọng hơn nữa vì nếu kẹt sẽ hiện
+  sai số liệu ("0") chứ không chỉ vô hình.
+- **`HeroImageCarousel`** — chuyển từ đổi ảnh thẳng (hard cut) sang
+  crossfade: mọi banner luôn nằm trong DOM (không unmount/remount `<Image>`
+  nên không giật/tải lại), chỉ đổi `opacity` với `transition-opacity
+  duration-1000`.
+- **`QuickContactWidget`** — đổi từ luôn hiện sẵn cả 3 nút sang có 1 nút
+  chính (dấu +, xoay 45° thành dấu × khi mở) bấm mới xoè các lựa chọn ra,
+  so le nhẹ bằng `transitionDelay` tăng dần theo thứ tự — tham khảo đúng
+  th.hopluchospital.com.
+
+**Bài học chung rút ra khi làm hiệu ứng dựa trên IntersectionObserver/timer
+trong dự án này**: luôn kèm 1 hẹn giờ dự phòng (`setTimeout` fallback) để
+tự hoàn tất trạng thái cuối nếu observer/timer chính không bao giờ bắn —
+đừng để hiệu ứng "vào" (entrance) là điều kiện duy nhất quyết định nội
+dung có hiển thị/đúng số liệu hay không.
+
+### Nút liên hệ nhanh quản lý qua admin (`quick_contacts`)
+Người dùng nhận ra nút liên hệ nhanh (lúc đó đọc thẳng từ
+`site_settings.hotline/zaloUrl/facebookUrl`) không thể thêm mục mới (VD
+"Tin nhắn", "ChatbotAI") hay đổi link riêng từng mục qua admin. Tách hẳn ra
+bảng riêng:
+
+- **`quick_contacts`**: `type` (discriminator: `hotline`/`zalo`/`facebook`/
+  `message`/`chatbot`/`custom`) + `label`/`label_en` + `href` (nhập nguyên
+  link, VD `tel:...` hay `https://...`) + `sort_order`. Cùng pattern
+  discriminator-`type` như `faculty_attributes` — 1 bảng, 1 trang admin,
+  `type` quyết định icon/màu hiển thị ở `QuickContactWidget.tsx` (map
+  `TYPE_STYLE` theo `type`, không phải theo từng dòng dữ liệu).
+- **Admin `admin/lien-he-nhanh`**: list + form, chọn `type` qua dropdown có
+  gợi ý định dạng link theo từng loại (VD gợi ý `tel:19006868` khi chọn
+  Hotline) — theo đúng pattern CRUD list/form đã dùng cho `admin/khoa`,
+  `admin/danh-hieu`, `admin/faq`.
+- **"ChatbotAI" chỉ là 1 icon/link trong danh sách, KHÔNG phải chatbot AI
+  thật** — đã hỏi lại phạm vi qua `AskUserQuestion` và người dùng chọn rõ
+  ràng phương án đơn giản (không tích hợp AI provider/API/giao diện hội
+  thoại riêng). Nếu sau này cần chatbot thật, đó là 1 tính năng lớn khác,
+  không phải chỉnh sửa bảng này.
+- **Seed mặc định**: tự lấy hotline/Zalo/Facebook từ `site_settings` hiện
+  có (bỏ qua Zalo/Facebook nếu đang là placeholder `"#"`), cộng thêm 2 mục
+  placeholder "Tin nhắn"/"ChatbotAI" với `href: "#"` để trường tự điền link
+  thật sau.
+- `site_settings.hotline/zaloUrl/facebookUrl` **vẫn giữ nguyên** — vẫn dùng
+  ở nơi khác (header, footer) — chỉ riêng widget nổi góc màn hình là đổi
+  sang đọc từ `quick_contacts`.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -511,10 +574,7 @@ Cộng thêm 3 hạng mục người dùng chọn từ nghiên cứu:
 2. Upload ảnh thật cho các mục đang seed rỗng (`gallery_items` chưa có ảnh, `heroImageUrl`/`photoUrl`/`avatarUrl` đa số null) — hiện Trang chủ tự hiện placeholder gradient, cần người dùng vào từng trang admin liên quan (`admin/trang-chu`, `admin/thu-vien-trang-chu`, `admin/giang-vien`, `admin/danh-gia`) upload ảnh thật. **Đặc biệt lưu ý riêng 4 trang Công khai** (`admin/trang-tinh`, slug `cong-khai-*`) — nội dung đang là khung placeholder `[điền ...]`, cần xác nhận với nhà trường có bắt buộc áp dụng theo Thông tư 36/2017 không rồi điền số liệu thật trước khi công bố. **Và cấu hình `lmsUrl`** (`admin/cai-dat`) — hiện để `"#"`, trang /lms đang hiện thông báo chưa cập nhật.
 3. ~~Trang quản trị Media~~, ~~Trang quản trị Trang tĩnh~~ (CRUD + đã nối hiển thị), ~~Danh mục bài viết~~, ~~Đối tác~~, ~~Giảng viên~~, ~~Đánh giá cựu SV~~, ~~Thư viện ảnh Trang chủ~~, ~~Menu chính~~ đều đã xong.
 4. Khi các trang xong hết (đã xong) → thực hiện chuyển DB sang PostgreSQL theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c). Đây giờ là hạng mục ưu tiên cao nhất còn lại trước khi đưa web lên mạng cho người dùng thật.
-5. **Đợt "hiệu ứng"** — người dùng chủ động nói rõ: **xong hết chức năng mới bắt đầu làm hiệu ứng** (đã tham khảo th.hopluchospital.com). Việc đã cố ý làm "cứng"/đơn giản, chưa làm mượt, để dành đợt này:
-   - `HeroImageCarousel` (`src/components/site/HeroImageCarousel.tsx`) — banner Trang chủ đang chuyển ảnh **thẳng (hard cut)** mỗi 5s, chưa có fade/slide.
-   - Có thể cân nhắc thêm: hiệu ứng cuộn xuất hiện (scroll reveal) cho các section, hover tinh tế hơn ở card, transition mượt khi chuyển trang...
-   - **Trước khi bắt đầu đợt này, hỏi lại người dùng phạm vi cụ thể** (giống cách đã làm ở các đợt tính năng trước) — đừng tự suy đoán "hiệu ứng" nghĩa là gì.
+5. ~~Đợt "hiệu ứng"~~ — **XONG 4/4 hạng mục đã chốt** (xem mục 5 "Đợt 'hiệu ứng' Trang chủ"): banner crossfade, scroll reveal, count-up số liệu, nút liên hệ nhanh xoè/thu. Còn có thể cân nhắc thêm sau nếu người dùng muốn: hover tinh tế hơn ở card, transition mượt khi chuyển trang (View Transitions API) — **hỏi lại phạm vi cụ thể trước khi làm thêm**, đừng tự suy đoán.
 6. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 
 ---

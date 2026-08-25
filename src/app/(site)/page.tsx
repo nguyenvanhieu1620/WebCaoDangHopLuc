@@ -5,6 +5,8 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { HeroImageCarousel } from "@/components/site/HeroImageCarousel";
+import { Reveal } from "@/components/site/Reveal";
+import { CountUp } from "@/components/site/CountUp";
 import { programGradient } from "@/lib/constants";
 import { getFeaturedPrograms, getPrograms } from "@/lib/data/programs";
 import { getHomepageContent } from "@/lib/data/homepage";
@@ -118,7 +120,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute -top-44 -left-32 h-[560px] w-[560px] rounded-full bg-brand-500/20 blur-[60px]" />
         <div className="pointer-events-none absolute -bottom-56 -right-40 h-[600px] w-[600px] rounded-full bg-accent-500/15 blur-[60px]" />
 
-        <div className="relative mx-auto grid max-w-[1320px] items-center gap-14 lg:grid-cols-2">
+        <Reveal className="relative mx-auto grid max-w-[1320px] items-center gap-14 lg:grid-cols-2">
           <div>
             <Eyebrow tone="blue" className="mb-6">
               {content.heroBadge}
@@ -154,25 +156,25 @@ export default async function HomePage() {
               <div className="mt-4 grid grid-cols-2 gap-3.5">
                 <div className="float-y rounded-2xl border border-white/90 bg-white/70 p-4 shadow-md2">
                   <div className="font-mono text-[26px] font-semibold text-brand-700">
-                    {content.heroBadge1Value}
+                    <CountUp value={content.heroBadge1Value} />
                   </div>
                   <div className="text-xs text-ink-soft">{content.heroBadge1Label}</div>
                 </div>
                 <div className="rounded-2xl border border-white/90 bg-white/70 p-4 shadow-md2">
                   <div className="font-mono text-[26px] font-semibold text-accent-600">
-                    {content.heroBadge2Value}
+                    <CountUp value={content.heroBadge2Value} />
                   </div>
                   <div className="text-xs text-ink-soft">{content.heroBadge2Label}</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ CÔNG CỤ NHANH ============ */}
       <section className="px-6 pb-16 sm:px-8">
-        <div className="mx-auto grid max-w-[1320px] grid-cols-2 gap-4 lg:grid-cols-4">
+        <Reveal className="mx-auto grid max-w-[1320px] grid-cols-2 gap-4 lg:grid-cols-4">
           {quickTools.map((tool) => (
             <Link
               key={tool.href + tool.label}
@@ -192,13 +194,13 @@ export default async function HomePage() {
               </div>
             </Link>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ ĐỐI TÁC ============ */}
       {partners.length > 0 && (
         <section className="border-y border-line bg-white px-6 py-9 sm:px-8">
-          <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-8">
+          <Reveal className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-8">
             {partners.map((p) => (
               <span
                 key={p.id}
@@ -207,29 +209,31 @@ export default async function HomePage() {
                 {p.name}
               </span>
             ))}
-          </div>
+          </Reveal>
         </section>
       )}
 
       {/* ============ STATS ============ */}
       <section className="px-6 pt-24 sm:px-8">
-        <div className="mx-auto grid max-w-[1320px] grid-cols-2 gap-5 lg:grid-cols-4">
+        <Reveal className="mx-auto grid max-w-[1320px] grid-cols-2 gap-5 lg:grid-cols-4">
           {stats.map((s) => (
             <div
               key={s.label}
               className="rounded-2xl border border-line bg-white p-7 text-center shadow-sm2"
             >
-              <div className="font-mono text-4xl font-semibold text-brand-700">{s.value}</div>
+              <div className="font-mono text-4xl font-semibold text-brand-700">
+                <CountUp value={s.value} />
+              </div>
               <div className="mt-1.5 text-[13.5px] text-ink-soft">{s.label}</div>
             </div>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ SỨ MỆNH - TẦM NHÌN ============ */}
       {(content.missionText || content.visionText) && (
         <section className="px-6 pt-24 sm:px-8">
-          <div className="mx-auto grid max-w-[1320px] gap-5 sm:grid-cols-2">
+          <Reveal className="mx-auto grid max-w-[1320px] gap-5 sm:grid-cols-2">
             {content.missionText && (
               <div className="rounded-2xl border border-line bg-white p-8 shadow-sm2">
                 <Eyebrow tone="blue" className="mb-4">
@@ -246,13 +250,13 @@ export default async function HomePage() {
                 <p className="text-[15px] leading-relaxed text-ink-soft">{content.visionText}</p>
               </div>
             )}
-          </div>
+          </Reveal>
         </section>
       )}
 
       {/* ============ FEATURES ============ */}
       <section className="px-6 py-24 sm:px-8">
-        <div className="mx-auto max-w-[1320px]">
+        <Reveal className="mx-auto max-w-[1320px]">
           <SectionHeading
             eyebrow="Vì sao chọn Hợp Lực"
             title="Đào tạo thực chiến, đồng hành đến khi có việc làm"
@@ -271,12 +275,12 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ PROGRAMS ============ */}
       <section className="bg-paper-alt px-6 py-24 sm:px-8">
-        <div className="mx-auto max-w-[1320px]">
+        <Reveal className="mx-auto max-w-[1320px]">
           <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
             <div>
               <Eyebrow tone="blue" className="mb-3">
@@ -317,12 +321,12 @@ export default async function HomePage() {
               </Link>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ PROCESS ============ */}
       <section className="bg-paper px-6 py-24 sm:px-8">
-        <div className="mx-auto max-w-[1100px]">
+        <Reveal className="mx-auto max-w-[1100px]">
           <SectionHeading eyebrow="Quy trình tuyển sinh" title="4 bước xét tuyển đơn giản" />
           <div className="relative grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <div
@@ -342,13 +346,13 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ THƯ VIỆN (BENTO) ============ */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-900 to-brand-700 px-6 py-24 sm:px-8">
         <div className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-accent-500/25 blur-[50px]" />
-        <div className="relative mx-auto max-w-[1320px]">
+        <Reveal className="relative mx-auto max-w-[1320px]">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
             <div>
               <div className="mb-3 font-mono text-[11px] uppercase tracking-wider text-brand-100">
@@ -384,13 +388,13 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ============ GIẢNG VIÊN ============ */}
       {facultyList.length > 0 && (
         <section className="px-6 py-24 sm:px-8">
-          <div className="mx-auto max-w-[1320px]">
+          <Reveal className="mx-auto max-w-[1320px]">
             <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
               <SectionHeading
                 eyebrow="Đội ngũ giảng viên"
@@ -442,14 +446,14 @@ export default async function HomePage() {
                 );
               })}
             </div>
-          </div>
+          </Reveal>
         </section>
       )}
 
       {/* ============ ĐÁNH GIÁ CỰU SV ============ */}
       {testimonials.length > 0 && (
         <section className="bg-paper-alt px-6 py-24 sm:px-8">
-          <div className="mx-auto max-w-[1000px] text-center">
+          <Reveal className="mx-auto max-w-[1000px] text-center">
             <SectionHeading eyebrow="Cựu sinh viên nói gì" title="Câu chuyện thành công" />
             <div className="grid gap-6 text-left sm:grid-cols-2">
               {testimonials.map((t) => (
@@ -474,14 +478,14 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </section>
       )}
 
       {/* ============ SỰ KIỆN SẮP DIỄN RA ============ */}
       {nextEvents.length > 0 && (
         <section className="bg-paper-alt px-6 py-24 sm:px-8">
-          <div className="mx-auto max-w-[1320px]">
+          <Reveal className="mx-auto max-w-[1320px]">
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
               <h2 className="font-display text-[34px] font-semibold text-brand-900">
                 Sự kiện sắp diễn ra
@@ -518,14 +522,14 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </section>
       )}
 
       {/* ============ TIN TỨC ============ */}
       {latestPosts.length > 0 && (
         <section className="px-6 py-24 sm:px-8">
-          <div className="mx-auto max-w-[1320px]">
+          <Reveal className="mx-auto max-w-[1320px]">
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
               <h2 className="font-display text-[34px] font-semibold text-brand-900">
                 Tin tức
@@ -563,15 +567,16 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
-          </div>
+          </Reveal>
         </section>
       )}
 
       {/* ============ BANNER CÔNG KHAI ============ */}
       <section className="px-6 pb-2 sm:px-8">
+        <Reveal className="mx-auto max-w-[1320px]">
         <Link
           href="/cong-khai"
-          className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white px-7 py-5 shadow-sm2 transition-colors hover:border-brand-500"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white px-7 py-5 shadow-sm2 transition-colors hover:border-brand-500"
         >
           <div className="flex items-center gap-3.5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/10 text-brand-700">
@@ -592,11 +597,12 @@ export default async function HomePage() {
           </div>
           <span className="text-sm font-semibold text-brand-700">Xem chi tiết →</span>
         </Link>
+        </Reveal>
       </section>
 
       {/* ============ CTA BAND ============ */}
       <section className="px-6 pb-24 sm:px-8">
-        <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px] bg-gradient-to-br from-accent-600 to-accent-500 px-8 py-16 text-center sm:px-14">
+        <Reveal className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px] bg-gradient-to-br from-accent-600 to-accent-500 px-8 py-16 text-center sm:px-14">
           <div className="pointer-events-none absolute -top-24 -right-16 h-80 w-80 rounded-full bg-white/10" />
           <h2 className="relative mx-auto max-w-xl font-display text-[32px] font-semibold leading-snug text-white">
             {content.ctaTitle}
@@ -610,7 +616,7 @@ export default async function HomePage() {
           >
             Đăng ký xét tuyển ngay
           </Link>
-        </div>
+        </Reveal>
       </section>
     </>
   );

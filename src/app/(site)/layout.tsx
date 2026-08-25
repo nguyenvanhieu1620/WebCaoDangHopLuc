@@ -4,6 +4,7 @@ import { QuickContactWidget } from "@/components/site/QuickContactWidget";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getNavTree } from "@/lib/data/nav";
 import { getLocale } from "@/lib/locale";
+import { getQuickContacts } from "@/lib/data/quick-contacts";
 
 /**
  * Layout dùng chung cho mọi trang công khai (route group "(site)").
@@ -15,17 +16,18 @@ export default async function SiteGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, navTree, locale] = await Promise.all([
+  const [settings, navTree, locale, contacts] = await Promise.all([
     getSiteSettings(),
     getNavTree(),
     getLocale(),
+    getQuickContacts(),
   ]);
   return (
     <div className="bg-paper">
       <SiteHeader settings={settings} navTree={navTree} locale={locale} />
       <main>{children}</main>
       <SiteFooter settings={settings} />
-      <QuickContactWidget settings={settings} />
+      <QuickContactWidget contacts={contacts} />
     </div>
   );
 }

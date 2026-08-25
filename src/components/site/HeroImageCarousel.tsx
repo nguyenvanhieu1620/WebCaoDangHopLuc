@@ -14,10 +14,11 @@ type HeroImageCarouselProps = {
 };
 
 /**
- * Ảnh Hero Trang chủ — nhiều banner thì tự xoay vòng (chuyển thẳng, chưa có
- * hiệu ứng mượt — làm sau ở đợt hiệu ứng). Không có banner nào thì dùng lại
- * `fallbackImageUrl` (ảnh Hero tĩnh cũ trong Nội dung Trang chủ) để không vỡ
- * layout cho site đã có sẵn dữ liệu trước khi tính năng này ra đời.
+ * Ảnh Hero Trang chủ — nhiều banner thì tự xoay vòng, chuyển ảnh mượt kiểu
+ * crossfade (mọi banner luôn nằm trong DOM, chỉ đổi opacity — không unmount/
+ * remount <Image> nên không giật/tải lại ảnh). Không có banner nào thì dùng
+ * lại `fallbackImageUrl` (ảnh Hero tĩnh cũ trong Nội dung Trang chủ) để
+ * không vỡ layout cho site đã có sẵn dữ liệu trước khi tính năng này ra đời.
  */
 export function HeroImageCarousel({ banners, fallbackImageUrl, fallbackAlt }: HeroImageCarouselProps) {
   const [index, setIndex] = useState(0);
@@ -38,20 +39,36 @@ export function HeroImageCarousel({ banners, fallbackImageUrl, fallbackAlt }: He
     );
   }
 
-  const banner = banners[index];
-  const image = (
-    <Image
-      src={banner.imageUrl}
-      alt={banner.caption || fallbackAlt}
-      fill
-      className="object-cover"
-      priority={index === 0}
-    />
-  );
-
   return (
     <>
-      {banner.linkUrl ? <Link href={banner.linkUrl}>{image}</Link> : image}
+      {banners.map((banner, i) => {
+        const image = (
+          <Image
+            src={banner.imageUrl}
+            alt={banner.caption || fallbackAlt}
+            fill
+            className="object-cover"
+            priority={i === 0}
+          />
+        );
+        return (
+          <div
+            key={banner.id}
+            className={cn(
+              "absolute inset-0 transition-opacity duration-1000 ease-in-out",
+              i === index ? "opacity-100" : "pointer-events-none opacity-0"
+            )}
+          >
+            {banner.linkUrl ? (
+              <Link href={banner.linkUrl} className="block h-full w-full">
+                {image}
+              </Link>
+            ) : (
+              image
+            )}
+          </div>
+        );
+      })}
 
       {banners.length > 1 && (
         <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
@@ -62,7 +79,7 @@ export function HeroImageCarousel({ banners, fallbackImageUrl, fallbackAlt }: He
               aria-label={`Banner ${i + 1}`}
               onClick={() => setIndex(i)}
               className={cn(
-                "h-1.5 rounded-full transition-all",
+                "h-1.5 rounded-full transition-all duration-500",
                 i === index ? "w-5 bg-white" : "w-1.5 bg-white/50"
               )}
             />

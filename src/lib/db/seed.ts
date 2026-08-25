@@ -20,6 +20,7 @@ import {
   pages,
   events,
   faqs,
+  quickContacts,
 } from "./schema";
 
 /**
@@ -898,6 +899,50 @@ Giờ làm việc: [Trường điền: VD Thứ 2 - Thứ 6, 7h30 - 17h00]`,
     if (labelEn && !row.labelEn) {
       await db.update(navItems).set({ labelEn }).where(eq(navItems.id, row.id));
     }
+  }
+
+  // Nút liên hệ nhanh nổi góc màn hình (admin/lien-he-nhanh) — mặc định lấy
+  // hotline/Zalo/Facebook từ Cài đặt chung, cộng thêm 2 mục placeholder
+  // (Tin nhắn, ChatbotAI) để trường tự điền link khi sẵn sàng.
+  const existingQuickContacts = await db.query.quickContacts.findMany();
+  if (existingQuickContacts.length === 0) {
+    const s = await db.query.siteSettings.findFirst({ where: (row, { eq }) => eq(row.id, "main") });
+    const rows: (typeof quickContacts.$inferInsert)[] = [];
+    if (s?.hotline) {
+      rows.push({
+        type: "hotline",
+        label: `Gọi hotline ${s.hotline}`,
+        labelEn: `Call hotline ${s.hotline}`,
+        href: `tel:${s.hotline.replace(/\s+/g, "")}`,
+        sortOrder: 0,
+      });
+    }
+    if (s?.zaloUrl && s.zaloUrl !== "#") {
+      rows.push({
+        type: "zalo",
+        label: "Nhắn tin qua Zalo",
+        labelEn: "Message via Zalo",
+        href: s.zaloUrl,
+        sortOrder: 1,
+      });
+    }
+    if (s?.facebookUrl && s.facebookUrl !== "#") {
+      rows.push({
+        type: "facebook",
+        label: "Nhắn tin qua Facebook",
+        labelEn: "Message via Facebook",
+        href: s.facebookUrl,
+        sortOrder: 2,
+      });
+    }
+    rows.push(
+      { type: "message", label: "Tin nhắn", labelEn: "Message", href: "#", sortOrder: 3 },
+      { type: "chatbot", label: "ChatbotAI", labelEn: "ChatbotAI", href: "#", sortOrder: 4 }
+    );
+    await db.insert(quickContacts).values(rows);
+    console.log(`✓ Tạo ${rows.length} nút liên hệ nhanh mặc định`);
+  } else {
+    console.log("• Đã có nút liên hệ nhanh, bỏ qua.");
   }
 
   console.log("Seed hoàn tất.");

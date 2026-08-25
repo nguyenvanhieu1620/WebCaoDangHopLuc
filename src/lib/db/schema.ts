@@ -202,6 +202,30 @@ export const navItems = sqliteTable("nav_items", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Danh sách nút liên hệ nhanh nổi góc màn hình (`QuickContactWidget`) —
+ * admin tự thêm/sửa/xoá/sắp thứ tự, mỗi mục tự chọn `type` (quyết định icon
+ * hiện ra) + `href` riêng (tel:, https://zalo.me/..., link chatbot ngoài...).
+ * Trước đây cố định cứng 3 kênh (Hotline/Zalo/Facebook) lấy từ
+ * `site_settings` — giờ tách hẳn ra đây để linh hoạt thêm kênh mới (Tin
+ * nhắn, ChatbotAI...) mà không phải sửa code.
+ */
+export const quickContacts = sqliteTable("quick_contacts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** "hotline" | "zalo" | "facebook" | "message" | "chatbot" | "custom" — quyết định icon hiển thị. */
+  type: text("type").notNull(),
+  label: text("label").notNull(),
+  labelEn: text("label_en"),
+  /** Link đầy đủ — VD "tel:19006868", "https://zalo.me/...". Nhập nguyên href, không tự ghép. */
+  href: text("href").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Đối tác hiển thị ở dải logo/tên Trang chủ — sortOrder do admin tự nhập để sắp vị trí. */
 export const partners = sqliteTable("partners", {
   id: text("id")
@@ -441,3 +465,4 @@ export type Faq = typeof faqs.$inferSelect;
 export type HeroBanner = typeof heroBanners.$inferSelect;
 export type Department = typeof departments.$inferSelect;
 export type FacultyAttribute = typeof facultyAttributes.$inferSelect;
+export type QuickContact = typeof quickContacts.$inferSelect;
