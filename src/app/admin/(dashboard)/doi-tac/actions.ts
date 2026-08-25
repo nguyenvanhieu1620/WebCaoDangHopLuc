@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertPartnerAction(formData: FormData) {
   await requirePermission("partners");
@@ -28,6 +29,8 @@ export async function upsertPartnerAction(formData: FormData) {
 
   revalidatePath("/admin/doi-tac");
   revalidatePath("/");
+
+  redirect("/admin/doi-tac");
 }
 
 export async function deletePartnerAction(partnerId: string) {

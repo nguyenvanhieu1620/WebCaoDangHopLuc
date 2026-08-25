@@ -632,6 +632,44 @@ module** (không phải 2-3 cấp vai trò cố định):
   nhạy cảm vẫn nằm sau `requirePermission("admissions-contact")` ở
   `admin/tuyen-sinh`/`admin/lien-he`.
 
+### Rà soát thao tác admin — vá 2 lỗ hổng CRUD + sửa hành vi Lưu form
+Người dùng yêu cầu rà soát lại toàn bộ thao tác trong admin, tự test và
+nhận xét "sửa/thêm mới cái gì bấm Lưu form vẫn hiện ở đó, nên nhảy sang
+giao diện khác". Rà soát phát hiện:
+
+- **Bài viết (`admin/bai-viet`) và Danh mục bài viết (`admin/danh-muc`)
+  KHÔNG có chức năng Sửa** — trước đây chỉ Tạo/Xoá (bài viết còn có thêm
+  Đăng/Gỡ đăng), viết sai chính tả hay cần cập nhật nội dung không có cách
+  nào khác ngoài xoá rồi tạo lại (mất slug/link cũ, ảnh hưởng SEO nếu bài
+  đã được chia sẻ/Google index). Đã vá: cả 2 chuyển sang `upsertPostAction`/
+  `upsertCategoryAction` theo đúng pattern `?edit={id}` dùng ở mọi trang
+  admin khác (xem mục 6 quy ước #8). **Sửa bài viết/danh mục KHÔNG đổi
+  slug dù đổi tiêu đề/tên** — cố ý, tránh vỡ link cũ; slug chỉ sinh 1 lần
+  lúc tạo mới. Sửa bài viết cũng KHÔNG đổi trạng thái đăng/nháp qua form —
+  vẫn dùng riêng nút "Đăng ngay"/"Gỡ đăng" ở danh sách như cũ, tránh 1 form
+  làm 2 việc.
+- **Học hàm/Học vị/Chức vụ (`admin/danh-hieu`) cũng thiếu Sửa** (chỉ
+  Thêm/Xoá) — nhưng vì đây là danh sách nhỏ dạng thẻ (3 cột), **không dùng
+  pattern `?edit=` cồng kềnh** mà cho sửa trực tiếp tại chỗ: mỗi dòng là 1
+  `<form>` riêng với input tên (`defaultValue`) + nút "Lưu", gộp chung
+  `createFacultyAttributeAction` cũ thành `upsertFacultyAttributeAction`.
+  Đổi tên không tự dịch lại bản tiếng Anh cũ (giữ nguyên nếu đã có, tránh
+  ghi đè bất ngờ).
+- **Hành vi "Lưu form vẫn đứng yên" ở TOÀN BỘ trang dùng pattern `?edit=`**
+  (13 trang có sẵn + 2 trang vừa vá ở trên) — nguyên nhân: các `upsertXxxAction`
+  trước đây chỉ gọi `revalidatePath()`, không `redirect()`, nên sau khi Lưu,
+  Next.js soft-navigate về ĐÚNG URL đang đứng (`?edit=id` vẫn còn), form vẫn
+  hiện dữ liệu vừa sửa — không rõ ràng là đã lưu xong hay chưa, không có
+  cách quay nhanh về trạng thái "Thêm mới". Đã vá: mọi `upsertXxxAction`
+  (trừ `cai-dat`/`trang-chu` — 2 trang **cấu hình 1 dòng duy nhất**, không
+  phải danh sách Thêm/Sửa nên KHÔNG áp dụng, ở lại trang là đúng) giờ gọi
+  thêm `redirect(basePath)` (VD `redirect("/admin/bai-viet")`) làm dòng
+  cuối cùng, sau mọi `revalidatePath` — Lưu xong tự về danh sách sạch +
+  form "Thêm mới" trống, đúng cảm giác "nhảy sang giao diện khác" người
+  dùng mong muốn. **Quy ước cho trang admin mới theo pattern `?edit=`**:
+  luôn thêm `redirect(basePath)` cuối `upsertXxxAction`, KHÔNG thêm cho
+  trang cấu hình 1 dòng.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -643,7 +681,7 @@ module** (không phải 2-3 cấp vai trò cố định):
 5. **Mọi component/màu mới dùng token trong `tailwind.config.ts`**, không hard-code mã hex mới trừ khi thật sự cần (và phải thêm token mới, không viết tay).
 6. **File tạm/test (screenshot .png, db test data) không commit vào git** — dọn trước khi đóng gói/commit.
 7. **Sửa/xoá bảng đơn dòng** (`site_settings`, `homepage_content`): luôn query/update theo `id = "main"` cố định — không tạo dòng thứ 2, không xoá dòng này (form admin chỉ có Sửa, không có Thêm/Xoá cho 2 bảng này).
-8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ).
+8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ). **Cuối `upsertXxxAction` (sau mọi `revalidatePath`), luôn gọi `redirect(basePath)`** (import từ `next/navigation`) để về danh sách sạch + form "Thêm mới" trống sau khi Lưu — trừ trang cấu hình 1 dòng (`cai-dat`, `trang-chu`) thì không áp dụng (xem mục 5 "Rà soát thao tác admin").
 9. **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file.
 10. **Danh sách có thứ tự hiển thị** (`partners`, `gallery_items`, `faculty`, `testimonials`): dùng cột `sortOrder` nhập tay, sort bằng `asc(schema.<table>.sortOrder)` ở data layer — không thêm thư viện kéo-thả.
 11. **Trang admin mới cần phân quyền**: thêm entity vào `ADMIN_NAV`

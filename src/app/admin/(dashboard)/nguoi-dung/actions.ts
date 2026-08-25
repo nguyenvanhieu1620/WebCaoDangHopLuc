@@ -6,6 +6,7 @@ import { db, schema } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
 import { requirePermission, getUserPermissions } from "@/lib/admin-auth";
 import { PERMISSION_MODULES } from "@/lib/constants";
+import { redirect } from "next/navigation";
 
 const VALID_KEYS = new Set(PERMISSION_MODULES.map((m) => m.key));
 
@@ -54,6 +55,8 @@ export async function upsertAdminUserAction(formData: FormData) {
   }
 
   revalidatePath("/admin/nguoi-dung");
+
+  redirect("/admin/nguoi-dung");
 }
 
 export async function deleteAdminUserAction(id: string) {

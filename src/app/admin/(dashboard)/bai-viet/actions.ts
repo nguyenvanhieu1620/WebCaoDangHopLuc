@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
@@ -8,8 +9,9 @@ import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 
-export async function createPostAction(formData: FormData) {
+export async function upsertPostAction(formData: FormData) {
   await requirePermission("posts");
+  const id = String(formData.get("id") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const excerpt = String(formData.get("excerpt") || "").trim();
   const content = String(formData.get("content") || "").trim();
@@ -21,16 +23,13 @@ export async function createPostAction(formData: FormData) {
 
   if (!title || !content) return;
 
-  const baseSlug = slugify(title) || `bai-viet-${Date.now()}`;
-  let slug = baseSlug;
-  let counter = 1;
-  // Đảm bảo slug duy nhất — nếu trùng thì thêm hậu tố -2, -3...
-  while (await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) })) {
-    counter += 1;
-    slug = `${baseSlug}-${counter}`;
-  }
-
-  const coverImageUrl = await resolveImageUrl(formData, "coverImage", "coverImageExisting");
+  const current = id ? await db.query.posts.findFirst({ where: eq(schema.posts.id, id) }) : null;
+  const coverImageUrl = await resolveImageUrl(
+    formData,
+    "coverImage",
+    "coverImageExisting",
+    current?.coverImageUrl ?? null
+  );
 
   const [titleEnFinal, excerptEnFinal, contentEnFinal] = await autoFillTranslations([
     { vi: title, en: titleEn },
@@ -38,23 +37,53 @@ export async function createPostAction(formData: FormData) {
     { vi: content, en: contentEn },
   ]);
 
-  await db.insert(schema.posts).values({
-    title,
-    titleEn: titleEnFinal || null,
-    slug,
-    excerpt: excerpt || null,
-    excerptEn: excerptEnFinal || null,
-    content,
-    contentEn: contentEnFinal || null,
-    categoryId: categoryId || null,
-    coverImageUrl,
-    status: publishNow ? "published" : "draft",
-    publishedAt: publishNow ? new Date().toISOString() : null,
-  });
+  if (id) {
+    // Sửa bài viết KHÔNG đổi slug (dù đổi tiêu đề) — tránh vỡ link cũ đã
+    // chia sẻ/được Google index. Trạng thái đăng/nháp cũng giữ nguyên, quản
+    // lý riêng qua nút "Đăng ngay"/"Gỡ đăng" ở danh sách, không qua form này.
+    await db
+      .update(schema.posts)
+      .set({
+        title,
+        titleEn: titleEnFinal || null,
+        excerpt: excerpt || null,
+        excerptEn: excerptEnFinal || null,
+        content,
+        contentEn: contentEnFinal || null,
+        categoryId: categoryId || null,
+        coverImageUrl,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.posts.id, id));
+  } else {
+    const baseSlug = slugify(title) || `bai-viet-${Date.now()}`;
+    let slug = baseSlug;
+    let counter = 1;
+    // Đảm bảo slug duy nhất — nếu trùng thì thêm hậu tố -2, -3...
+    while (await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) })) {
+      counter += 1;
+      slug = `${baseSlug}-${counter}`;
+    }
+
+    await db.insert(schema.posts).values({
+      title,
+      titleEn: titleEnFinal || null,
+      slug,
+      excerpt: excerpt || null,
+      excerptEn: excerptEnFinal || null,
+      content,
+      contentEn: contentEnFinal || null,
+      categoryId: categoryId || null,
+      coverImageUrl,
+      status: publishNow ? "published" : "draft",
+      publishedAt: publishNow ? new Date().toISOString() : null,
+    });
+  }
 
   revalidatePath("/admin/bai-viet");
   revalidatePath("/admin");
   revalidatePath("/");
+  redirect("/admin/bai-viet");
 }
 
 export async function togglePublishAction(postId: string, nextStatus: "draft" | "published") {

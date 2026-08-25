@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertFaqAction(formData: FormData) {
   await requirePermission("faq");
@@ -45,6 +46,8 @@ export async function upsertFaqAction(formData: FormData) {
 
   revalidatePath("/admin/faq");
   revalidatePath("/faq");
+
+  redirect("/admin/faq");
 }
 
 export async function deleteFaqAction(faqId: string) {

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertEventAction(formData: FormData) {
   await requirePermission("events");
@@ -58,6 +59,8 @@ export async function upsertEventAction(formData: FormData) {
   revalidatePath("/admin/su-kien");
   revalidatePath("/su-kien");
   revalidatePath("/");
+
+  redirect("/admin/su-kien");
 }
 
 export async function deleteEventAction(eventId: string) {

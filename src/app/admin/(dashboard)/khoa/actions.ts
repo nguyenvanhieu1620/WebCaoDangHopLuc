@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertDepartmentAction(formData: FormData) {
   await requirePermission("faculty");
@@ -29,6 +30,8 @@ export async function upsertDepartmentAction(formData: FormData) {
   revalidatePath("/admin/khoa");
   revalidatePath("/admin/giang-vien");
   revalidatePath("/doi-ngu-giang-vien", "layout");
+
+  redirect("/admin/khoa");
 }
 
 export async function deleteDepartmentAction(departmentId: string) {

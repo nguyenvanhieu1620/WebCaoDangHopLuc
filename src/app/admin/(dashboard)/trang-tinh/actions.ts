@@ -7,6 +7,7 @@ import { slugify } from "@/lib/utils";
 import { autoFillTranslations } from "@/lib/translate";
 import { resolveImageUrl } from "@/lib/media";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertPageAction(formData: FormData) {
   await requirePermission("pages");
@@ -67,6 +68,8 @@ export async function upsertPageAction(formData: FormData) {
   }
 
   revalidatePath("/admin/trang-tinh");
+
+  redirect("/admin/trang-tinh");
 }
 
 export async function deletePageAction(pageId: string) {

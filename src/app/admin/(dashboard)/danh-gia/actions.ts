@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertTestimonialAction(formData: FormData) {
   await requirePermission("testimonials");
@@ -56,6 +57,8 @@ export async function upsertTestimonialAction(formData: FormData) {
 
   revalidatePath("/admin/danh-gia");
   revalidatePath("/");
+
+  redirect("/admin/danh-gia");
 }
 
 export async function deleteTestimonialAction(testimonialId: string) {

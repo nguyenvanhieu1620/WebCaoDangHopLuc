@@ -7,6 +7,7 @@ import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { slugify } from "@/lib/utils";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertFacultyAction(formData: FormData) {
   await requirePermission("faculty");
@@ -75,6 +76,8 @@ export async function upsertFacultyAction(formData: FormData) {
   revalidatePath("/admin/giang-vien");
   revalidatePath("/");
   revalidatePath("/doi-ngu-giang-vien", "layout");
+
+  redirect("/admin/giang-vien");
 }
 
 export async function deleteFacultyAction(facultyId: string) {

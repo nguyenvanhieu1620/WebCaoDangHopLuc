@@ -6,7 +6,7 @@ import { ImagePicker } from "@/components/admin/ImagePicker";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
-import { createPostAction, togglePublishAction, deletePostAction } from "./actions";
+import { upsertPostAction, togglePublishAction, deletePostAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Quản lý bài viết" };
@@ -20,10 +20,10 @@ const STATUS_FILTERS = [
 export default async function AdminPostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; edit?: string }>;
 }) {
   await requirePermission("posts");
-  const { q, status } = await searchParams;
+  const { q, status, edit } = await searchParams;
   const activeStatus = status === "published" || status === "draft" ? status : "all";
 
   const [allPosts, categories, mediaImages] = await Promise.all([
@@ -35,6 +35,7 @@ export default async function AdminPostsPage({
     }),
   ]);
   const categoryNameById = new Map(categories.map((c) => [c.id, c.name]));
+  const editing = edit ? await db.query.posts.findFirst({ where: eq(schema.posts.id, edit) }) : null;
 
   const filteredPosts = allPosts.filter((post) => {
     if (activeStatus !== "all" && post.status !== activeStatus) return false;
@@ -133,6 +134,12 @@ export default async function AdminPostsPage({
                         {post.status === "published" ? "Gỡ đăng" : "Đăng ngay"}
                       </button>
                     </form>
+                    <a
+                      href={`/admin/bai-viet?edit=${post.id}`}
+                      className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-soft hover:border-brand-500 hover:text-brand-700"
+                    >
+                      Sửa
+                    </a>
                     <form
                       action={async () => {
                         "use server";
@@ -154,10 +161,20 @@ export default async function AdminPostsPage({
         </div>
 
         <div className="flex h-fit flex-col gap-6">
-          {/* Form tạo bài viết mới */}
+          {/* Form thêm/sửa bài viết */}
           <div className="rounded-2xl border border-line bg-white p-6">
-            <div className="mb-4 text-sm font-semibold text-brand-900">Viết bài mới</div>
-            <form action={createPostAction} className="space-y-3.5">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm font-semibold text-brand-900">
+                {editing ? "Sửa bài viết" : "Viết bài mới"}
+              </span>
+              {editing && (
+                <a href="/admin/bai-viet" className="text-xs font-semibold text-ink-faint hover:text-ink">
+                  Huỷ sửa
+                </a>
+              )}
+            </div>
+            <form key={editing?.id ?? "new"} action={upsertPostAction} className="space-y-3.5">
+              {editing && <input type="hidden" name="id" value={editing.id} />}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Tiêu đề
@@ -165,9 +182,15 @@ export default async function AdminPostsPage({
                 <input
                   name="title"
                   required
+                  defaultValue={editing?.title}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   placeholder="VD: Thông báo lịch thi cuối kỳ"
                 />
+                {editing && (
+                  <p className="mt-1 font-mono text-[10.5px] text-ink-faint">
+                    /{editing.slug} — đổi tiêu đề không đổi link này
+                  </p>
+                )}
               </div>
               <details className="rounded-lg border border-line p-3">
                 <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
@@ -183,15 +206,22 @@ export default async function AdminPostsPage({
                   />
                   <input
                     name="titleEn"
+                    defaultValue={editing?.titleEn ?? ""}
                     placeholder="Title (English)"
                     className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   />
                   <input
                     name="excerptEn"
+                    defaultValue={editing?.excerptEn ?? ""}
                     placeholder="Short excerpt (English)"
                     className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   />
-                  <MarkdownEditor name="contentEn" rows={6} placeholder="Full content in English..." />
+                  <MarkdownEditor
+                    name="contentEn"
+                    rows={6}
+                    defaultValue={editing?.contentEn ?? ""}
+                    placeholder="Full content in English..."
+                  />
                 </div>
               </details>
               <div>
@@ -207,7 +237,7 @@ export default async function AdminPostsPage({
                 <select
                   name="categoryId"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                  defaultValue=""
+                  defaultValue={editing?.categoryId ?? ""}
                 >
                   <option value="">— Không chọn —</option>
                   {categories.map((c) => (
@@ -223,18 +253,20 @@ export default async function AdminPostsPage({
                 </label>
                 <input
                   name="excerpt"
+                  defaultValue={editing?.excerpt ?? ""}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   placeholder="Tóm tắt 1 câu (tuỳ chọn)"
                 />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                  Ảnh đại diện (tuỳ chọn)
+                  Ảnh đại diện (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
                 </label>
                 <ImagePicker
                   fileFieldName="coverImage"
                   pickedFieldName="coverImageExisting"
                   images={mediaImages}
+                  currentUrl={editing?.coverImageUrl}
                 />
               </div>
               <div>
@@ -245,18 +277,27 @@ export default async function AdminPostsPage({
                   name="content"
                   required
                   rows={6}
+                  defaultValue={editing?.content}
                   placeholder="Nội dung đầy đủ của bài viết..."
                 />
               </div>
-              <label className="flex items-center gap-2 text-xs font-medium text-ink-soft">
-                <input type="checkbox" name="publishNow" className="h-4 w-4 rounded border-line" />
-                Đăng ngay (bỏ chọn = lưu bản nháp)
-              </label>
+              {!editing && (
+                <label className="flex items-center gap-2 text-xs font-medium text-ink-soft">
+                  <input type="checkbox" name="publishNow" className="h-4 w-4 rounded border-line" />
+                  Đăng ngay (bỏ chọn = lưu bản nháp)
+                </label>
+              )}
+              {editing && (
+                <p className="text-[11px] text-ink-faint">
+                  Trạng thái đăng/nháp không đổi qua form này — dùng nút &quot;Đăng ngay&quot;/&quot;Gỡ
+                  đăng&quot; ở danh sách bên trái.
+                </p>
+              )}
               <button
                 type="submit"
                 className="w-full rounded-lg bg-gradient-to-br from-accent-600 to-accent-500 py-2.5 text-sm font-bold text-white shadow-red"
               >
-                Lưu bài viết
+                {editing ? "Lưu thay đổi" : "Lưu bài viết"}
               </button>
             </form>
           </div>

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertProgramAction(formData: FormData) {
   await requirePermission("programs");
@@ -74,6 +75,8 @@ export async function upsertProgramAction(formData: FormData) {
   revalidatePath("/admin/nganh-dao-tao");
   revalidatePath("/");
   revalidatePath("/nganh-dao-tao");
+
+  redirect("/admin/nganh-dao-tao");
 }
 
 export async function deleteProgramAction(programId: string) {

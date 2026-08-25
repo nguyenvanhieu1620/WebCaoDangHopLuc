@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertHeroBannerAction(formData: FormData) {
   await requirePermission("homepage");
@@ -40,6 +41,8 @@ export async function upsertHeroBannerAction(formData: FormData) {
 
   revalidatePath("/admin/banner-trang-chu");
   revalidatePath("/");
+
+  redirect("/admin/banner-trang-chu");
 }
 
 export async function deleteHeroBannerAction(bannerId: string) {

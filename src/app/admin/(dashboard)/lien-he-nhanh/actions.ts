@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 const VALID_TYPES = ["hotline", "zalo", "facebook", "message", "chatbot", "custom"];
 
@@ -38,6 +39,8 @@ export async function upsertQuickContactAction(formData: FormData) {
 
   revalidatePath("/admin/lien-he-nhanh");
   revalidatePath("/", "layout");
+
+  redirect("/admin/lien-he-nhanh");
 }
 
 export async function deleteQuickContactAction(id: string) {

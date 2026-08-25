@@ -4,7 +4,7 @@ import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
 import type { FacultyAttribute } from "@/lib/db/schema";
-import { createFacultyAttributeAction, deleteFacultyAttributeAction } from "./actions";
+import { upsertFacultyAttributeAction, deleteFacultyAttributeAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Học hàm / Học vị / Chức vụ" };
@@ -34,9 +34,24 @@ function AttributeSection({
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex items-center justify-between rounded-lg bg-paper-alt px-3 py-2 text-[13px]"
+              className="flex items-center gap-2 rounded-lg bg-paper-alt px-3 py-2 text-[13px]"
             >
-              <span className="font-medium text-ink">{item.name}</span>
+              <form action={upsertFacultyAttributeAction} className="flex flex-1 items-center gap-1.5">
+                <input type="hidden" name="id" value={item.id} />
+                <input type="hidden" name="type" value={type} />
+                <input
+                  name="name"
+                  required
+                  defaultValue={item.name}
+                  className="w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 font-medium text-ink outline-none focus:border-line focus:bg-white"
+                />
+                <button
+                  type="submit"
+                  className="shrink-0 text-[11px] font-semibold text-brand-700 hover:underline"
+                >
+                  Lưu
+                </button>
+              </form>
               <form
                 action={async () => {
                   "use server";
@@ -56,7 +71,7 @@ function AttributeSection({
       ) : (
         <div className="mb-3.5 text-[13px] text-ink-faint">Chưa có mục nào.</div>
       )}
-      <form action={createFacultyAttributeAction} className="flex gap-2">
+      <form action={upsertFacultyAttributeAction} className="flex gap-2">
         <input type="hidden" name="type" value={type} />
         <input
           name="name"

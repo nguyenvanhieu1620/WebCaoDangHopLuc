@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 
 export async function upsertNavItemAction(formData: FormData) {
   await requirePermission("menu");
@@ -38,6 +39,8 @@ export async function upsertNavItemAction(formData: FormData) {
 
   revalidatePath("/admin/menu", "layout");
   revalidatePath("/", "layout");
+
+  redirect("/admin/menu");
 }
 
 export async function deleteNavItemAction(navItemId: string) {
