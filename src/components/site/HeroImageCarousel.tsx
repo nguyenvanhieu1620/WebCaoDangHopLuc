@@ -31,6 +31,9 @@ export function HeroImageCarousel({ banners, fallbackImageUrl, fallbackAlt }: He
     return () => clearInterval(id);
   }, [banners.length]);
 
+  const goPrev = () => setIndex((i) => (i - 1 + banners.length) % banners.length);
+  const goNext = () => setIndex((i) => (i + 1) % banners.length);
+
   if (banners.length === 0) {
     return fallbackImageUrl ? (
       <Image src={fallbackImageUrl} alt={fallbackAlt} fill className="object-cover" />
@@ -71,20 +74,42 @@ export function HeroImageCarousel({ banners, fallbackImageUrl, fallbackAlt }: He
       })}
 
       {banners.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
-          {banners.map((b, i) => (
-            <button
-              key={b.id}
-              type="button"
-              aria-label={`Banner ${i + 1}`}
-              onClick={() => setIndex(i)}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-500",
-                i === index ? "w-5 bg-white" : "w-1.5 bg-white/50"
-              )}
-            />
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            aria-label="Ảnh trước"
+            onClick={goPrev}
+            className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            aria-label="Ảnh tiếp theo"
+            onClick={goNext}
+            className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+            {banners.map((b, i) => (
+              <button
+                key={b.id}
+                type="button"
+                aria-label={`Banner ${i + 1}`}
+                onClick={() => setIndex(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-500",
+                  i === index ? "w-5 bg-white" : "w-1.5 bg-white/50"
+                )}
+              />
+            ))}
+          </div>
+        </>
       )}
     </>
   );

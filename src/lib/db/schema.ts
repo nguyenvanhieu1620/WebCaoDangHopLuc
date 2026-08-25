@@ -368,6 +368,8 @@ export const events = sqliteTable("events", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  /** Nullable dù logic luôn tự sinh khi tạo mới — bảng đã có dữ liệu lúc thêm cột này, SQLite không cho NOT NULL không kèm DEFAULT (xem CLAUDE.md mục 5 "Trang chi tiết giảng viên" — cùng lý do). */
+  slug: text("slug").unique(),
   title: text("title").notNull(),
   titleEn: text("title_en"),
   description: text("description"),

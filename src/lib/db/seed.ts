@@ -783,6 +783,7 @@ Làm việc tại trạm y tế xã/phường, phòng khám đa khoa, hoặc h�
 
     await db.insert(events).values([
       {
+        slug: "ngay-hoi-tu-van-tuyen-sinh-2026",
         title: "Ngày hội tư vấn tuyển sinh 2026",
         description:
           "Tư vấn trực tiếp về các ngành đào tạo, học phí, học bổng và cơ hội việc làm sau tốt nghiệp.",
@@ -790,6 +791,7 @@ Làm việc tại trạm y tế xã/phường, phòng khám đa khoa, hoặc h�
         startAt: inThreeWeeks.toISOString(),
       },
       {
+        slug: "le-tot-nghiep-khoa-2023-2026",
         title: "Lễ tốt nghiệp khoá 2023-2026",
         description: "Lễ tốt nghiệp và trao bằng cho sinh viên khoá 2023-2026.",
         location: "Hội trường lớn",
@@ -799,6 +801,22 @@ Làm việc tại trạm y tế xã/phường, phòng khám đa khoa, hoặc h�
     console.log("✓ Tạo 2 sự kiện mẫu");
   } else {
     console.log("• Đã có sự kiện, bỏ qua.");
+  }
+
+  // Backfill slug cho sự kiện đã tồn tại trước khi có cột này (idempotent).
+  const eventsWithoutSlug = await db.query.events.findMany();
+  for (const row of eventsWithoutSlug) {
+    if (!row.slug) {
+      const baseSlug = slugify(row.title) || `su-kien-${row.id.slice(0, 8)}`;
+      let slug = baseSlug;
+      let counter = 1;
+      while (await db.query.events.findFirst({ where: (e, { eq: eqOp }) => eqOp(e.slug, slug) })) {
+        counter += 1;
+        slug = `${baseSlug}-${counter}`;
+      }
+      await db.update(events).set({ slug }).where(eq(events.id, row.id));
+      console.log(`✓ Backfill slug cho sự kiện "${row.title}"`);
+    }
   }
 
   // Câu hỏi thường gặp mẫu

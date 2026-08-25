@@ -7,7 +7,7 @@ import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
-import { vnDatetimeLocalToISO } from "@/lib/utils";
+import { vnDatetimeLocalToISO, slugify } from "@/lib/utils";
 
 export async function upsertEventAction(formData: FormData) {
   await requirePermission("events");
@@ -52,9 +52,17 @@ export async function upsertEventAction(formData: FormData) {
   };
 
   if (id) {
+    // Sửa KHÔNG đổi slug dù đổi tiêu đề — cùng lý do với Bài viết/Danh mục: tránh vỡ link cũ.
     await db.update(schema.events).set(values).where(eq(schema.events.id, id));
   } else {
-    await db.insert(schema.events).values(values);
+    const baseSlug = slugify(title) || `su-kien-${Date.now()}`;
+    let slug = baseSlug;
+    let counter = 1;
+    while (await db.query.events.findFirst({ where: eq(schema.events.slug, slug) })) {
+      counter += 1;
+      slug = `${baseSlug}-${counter}`;
+    }
+    await db.insert(schema.events).values({ ...values, slug });
   }
 
   revalidatePath("/admin/su-kien");

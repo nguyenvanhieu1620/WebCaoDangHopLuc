@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import type { Event } from "@/lib/db/schema";
 import { getLocale, pickLocale } from "@/lib/locale";
 
@@ -19,4 +19,13 @@ export async function getEvents(): Promise<Event[]> {
     getLocale(),
   ]);
   return rows.map((e) => localize(e, locale));
+}
+
+/** Lấy 1 sự kiện theo slug — dùng cho trang chi tiết /su-kien/[slug]. Trả về null nếu không tìm thấy. */
+export async function getEventBySlug(slug: string): Promise<Event | null> {
+  const [event, locale] = await Promise.all([
+    db.query.events.findFirst({ where: eq(schema.events.slug, slug) }),
+    getLocale(),
+  ]);
+  return event ? localize(event, locale) : null;
 }

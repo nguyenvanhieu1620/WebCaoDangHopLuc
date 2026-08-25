@@ -826,6 +826,30 @@ dẫn ở mục 9):**
   giá trị** — chưa gắn GA thì CSP không tự mở domain ngoài cho tính năng
   chưa dùng.
 
+### Phản hồi sau khi xem demo — nút chuyển banner tay + Sự kiện thiếu trang chi tiết
+Người dùng tự xem giao diện với dữ liệu demo, phát hiện 2 vấn đề thật:
+
+- **Banner Trang chủ không có nút tự bấm chuyển ảnh** — trước đó chỉ có
+  chấm tròn (dot) bấm được + tự động xoay 5s/lần, không có mũi tên
+  trái/phải rõ ràng. Đã thêm 2 nút mũi tên `←`/`→` 2 bên banner
+  (`HeroImageCarousel.tsx`), style trong suốt/backdrop-blur giống nút dot.
+- **Sự kiện không có trang chi tiết để bấm vào xem** — khác hẳn Bài viết
+  (đã có `/tin-tuc/[slug]` từ lâu), card Sự kiện ở Trang chủ ("Sự kiện sắp
+  diễn ra") trước đó chỉ là `<div>` thường, không phải `<Link>`. Vá bằng
+  cách dựng hẳn trang chi tiết thật (nhất quán với Bài viết/Ngành đào
+  tạo/Giảng viên, không phải chỉ trỏ tạm về trang danh sách):
+  - Thêm cột `events.slug` (nullable — bảng đã có dữ liệu lúc thêm cột,
+    cùng lý do kỹ thuật với `faculty.slug`/`programs`, xem mục 5 "Trang
+    chi tiết giảng viên"). `admin/su-kien` tự sinh slug lúc **tạo mới**,
+    **sửa không đổi slug** (đúng quy ước đã áp dụng cho Bài viết/Danh mục).
+  - `getEventBySlug()` mới trong `src/lib/data/events.ts`.
+  - `src/app/(site)/su-kien/[slug]/page.tsx` — trang chi tiết thật (giờ/địa
+    điểm, ảnh bìa, mô tả Markdown đầy đủ).
+  - Card Sự kiện ở Trang chủ và trang `/su-kien` giờ đều là `<Link>` trỏ
+    `/su-kien/{slug}` (fallback về `<div>` thường nếu slug null — dữ liệu
+    cũ trước migration, dù thực tế luôn có slug qua backfill).
+  - Thêm `/su-kien/{slug}` vào `sitemap.ts`.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới

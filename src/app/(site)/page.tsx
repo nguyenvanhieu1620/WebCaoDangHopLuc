@@ -498,29 +498,39 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-3">
-              {nextEvents.map((e) => (
-                <div
-                  key={e.id}
-                  className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2"
-                >
-                  <div className="relative h-[150px]">
-                    {e.coverImageUrl ? (
-                      <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover" />
-                    ) : (
-                      <ImagePlaceholder label="Ảnh sự kiện" />
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-accent-600">
-                      {formatVNDateTime(e.startAt)}
-                      {e.location ? ` · ${e.location}` : ""}
+              {nextEvents.map((e) => {
+                const card = (
+                  <>
+                    <div className="relative h-[150px]">
+                      {e.coverImageUrl ? (
+                        <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover" />
+                      ) : (
+                        <ImagePlaceholder label="Ảnh sự kiện" />
+                      )}
                     </div>
-                    <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
-                      {e.title}
-                    </h4>
+                    <div className="p-5">
+                      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-accent-600">
+                        {formatVNDateTime(e.startAt)}
+                        {e.location ? ` · ${e.location}` : ""}
+                      </div>
+                      <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
+                        {e.title}
+                      </h4>
+                    </div>
+                  </>
+                );
+                const className =
+                  "overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-transform hover:-translate-y-1";
+                return e.slug ? (
+                  <Link key={e.id} href={`/su-kien/${e.slug}`} className={className}>
+                    {card}
+                  </Link>
+                ) : (
+                  <div key={e.id} className={className}>
+                    {card}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Reveal>
         </section>

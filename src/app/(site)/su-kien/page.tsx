@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
@@ -75,12 +76,8 @@ function EventCard({
   event: Awaited<ReturnType<typeof getEvents>>[number];
   muted?: boolean;
 }) {
-  return (
-    <div
-      className={`overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 sm:flex ${
-        muted ? "opacity-70" : ""
-      }`}
-    >
+  const content = (
+    <>
       <div className="relative h-[180px] shrink-0 sm:h-auto sm:w-[220px]">
         {event.coverImageUrl ? (
           <Image src={event.coverImageUrl} alt={event.title} fill className="object-cover" />
@@ -97,7 +94,21 @@ function EventCard({
         {event.description && (
           <MarkdownContent content={event.description} className="mt-2.5 text-[14px]" />
         )}
+        {event.slug && (
+          <span className="mt-3 inline-block text-sm font-bold text-brand-700">Xem chi tiết →</span>
+        )}
       </div>
-    </div>
+    </>
+  );
+  const className = `overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 sm:flex ${
+    muted ? "opacity-70" : "transition-transform hover:-translate-y-1"
+  }`;
+
+  return event.slug ? (
+    <Link href={`/su-kien/${event.slug}`} className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
