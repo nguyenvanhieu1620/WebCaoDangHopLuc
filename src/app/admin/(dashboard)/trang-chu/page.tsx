@@ -35,8 +35,13 @@ function FormSection({ title, children }: { title: string; children: React.React
   );
 }
 
-export default async function AdminHomepagePage() {
+export default async function AdminHomepagePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
   await requirePermission("homepage");
+  const { saved } = await searchParams;
   const [row, mediaImages] = await Promise.all([
     db.query.homepageContent.findFirst({ where: eq(schema.homepageContent.id, "main") }),
     db.query.mediaItems.findMany({
@@ -86,6 +91,11 @@ export default async function AdminHomepagePage() {
         description="Chỉnh nội dung chữ ở Hero, chỉ số, điểm mạnh, quy trình, CTA — số lượng mục cố định (4/3/4) để không vỡ layout"
       />
       <div className="p-8">
+        {saved && (
+          <div className="mb-5 max-w-3xl rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
+            ✓ Đã lưu thay đổi thành công.
+          </div>
+        )}
         <form
           action={updateHomepageContentAction}
           className="max-w-3xl space-y-6 rounded-2xl border border-line bg-white p-6"

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageStub } from "@/components/ui/PageStub";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { Button } from "@/components/ui/Button";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getAllProgramSlugs, getProgramBySlug } from "@/lib/data/programs";
 
 export async function generateStaticParams() {
@@ -28,10 +31,56 @@ export default async function ProgramDetailPage({
   if (!program) notFound();
 
   return (
-    <PageStub
-      eyebrow="Ngành đào tạo"
-      title={program.name}
-      description={program.summary}
-    />
+    <section className="px-6 py-20 sm:px-8">
+      <div className="mx-auto max-w-3xl">
+        <Link
+          href="/nganh-dao-tao"
+          className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
+        >
+          ← Ngành đào tạo
+        </Link>
+
+        <Eyebrow tone="blue" className="mb-6">
+          {program.code}
+        </Eyebrow>
+        <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
+          {program.name}
+        </h1>
+        <p className="mt-3.5 max-w-xl text-[15.5px] leading-relaxed text-ink-soft">
+          {program.summary}
+        </p>
+
+        <div className="mt-8 grid grid-cols-2 gap-4 rounded-2xl border border-line bg-white p-6 sm:grid-cols-2">
+          <div>
+            <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
+              Thời gian đào tạo
+            </div>
+            <div className="mt-1 text-lg font-semibold text-ink">{program.duration}</div>
+          </div>
+          <div>
+            <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
+              Chỉ tiêu tuyển sinh
+            </div>
+            <div className="mt-1 text-lg font-semibold text-ink">{program.intake}</div>
+          </div>
+        </div>
+
+        {program.content ? (
+          <MarkdownContent content={program.content} className="mt-10" />
+        ) : (
+          <div className="mt-10 rounded-2xl border border-line bg-white p-6 text-sm text-ink-faint">
+            Chương trình đào tạo chi tiết đang được cập nhật — liên hệ hotline
+            để được tư vấn thêm về ngành {program.name}.
+          </div>
+        )}
+
+        <div className="mt-10 flex flex-wrap gap-3 border-t border-line pt-8">
+          <Button href="/tuyen-sinh">Đăng ký xét tuyển ngành này →</Button>
+          <Button href="/nganh-dao-tao" variant="outline">
+            Xem các ngành khác
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }

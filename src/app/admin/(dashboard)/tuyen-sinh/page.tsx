@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
-import { updateAdmissionStatusAction } from "./actions";
+import { updateAdmissionStatusAction, deleteAdmissionAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Đăng ký tuyển sinh" };
@@ -109,6 +110,7 @@ export default async function AdminAdmissionsPage({
                   <th className="px-6 py-3 font-semibold">Ngành quan tâm</th>
                   <th className="px-6 py-3 font-semibold">Trạng thái</th>
                   <th className="px-6 py-3 font-semibold">Cập nhật</th>
+                  <th className="px-6 py-3 font-semibold">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -145,6 +147,21 @@ export default async function AdminAdmissionsPage({
                           </form>
                         ))}
                       </div>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <form
+                        action={async () => {
+                          "use server";
+                          await deleteAdmissionAction(s.id);
+                        }}
+                      >
+                        <ConfirmDeleteButton
+                          className="rounded-md border border-line px-2.5 py-1 text-[10.5px] font-semibold text-accent-600 hover:border-accent-500"
+                          confirmMessage={`Xoá hồ sơ của "${s.fullName}"? Không thể hoàn tác.`}
+                        >
+                          Xoá
+                        </ConfirmDeleteButton>
+                      </form>
                     </td>
                   </tr>
                 ))}

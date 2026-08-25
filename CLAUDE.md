@@ -187,7 +187,10 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 **Tất cả các trang công khai trong SRS Giai đoạn 1 giờ đã có nội dung thật —
-không còn `PageStub` nào ở route chính.**
+không còn `PageStub` nào ở route chính.** (Ghi chú này từng SAI một thời
+gian dài: `/nganh-dao-tao` + `/nganh-dao-tao/[slug]` vẫn là `PageStub` dù
+admin đã có đầy đủ CRUD, chỉ phát hiện ra ở lượt rà soát lần 2 — xem mục 5
+"Rà soát admin + web công khai lần 2". Nay đã sửa, ghi chú này giờ đúng thật.)
 
 ### Ghi chú thêm cho vài trang (không còn là khung tạm)
 - **Tin tức** (`/tin-tuc` danh sách + `/tin-tuc/[slug]` chi tiết) — đọc qua
@@ -669,6 +672,70 @@ giao diện khác". Rà soát phát hiện:
   dùng mong muốn. **Quy ước cho trang admin mới theo pattern `?edit=`**:
   luôn thêm `redirect(basePath)` cuối `upsertXxxAction`, KHÔNG thêm cho
   trang cấu hình 1 dòng.
+
+### Rà soát admin + web công khai lần 2 — vá 8 lỗi theo mức độ ưu tiên
+Người dùng yêu cầu rà soát toàn diện thêm 1 lần nữa (cả admin lẫn web công
+khai) trước khi phản hồi — đọc hết `page.tsx`+`actions.ts` của 21 trang
+admin và 14 trang công khai, tìm được 8 vấn đề, xếp mức độ rồi sửa từ cao
+xuống thấp:
+
+- **🔴 Nghiêm trọng — `/nganh-dao-tao` và `/nganh-dao-tao/[slug]` chỉ là
+  `PageStub`** dù `admin/nganh-dao-tao` đã có đầy đủ CRUD (mã ngành, thời
+  lượng, chỉ tiêu, mô tả, nội dung chi tiết) — mọi thẻ ngành ở Trang chủ
+  đều dẫn tới "Trang đang được xây dựng". Đây là gap lớn nhất từng có
+  trong dự án, và ghi chú cũ ở mục 5 "không còn PageStub nào ở route
+  chính" là **sai** — đã sửa lại đúng thực tế. Đã dựng 2 trang thật: danh
+  sách dạng lưới thẻ màu (tái dùng đúng style card ở Trang chủ, xem
+  `programGradient()`) + trang chi tiết (thời gian/chỉ tiêu/nội dung
+  Markdown, có nút CTA "Đăng ký xét tuyển ngành này"). Ngành nào chưa nhập
+  `content` thì hiện dòng gợi ý liên hệ hotline thay vì để trống trơn.
+- **🟠 Cao — Footer hard-code cứng 6 ngành đào tạo** (`PROGRAM_LINKS` tĩnh
+  trong `SiteFooter.tsx`) — vi phạm nguyên tắc "quản lý qua CMS, không
+  hard-code". Đã sửa: `(site)/layout.tsx` gọi thêm `getPrograms()`, truyền
+  xuống `SiteFooter` qua prop `programs`, footer tự lấy 6 ngành đầu từ DB
+  (`.slice(0, 6)`) — admin đổi ngành ở CMS là footer cập nhật theo, không
+  còn lệch.
+- **🟠 Cao — `admin/tuyen-sinh` không xoá được hồ sơ** (chỉ đổi trạng
+  thái) — thêm `deleteAdmissionAction` + nút Xoá (`ConfirmDeleteButton`)
+  theo đúng pattern các trang khác.
+- **🟡 Trung bình — `admin/cai-dat`/`admin/trang-chu` (trang cấu hình 1
+  dòng, cố ý KHÔNG `redirect()` — xem quy ước #8 mục 6) không có thông báo
+  "Đã lưu thành công"** — đã thêm: action `redirect(path + "?saved=1")` về
+  lại chính trang đó (không phải sang trang khác, giữ đúng thiết kế), page
+  đọc `searchParams.saved` để hiện banner xanh xác nhận.
+- **🟡 Trung bình — Chưa có trang Chính sách bảo mật**, footer trước đó là
+  `<span>` tĩnh giả làm link. Đã tạo `/chinh-sach-bao-mat` (đọc qua
+  `getPageBySlug`, cùng pattern `gioi-thieu`/`lien-he`), seed nội dung
+  khung liệt kê đúng dữ liệu 2 form công khai (Tuyển sinh, Liên hệ) đang
+  thu thập thật + mục đích sử dụng — theo tinh thần Nghị định
+  13/2023/NĐ-CP, **không phải văn bản pháp lý chính thức**, cần bộ phận
+  phụ trách rà soát trước khi xem là hoàn chỉnh (giống cách các trang "3
+  công khai" đã làm).
+- **🟡 Trung bình — Giờ Sự kiện lệch múi giờ nếu server không đặt giờ Việt
+  Nam** — `admin/su-kien` trước đó dùng `new Date(iso).getHours()` (giờ
+  LOCAL CỦA MÁY CHỦ) để đổ vào ô `datetime-local` lúc Sửa, và
+  `new Date(startAt).toISOString()` (cũng hiểu chuỗi nhập theo giờ local
+  máy chủ) lúc Lưu — đúng trên máy dev (múi giờ Asia/Saigon) nhưng SAI nếu
+  deploy lên server đặt múi giờ khác (VD US cloud mặc định UTC): giờ hiện
+  ra khi Sửa lại sẽ lệch 7 tiếng so với giờ admin đã nhập. Cũng phát hiện
+  `formatVNDate`/`formatVNDateTime` (dùng hiển thị ngày tin tức/sự kiện
+  khắp site) có cùng lỗi gốc (`toLocaleDateString("vi-VN")` không kèm
+  `timeZone` thì lấy giờ máy chủ). Đã sửa tận gốc trong
+  `src/lib/utils.ts`: thêm `timeZone: "Asia/Ho_Chi_Minh"` vào
+  `formatVNDate`/`formatVNDateTime`, và 2 hàm mới
+  `vnDatetimeLocalToISO`/`isoToVnDatetimeLocal` tính thủ công theo offset
+  cố định UTC+7 (Việt Nam không có giờ mùa hè, an toàn để cố định) —
+  **hoàn toàn không phụ thuộc múi giờ máy chủ đang chạy**, đã tự kiểm tra
+  bằng cách ép `TZ=UTC` lúc chạy Node để xác nhận. `admin/su-kien` đổi
+  sang dùng 2 hàm mới này. **Nếu sau này thêm ô nhập ngày giờ nào khác
+  (`datetime-local`), luôn dùng cặp hàm này, đừng tự viết lại bằng
+  `new Date(...).getHours()`.**
+- **🟢 Thấp — Nút Facebook/Zalo/YouTube ở footer vẫn hiện dù chưa cấu
+  hình** (`site_settings` để mặc định `"#"`) — đã thêm lọc
+  `!== "#"` giống cách widget liên hệ nhanh đã làm.
+- **🟢 Thấp — Bảng "Chỉ tiêu & điều kiện" ở `/tuyen-sinh` không link được
+  sang trang chi tiết ngành** — giờ trang chi tiết đã có thật (mục đầu
+  tiên ở trên), đã thêm link tên ngành trỏ `/nganh-dao-tao/{slug}`.
 
 ---
 

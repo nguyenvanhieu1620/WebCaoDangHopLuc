@@ -18,3 +18,10 @@ export async function updateAdmissionStatusAction(
   revalidatePath("/admin/tuyen-sinh");
   revalidatePath("/admin");
 }
+
+export async function deleteAdmissionAction(submissionId: string) {
+  await requirePermission("admissions-contact");
+  await db.delete(schema.admissionSubmissions).where(eq(schema.admissionSubmissions.id, submissionId));
+  revalidatePath("/admin/tuyen-sinh");
+  revalidatePath("/admin");
+}

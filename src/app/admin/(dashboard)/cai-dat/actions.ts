@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
@@ -43,4 +44,6 @@ export async function updateSiteSettingsAction(formData: FormData) {
   revalidatePath("/", "layout");
   revalidatePath("/lms");
   revalidatePath("/admin/cai-dat");
+
+  redirect("/admin/cai-dat?saved=1");
 }

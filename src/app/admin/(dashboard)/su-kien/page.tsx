@@ -6,19 +6,11 @@ import { ImagePicker } from "@/components/admin/ImagePicker";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
-import { formatVNDateTime } from "@/lib/utils";
+import { formatVNDateTime, isoToVnDatetimeLocal } from "@/lib/utils";
 import { upsertEventAction, deleteEventAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Sự kiện" };
-
-/** "2026-09-15T09:00:00.000Z" -> "2026-09-15T09:00" (giờ local, cho input datetime-local). */
-function toDatetimeLocalValue(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export default async function AdminEventsPage({
   searchParams,
@@ -118,7 +110,7 @@ export default async function AdminEventsPage({
                   name="startAt"
                   type="datetime-local"
                   required
-                  defaultValue={toDatetimeLocalValue(editing?.startAt)}
+                  defaultValue={isoToVnDatetimeLocal(editing?.startAt)}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
               </div>
@@ -129,7 +121,7 @@ export default async function AdminEventsPage({
                 <input
                   name="endAt"
                   type="datetime-local"
-                  defaultValue={toDatetimeLocalValue(editing?.endAt)}
+                  defaultValue={isoToVnDatetimeLocal(editing?.endAt)}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
               </div>

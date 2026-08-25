@@ -8,8 +8,13 @@ import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Cài đặt chung" };
 
-export default async function AdminSiteSettingsPage() {
+export default async function AdminSiteSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
   await requirePermission("site-settings");
+  const { saved } = await searchParams;
   const settings = await db.query.siteSettings.findFirst({
     where: eq(schema.siteSettings.id, "main"),
   });
@@ -24,6 +29,11 @@ export default async function AdminSiteSettingsPage() {
         description="Thông tin liên hệ & banner thông báo hiển thị ở Header/Footer toàn site"
       />
       <div className="p-8">
+        {saved && (
+          <div className="mb-5 max-w-2xl rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
+            ✓ Đã lưu thay đổi thành công.
+          </div>
+        )}
         <form
           action={updateSiteSettingsAction}
           className="max-w-2xl space-y-4 rounded-2xl border border-line bg-white p-6"

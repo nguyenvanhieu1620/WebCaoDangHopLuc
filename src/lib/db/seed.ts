@@ -831,6 +831,39 @@ Giờ làm việc: [Trường điền: VD Thứ 2 - Thứ 6, 7h30 - 17h00]`,
     console.log("• Đã có trang Giới thiệu/Liên hệ, bỏ qua.");
   }
 
+  // Trang Chính sách bảo mật — khung tham khảo tinh thần Nghị định 13/2023/NĐ-CP
+  // (bảo vệ dữ liệu cá nhân), liệt kê đúng những gì 2 form công khai (Tuyển
+  // sinh, Liên hệ) đang thu thập thật. KHÔNG phải văn bản pháp lý chính thức
+  // — trường nên rà soát cùng bộ phận pháp lý trước khi xem là hoàn chỉnh.
+  const existingPrivacyPage = await db.query.pages.findFirst({
+    where: (p, { eq: eqOp }) => eqOp(p.slug, "chinh-sach-bao-mat"),
+  });
+  if (!existingPrivacyPage) {
+    await db.insert(pages).values({
+      slug: "chinh-sach-bao-mat",
+      title: "Chính sách bảo mật",
+      content: `Trường Cao đẳng Y Dược Hợp Lực tôn trọng và cam kết bảo vệ thông tin cá nhân của người truy cập website.
+
+Thông tin thu thập
+— Form "Đăng ký xét tuyển" (/tuyen-sinh): họ tên, số điện thoại, số CCCD, email (tuỳ chọn), ngành quan tâm, ghi chú.
+— Form "Liên hệ" (/lien-he): họ tên, số điện thoại (tuỳ chọn), email (tuỳ chọn), nội dung câu hỏi.
+
+Mục đích sử dụng
+Thông tin trên chỉ dùng để xử lý hồ sơ xét tuyển, tra cứu kết quả (qua số CCCD) và phản hồi câu hỏi của bạn — không dùng cho mục đích quảng cáo, không chia sẻ cho bên thứ ba ngoài phạm vi hoạt động tuyển sinh của trường.
+
+Thời gian lưu trữ
+[Trường điền: thời gian lưu trữ hồ sơ theo quy định nội bộ, VD lưu trong suốt khoá học + X năm sau khi tốt nghiệp]
+
+Quyền của bạn
+Bạn có quyền yêu cầu xem, chỉnh sửa hoặc xoá thông tin cá nhân đã cung cấp — liên hệ qua hotline/email ở trang Liên hệ để được hỗ trợ.
+
+[Bộ phận phụ trách pháp lý/tuyển sinh rà soát và cập nhật nội dung chính thức trước khi công bố]`,
+    });
+    console.log("✓ Tạo trang Chính sách bảo mật mặc định");
+  } else {
+    console.log("• Đã có trang Chính sách bảo mật, bỏ qua.");
+  }
+
   // Mục menu "Công khai" — danh mục to (nằm trong nút ☰, giống site tham khảo) + 4 danh mục con
   const existingCongKhaiNav = await db.query.navItems.findFirst({
     where: (n, { eq }) => eq(n.href, "/cong-khai"),

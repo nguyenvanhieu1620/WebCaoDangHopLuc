@@ -7,6 +7,7 @@ import { resolveImageUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
+import { vnDatetimeLocalToISO } from "@/lib/utils";
 
 export async function upsertEventAction(formData: FormData) {
   await requirePermission("events");
@@ -45,8 +46,8 @@ export async function upsertEventAction(formData: FormData) {
     descriptionEn: descriptionEnFinal || null,
     location: location || null,
     locationEn: locationEnFinal || null,
-    startAt: new Date(startAt).toISOString(),
-    endAt: endAt ? new Date(endAt).toISOString() : null,
+    startAt: vnDatetimeLocalToISO(startAt),
+    endAt: endAt ? vnDatetimeLocalToISO(endAt) : null,
     coverImageUrl,
   };
 

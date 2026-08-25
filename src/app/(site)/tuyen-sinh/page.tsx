@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { AdmissionForm } from "@/components/site/AdmissionForm";
 import { getPrograms } from "@/lib/data/programs";
@@ -36,7 +37,11 @@ export default async function AdmissionsPage() {
                 <tbody className="divide-y divide-line">
                   {programs.map((p) => (
                     <tr key={p.slug}>
-                      <td className="px-5 py-3.5 font-medium text-ink">{p.name}</td>
+                      <td className="px-5 py-3.5 font-medium text-ink">
+                        <Link href={`/nganh-dao-tao/${p.slug}`} className="hover:text-brand-700 hover:underline">
+                          {p.name}
+                        </Link>
+                      </td>
                       <td className="px-5 py-3.5 text-ink-soft">{p.duration}</td>
                       <td className="px-5 py-3.5 text-ink-soft">{p.intake}</td>
                     </tr>

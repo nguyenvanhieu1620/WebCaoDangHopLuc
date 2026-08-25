@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { resolveImageUrl } from "@/lib/media";
@@ -177,4 +178,6 @@ export async function updateHomepageContentAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/trang-chu");
+
+  redirect("/admin/trang-chu?saved=1");
 }

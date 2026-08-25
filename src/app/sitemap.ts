@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/thu-vien",
     "/lms",
     "/cong-khai",
+    "/chinh-sach-bao-mat",
   ].map((path) => ({
     url: `${SITE_URL}${path}`,
     lastModified: new Date(),
