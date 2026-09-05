@@ -87,7 +87,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 - **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 21 bảng
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 22 bảng
 `admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`
 (có thêm `cover_image_url` — trang tĩnh giờ cũng thêm ảnh được, không chỉ
 text), `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
@@ -110,7 +110,10 @@ chủ nhiều ảnh + nút liên hệ nhanh nổi"), `departments` (Khoa/Bộ m�
 `faculty_attributes` (Học hàm/Học vị/Chức vụ — xem mục 5 "Sidebar admin
 theo khối thực thể"). Thêm ở đợt tách nút liên hệ nhanh khỏi
 `site_settings`: `quick_contacts` (xem mục 5 "Nút liên hệ nhanh quản lý
-qua admin").
+qua admin"). Thêm ở đợt đối chiếu với website trường khác: bảng mới
+`newsletter_subscribers`, cột `gallery_items.video_url` và
+`posts.is_pinned` (xem mục 5 "3 nâng cấp sau khi đối chiếu với website
+trường khác").
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -963,6 +966,41 @@ sang PostgreSQL:
   `mousemove` qua JS (`--spot-x`/`--spot-y` đổi giá trị theo toạ độ), nút
   CTA có đủ class quét sáng. Cần người dùng tự xem cảm giác cuộn/hover
   thật trên trình duyệt thật.
+
+### 3 nâng cấp sau khi đối chiếu với website trường khác (hmu.edu.vn, cdyduochanoi.edu.vn, cdyduocsaigon.edu.vn)
+Người dùng nhờ tham khảo website các trường (1 trường lớn + 2 trường cao
+đẳng cùng tầm) để tìm việc cần bổ sung. Phần lớn khoảng cách chỉ là NỘI
+DUNG (Cơ cấu tổ chức, Thông điệp Hiệu trưởng, Cựu sinh viên... admin tự
+tạo được ngay qua `admin/trang-tinh`, không cần code) — 3 mục dưới đây là
+phần thật sự cần code, người dùng chọn làm cả 3:
+
+- **Video trong Thư viện** (`gallery_items.video_url`, nullable) — trước
+  đây thư viện chỉ nhận ảnh dù tiêu đề trang đã ghi "Ảnh & video". Có
+  `video_url` (dán link YouTube) thì `image_url` đóng vai trò ảnh
+  bìa/thumbnail, phủ icon Play qua component dùng chung
+  `src/components/site/GalleryMedia.tsx` — bấm vào mở video ở tab mới
+  (`target="_blank"`), **không** nhúng iframe/modal để giữ đơn giản, không
+  thêm state client. Dùng chung ở cả bento Trang chủ và `/thu-vien`.
+- **Đăng ký nhận bản tin** (bảng mới `newsletter_subscribers`: `email`
+  unique + `created_at`) — form nhỏ ở `SiteFooter.tsx`
+  (`NewsletterForm.tsx`, cùng pattern honeypot + rate limit với
+  `ContactForm.tsx`) POST tới `/api/newsletter`. **Không** gửi email báo
+  admin mỗi lượt đăng ký (khác `/api/contact`, `/api/admissions`) — đây
+  không phải việc cần xử lý gấp, tránh spam hộp thư admin. Admin xem/xoá
+  qua `admin/dang-ky-nhan-tin` (module quyền dùng chung key
+  `"admissions-contact"` với Tuyển sinh/Liên hệ/Liên hệ nhanh — không tách
+  module quyền riêng cho 1 danh sách nhỏ), có nút "Sao chép danh sách
+  email" (`CopyEmailsButton.tsx`, client component, copy nối bằng dấu phẩy
+  vào clipboard) để dán qua Gmail/Outlook gửi hàng loạt thủ công — không
+  tự làm tính năng gửi bản tin hàng loạt (quá phạm vi, người dùng chưa cần).
+- **Ghim bài viết làm "Thông báo"** (`posts.is_pinned`, integer 0/1) —
+  cdyduocsaigon tách hẳn khối "THÔNG BÁO" khỏi Tin tức thường (lịch nghỉ,
+  tuyển dụng...) để nổi bật hơn. Thêm checkbox "Ghim làm Thông báo nổi bật"
+  trong form `admin/bai-viet` (áp dụng được cả lúc tạo lẫn sửa, khác cờ
+  đăng/nháp vốn chỉ đổi qua nút riêng ở danh sách — ghim chỉ là thuộc tính
+  nội dung, không phải trạng thái workflow). `getPinnedPosts()` trong
+  `src/lib/data/posts.ts` lấy bài đã đăng + đã ghim, Trang chủ hiện 1 khối
+  danh sách gọn ngay trên khối Tin tức (chỉ hiện khi có ít nhất 1 bài ghim).
 
 ---
 

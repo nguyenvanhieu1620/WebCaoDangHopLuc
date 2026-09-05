@@ -17,6 +17,7 @@ export async function upsertPostAction(formData: FormData) {
   const content = String(formData.get("content") || "").trim();
   const categoryId = String(formData.get("categoryId") || "").trim();
   const publishNow = formData.get("publishNow") === "on";
+  const isPinned = formData.get("isPinned") === "on";
   const titleEn = String(formData.get("titleEn") || "").trim();
   const excerptEn = String(formData.get("excerptEn") || "").trim();
   const contentEn = String(formData.get("contentEn") || "").trim();
@@ -52,6 +53,7 @@ export async function upsertPostAction(formData: FormData) {
         contentEn: contentEnFinal || null,
         categoryId: categoryId || null,
         coverImageUrl,
+        isPinned: isPinned ? 1 : 0,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(schema.posts.id, id));
@@ -75,6 +77,7 @@ export async function upsertPostAction(formData: FormData) {
       contentEn: contentEnFinal || null,
       categoryId: categoryId || null,
       coverImageUrl,
+      isPinned: isPinned ? 1 : 0,
       status: publishNow ? "published" : "draft",
       publishedAt: publishNow ? new Date().toISOString() : null,
     });

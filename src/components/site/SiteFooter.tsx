@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SITE } from "@/lib/constants";
+import { NewsletterForm } from "./NewsletterForm";
 import type { Program, SiteSettings } from "@/lib/db/schema";
 
 const QUICK_LINKS = [
@@ -80,6 +81,12 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
                 ))}
               </div>
             )}
+            <div className="mt-6 max-w-xs">
+              <div className="mb-2 font-mono text-[11px] uppercase tracking-wider text-white/45">
+                Đăng ký nhận tin
+              </div>
+              <NewsletterForm />
+            </div>
           </div>
 
           <FooterColumn title="Liên kết nhanh" links={QUICK_LINKS} />

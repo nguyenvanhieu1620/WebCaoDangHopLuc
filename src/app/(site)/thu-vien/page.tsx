@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { Reveal } from "@/components/site/Reveal";
+import { GalleryMedia } from "@/components/site/GalleryMedia";
 import { getGalleryItems } from "@/lib/data/gallery";
 
 export const metadata: Metadata = { title: "Thư viện ảnh & video" };
@@ -27,9 +27,7 @@ export default async function GalleryPage() {
             {items.map((item, i) => (
               <Reveal key={item.id} delay={i * 60}>
                 <figure className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2">
-                  <div className="relative h-[180px]">
-                    <Image src={item.imageUrl} alt={item.caption} fill className="object-cover" />
-                  </div>
+                  <GalleryMedia item={item} className="h-[180px]" />
                   <figcaption className="px-4 py-3 text-[13px] font-semibold text-ink">
                     {item.caption}
                   </figcaption>

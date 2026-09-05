@@ -88,6 +88,7 @@ export const ADMIN_NAV: AdminNavEntity[] = [
       { key: "admissions", label: "Đăng ký tuyển sinh", href: "/admin/tuyen-sinh" },
       { key: "contact-messages", label: "Tin nhắn liên hệ", href: "/admin/lien-he" },
       { key: "quick-contacts", label: "Liên hệ nhanh", href: "/admin/lien-he-nhanh" },
+      { key: "newsletter", label: "Đăng ký nhận tin", href: "/admin/dang-ky-nhan-tin" },
     ],
   },
   { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat" },

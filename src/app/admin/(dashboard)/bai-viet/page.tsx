@@ -98,7 +98,14 @@ export default async function AdminPostsPage({
               {filteredPosts.map((post) => (
                 <li key={post.id} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-ink">{post.title}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium text-ink">{post.title}</span>
+                      {!!post.isPinned && (
+                        <span className="shrink-0 rounded-full bg-accent-100 px-1.5 py-0.5 text-[10px] font-semibold text-accent-700">
+                          Đã ghim
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-0.5 flex items-center gap-2 font-mono text-[11px] text-ink-faint">
                       <span>/{post.slug}</span>
                       {post.categoryId && categoryNameById.get(post.categoryId) && (
@@ -281,6 +288,15 @@ export default async function AdminPostsPage({
                   placeholder="Nội dung đầy đủ của bài viết..."
                 />
               </div>
+              <label className="flex items-center gap-2 text-xs font-medium text-ink-soft">
+                <input
+                  type="checkbox"
+                  name="isPinned"
+                  defaultChecked={!!editing?.isPinned}
+                  className="h-4 w-4 rounded border-line"
+                />
+                Ghim làm Thông báo nổi bật ở Trang chủ
+              </label>
               {!editing && (
                 <label className="flex items-center gap-2 text-xs font-medium text-ink-soft">
                   <input type="checkbox" name="publishNow" className="h-4 w-4 rounded border-line" />

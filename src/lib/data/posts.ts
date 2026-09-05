@@ -50,6 +50,32 @@ export async function getLatestPublishedPosts(limit: number): Promise<PublishedP
   }));
 }
 
+/** Bài viết đã đăng và được ghim (`isPinned`), mới nhất trước — dùng cho khối "Thông báo" ở Trang chủ. */
+export async function getPinnedPosts(limit: number): Promise<PublishedPostPreview[]> {
+  const [rows, locale] = await Promise.all([
+    db.query.posts.findMany({
+      where: and(eq(schema.posts.status, "published"), eq(schema.posts.isPinned, 1)),
+      orderBy: desc(schema.posts.publishedAt),
+      limit,
+    }),
+    getLocale(),
+  ]);
+  if (rows.length === 0) return [];
+
+  const names = await categoryNameMap(
+    [...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    title: pickLocale(r.title, r.titleEn, locale),
+    excerpt: r.excerpt ? pickLocale(r.excerpt, r.excerptEn, locale) : r.excerpt,
+    coverImageUrl: r.coverImageUrl,
+    categoryName: r.categoryId ? names.get(r.categoryId) ?? null : null,
+    publishedAt: r.publishedAt,
+  }));
+}
+
 /**
  * Toàn bộ bài viết đã đăng, mới nhất trước — dùng cho trang danh sách
  * /tin-tuc. Có `categorySlug` (VD "hoc-bong") thì chỉ lấy bài thuộc đúng

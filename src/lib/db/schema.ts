@@ -67,6 +67,8 @@ export const posts = sqliteTable("posts", {
   status: text("status").notNull().default("draft"),
   categoryId: text("category_id"),
   coverImageUrl: text("cover_image_url"),
+  /** Ghim làm "Thông báo" nổi bật ở khối riêng trên Trang chủ (tách khỏi Tin tức thường). */
+  isPinned: integer("is_pinned").notNull().default(0),
   publishedAt: text("published_at"),
   createdAt: text("created_at")
     .notNull()
@@ -235,6 +237,17 @@ export const quickContacts = sqliteTable("quick_contacts", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/** Email đăng ký nhận bản tin — form ở Footer, admin xem/xuất danh sách qua admin/dang-ky-nhan-tin. */
+export const newsletterSubscribers = sqliteTable("newsletter_subscribers", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull().unique(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Đối tác hiển thị ở dải logo/tên Trang chủ — sortOrder do admin tự nhập để sắp vị trí. */
 export const partners = sqliteTable("partners", {
   id: text("id")
@@ -254,6 +267,8 @@ export const galleryItems = sqliteTable("gallery_items", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   imageUrl: text("image_url").notNull(),
+  /** Link video (VD YouTube) — tuỳ chọn. Có giá trị thì `imageUrl` đóng vai trò ảnh bìa/thumbnail, click mở video ở tab mới. */
+  videoUrl: text("video_url"),
   caption: text("caption").notNull(),
   captionEn: text("caption_en"),
   sortOrder: integer("sort_order").notNull().default(0),
@@ -477,3 +492,4 @@ export type HeroBanner = typeof heroBanners.$inferSelect;
 export type Department = typeof departments.$inferSelect;
 export type FacultyAttribute = typeof facultyAttributes.$inferSelect;
 export type QuickContact = typeof quickContacts.$inferSelect;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

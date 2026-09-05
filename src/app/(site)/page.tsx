@@ -14,9 +14,10 @@ import { getFeaturedPrograms, getPrograms } from "@/lib/data/programs";
 import { getHomepageContent } from "@/lib/data/homepage";
 import { getPartners } from "@/lib/data/partners";
 import { getGalleryItems } from "@/lib/data/gallery";
+import { GalleryMedia } from "@/components/site/GalleryMedia";
 import { getFacultyList, facultyDisplayName } from "@/lib/data/faculty";
 import { getTestimonials } from "@/lib/data/testimonials";
-import { getLatestPublishedPosts } from "@/lib/data/posts";
+import { getLatestPublishedPosts, getPinnedPosts } from "@/lib/data/posts";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getHeroBanners } from "@/lib/data/hero-banners";
 import { getEvents } from "@/lib/data/events";
@@ -64,6 +65,7 @@ export default async function HomePage() {
     facultyList,
     testimonials,
     latestPosts,
+    pinnedPosts,
     settings,
     heroBanners,
     allEvents,
@@ -76,6 +78,7 @@ export default async function HomePage() {
     getFacultyList(),
     getTestimonials(),
     getLatestPublishedPosts(3),
+    getPinnedPosts(5),
     getSiteSettings(),
     getHeroBanners(),
     getEvents(),
@@ -369,7 +372,7 @@ export default async function HomePage() {
                 )}
               >
                 {item ? (
-                  <Image src={item.imageUrl} alt={item.caption} fill className="object-cover" />
+                  <GalleryMedia item={item} className="h-full w-full" />
                 ) : (
                   <ImagePlaceholder
                     label={
@@ -529,6 +532,38 @@ export default async function HomePage() {
                 );
               })}
             </div>
+          </Reveal>
+        </section>
+      )}
+
+      {/* ============ THÔNG BÁO (bài viết được ghim) ============ */}
+      {pinnedPosts.length > 0 && (
+        <section className="px-6 pt-16 sm:px-8">
+          <Reveal className="mx-auto max-w-[1320px] overflow-hidden rounded-2xl border border-accent-100 bg-accent-50">
+            <div className="flex flex-wrap items-center gap-3 border-b border-accent-100 bg-white/60 px-6 py-3.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-600 text-white">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 2a5 5 0 00-5 5v3.6c0 .5-.2 1-.6 1.4L5 13.4c-.6.6-.2 1.6.6 1.6h13a1 1 0 00.7-1.6l-1.4-1.4a2 2 0 01-.6-1.4V7a5 5 0 00-5-5z" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M9 18a3 3 0 006 0" strokeLinecap="round" />
+                </svg>
+              </span>
+              <span className="font-display text-[16px] font-bold text-brand-900">Thông báo</span>
+            </div>
+            <ul className="divide-y divide-accent-100/70">
+              {pinnedPosts.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/tin-tuc/${p.slug}`}
+                    className="flex flex-wrap items-center justify-between gap-2 px-6 py-3.5 text-[14px] transition-colors hover:bg-white/60"
+                  >
+                    <span className="font-semibold text-ink">{p.title}</span>
+                    <span className="shrink-0 font-mono text-[11px] text-ink-faint">
+                      {formatVNDate(p.publishedAt)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </Reveal>
         </section>
       )}

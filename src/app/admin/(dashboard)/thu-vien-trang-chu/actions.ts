@@ -14,6 +14,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
   const caption = String(formData.get("caption") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
   const captionEn = String(formData.get("captionEn") || "").trim();
+  const videoUrl = String(formData.get("videoUrl") || "").trim();
 
   if (!caption) return;
 
@@ -29,7 +30,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
   if (id) {
     await db
       .update(schema.galleryItems)
-      .set({ caption, captionEn: captionEnFinal || null, sortOrder, imageUrl })
+      .set({ caption, captionEn: captionEnFinal || null, sortOrder, imageUrl, videoUrl: videoUrl || null })
       .where(eq(schema.galleryItems.id, id));
   } else {
     await db.insert(schema.galleryItems).values({
@@ -37,6 +38,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
       captionEn: captionEnFinal || null,
       sortOrder,
       imageUrl,
+      videoUrl: videoUrl || null,
     });
   }
 

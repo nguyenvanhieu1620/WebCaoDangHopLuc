@@ -55,7 +55,14 @@ export default async function AdminGalleryPage({
                       <Image src={item.imageUrl} alt={item.caption} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-ink">{item.caption}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-medium text-ink">{item.caption}</span>
+                        {item.videoUrl && (
+                          <span className="shrink-0 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
+                            Video
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[11.5px] text-ink-faint">vị trí #{item.sortOrder}</div>
                     </div>
                   </div>
@@ -136,6 +143,21 @@ export default async function AdminGalleryPage({
                 images={mediaImages}
                 currentUrl={editing?.imageUrl}
               />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Link video (YouTube, tuỳ chọn)
+              </label>
+              <input
+                name="videoUrl"
+                type="url"
+                defaultValue={editing?.videoUrl ?? ""}
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <p className="mt-1 text-[11px] text-ink-faint">
+                Có link thì ảnh trên đóng vai trò ảnh bìa — khách bấm vào sẽ mở video ở tab mới.
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
