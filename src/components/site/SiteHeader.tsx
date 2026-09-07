@@ -106,7 +106,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                 </Link>
                 {item.children.length > 0 && (
                   <div className="invisible absolute left-0 top-full z-50 min-w-[220px] pt-2 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100">
-                    <div className="rounded-2xl border border-brand-700/10 bg-white/97 p-2 shadow-lg2 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-brand-700/10 bg-white p-2 shadow-lg2">
                       {item.children.map((child) => (
                         <Link
                           key={child.id}
@@ -146,7 +146,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                   </div>
                 </button>
                 <div className="invisible absolute right-0 top-full z-50 min-w-[240px] pt-2 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100">
-                  <div className="rounded-2xl border border-brand-700/10 bg-white/97 p-2 shadow-lg2 backdrop-blur-xl">
+                  <div className="rounded-2xl border border-brand-700/10 bg-white p-2 shadow-lg2">
                     {navTree.secondary.map((item) => (
                       <div key={item.id} className="py-1">
                         <Link
