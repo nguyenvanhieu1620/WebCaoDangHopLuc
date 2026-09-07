@@ -1,4 +1,5 @@
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminMobileMenuProvider } from "@/components/admin/AdminMobileMenuContext";
 import { getCurrentAdminUser, getUserPermissions } from "@/lib/admin-auth";
 
 /**
@@ -7,6 +8,11 @@ import { getCurrentAdminUser, getUserPermissions } from "@/lib/admin-auth";
  * Việc bắt buộc đăng nhập đã xử lý ở src/proxy.ts (chạy trước layout này) —
  * ở đây đọc user đầy đủ (qua `getCurrentAdminUser`, có cache theo request) để
  * lấy tên hiển thị + quyền, dùng lọc bớt mục sidebar mà tài khoản không có quyền.
+ *
+ * `AdminMobileMenuProvider` bọc ngoài cùng để `AdminSidebar` (ở đây) và
+ * `AdminTopbar` (nằm sâu trong từng `page.tsx`) dùng chung 1 trạng thái
+ * đóng/mở — cho phép sidebar chuyển thành drawer trượt trên di động thay vì
+ * chiếm cứng 256px màn hình (xem AdminMobileMenuContext.tsx).
  */
 export default async function AdminDashboardLayout({
   children,
@@ -17,9 +23,11 @@ export default async function AdminDashboardLayout({
   const permissions = user ? getUserPermissions(user) : [];
 
   return (
-    <div className="flex min-h-screen bg-paper">
-      <AdminSidebar userName={user?.name ?? "Quản trị viên"} permissions={permissions} />
-      <div className="flex-1">{children}</div>
-    </div>
+    <AdminMobileMenuProvider>
+      <div className="flex min-h-screen bg-paper">
+        <AdminSidebar userName={user?.name ?? "Quản trị viên"} permissions={permissions} />
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    </AdminMobileMenuProvider>
   );
 }

@@ -5,9 +5,28 @@ import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
-import { resolveImageUrl } from "@/lib/media";
+import { resolveImageUrl, saveUploadedFile } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+
+/** Xử lý field "attachment" (PDF/Word/Excel) — có file mới thì upload + lưu tên gốc để hiện link đẹp; tick "removeAttachment" thì xoá; không đụng gì thì giữ nguyên giá trị cũ. */
+async function resolveAttachment(
+  formData: FormData,
+  current: { attachmentUrl: string | null; attachmentName: string | null } | null | undefined
+): Promise<{ attachmentUrl: string | null; attachmentName: string | null }> {
+  const file = formData.get("attachment");
+  if (file instanceof File && file.size > 0) {
+    const saved = await saveUploadedFile(file);
+    return { attachmentUrl: saved.url, attachmentName: file.name };
+  }
+  if (formData.get("removeAttachment") === "on") {
+    return { attachmentUrl: null, attachmentName: null };
+  }
+  return {
+    attachmentUrl: current?.attachmentUrl ?? null,
+    attachmentName: current?.attachmentName ?? null,
+  };
+}
 
 export async function upsertPostAction(formData: FormData) {
   await requirePermission("posts");
@@ -31,6 +50,7 @@ export async function upsertPostAction(formData: FormData) {
     "coverImageExisting",
     current?.coverImageUrl ?? null
   );
+  const { attachmentUrl, attachmentName } = await resolveAttachment(formData, current);
 
   const [titleEnFinal, excerptEnFinal, contentEnFinal] = await autoFillTranslations([
     { vi: title, en: titleEn },
@@ -54,6 +74,8 @@ export async function upsertPostAction(formData: FormData) {
         categoryId: categoryId || null,
         coverImageUrl,
         isPinned: isPinned ? 1 : 0,
+        attachmentUrl,
+        attachmentName,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(schema.posts.id, id));
@@ -78,6 +100,8 @@ export async function upsertPostAction(formData: FormData) {
       categoryId: categoryId || null,
       coverImageUrl,
       isPinned: isPinned ? 1 : 0,
+      attachmentUrl,
+      attachmentName,
       status: publishNow ? "published" : "draft",
       publishedAt: publishNow ? new Date().toISOString() : null,
     });

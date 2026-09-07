@@ -69,6 +69,10 @@ export const posts = sqliteTable("posts", {
   coverImageUrl: text("cover_image_url"),
   /** Ghim làm "Thông báo" nổi bật ở khối riêng trên Trang chủ (tách khỏi Tin tức thường). */
   isPinned: integer("is_pinned").notNull().default(0),
+  /** Tệp đính kèm (PDF/Word/Excel) — VD quyết định tuyển sinh, biểu mẫu. URL đã lưu qua saveUploadedFile. */
+  attachmentUrl: text("attachment_url"),
+  /** Tên file gốc để hiển thị link tải (URL lưu đã bị đổi tên thêm timestamp, không đẹp để hiện cho khách). */
+  attachmentName: text("attachment_name"),
   publishedAt: text("published_at"),
   createdAt: text("created_at")
     .notNull()

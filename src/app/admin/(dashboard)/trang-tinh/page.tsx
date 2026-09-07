@@ -11,6 +11,12 @@ import { requirePermission } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Quản lý trang tĩnh" };
 
+/** Phát hiện nội dung còn dạng "[điền số liệu]"/"[Trường điền: ...]" — ghi chú nội bộ chưa được thay bằng nội dung thật, để cảnh báo admin trước khi khách xem thấy nguyên văn. */
+const PLACEHOLDER_PATTERN = /\[[^\]]{2,}\]/;
+function hasPlaceholder(content: string): boolean {
+  return PLACEHOLDER_PATTERN.test(content);
+}
+
 export default async function AdminPagesPage({
   searchParams,
 }: {
@@ -53,7 +59,17 @@ export default async function AdminPagesPage({
               {allPages.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-ink">{p.title}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium text-ink">{p.title}</span>
+                      {hasPlaceholder(p.content) && (
+                        <span
+                          title="Nội dung còn chỗ [...] chưa điền — khách xem sẽ thấy nguyên văn"
+                          className="shrink-0 rounded-full bg-accent-100 px-1.5 py-0.5 text-[10px] font-semibold text-accent-700"
+                        >
+                          ⚠️ Chưa điền
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-0.5 font-mono text-[11px] text-ink-faint">/{p.slug}</div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -132,6 +148,12 @@ export default async function AdminPagesPage({
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Nội dung</label>
+              {editing && hasPlaceholder(editing.content) && (
+                <p className="mb-1.5 rounded-lg bg-accent-100 px-3 py-2 text-[11.5px] font-semibold text-accent-700">
+                  ⚠️ Nội dung còn chỗ dạng <code>[...]</code> chưa điền — khách xem trang này trên
+                  web sẽ thấy nguyên văn. Điền số liệu/nội dung thật rồi thay thế trước khi công khai.
+                </p>
+              )}
               <MarkdownEditor
                 name="content"
                 required

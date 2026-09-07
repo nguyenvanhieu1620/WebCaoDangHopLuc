@@ -113,7 +113,11 @@ theo khối thực thể"). Thêm ở đợt tách nút liên hệ nhanh khỏi
 qua admin"). Thêm ở đợt đối chiếu với website trường khác: bảng mới
 `newsletter_subscribers`, cột `gallery_items.video_url` và
 `posts.is_pinned` (xem mục 5 "3 nâng cấp sau khi đối chiếu với website
-trường khác").
+trường khác"). Thêm ở đợt đánh giá thiết kế lần 2: cột
+`posts.attachment_url`/`posts.attachment_name` (tệp đính kèm), `type` của
+`media_items` giờ có thêm giá trị `"document"` ngoài `"image"`/`"video"`
+(xem mục 5 "Đánh giá thiết kế web + admin lần 2 + tệp đính kèm cho Bài
+viết").
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -1051,6 +1055,65 @@ code) thì ghi rõ ra thay vì im lặng bỏ qua:
   serverless (Vercel) sẽ mất file khi khởi động lại instance, chỉ ổn khi
   deploy VPS/server chạy 1 tiến trình dài hạn (đã có kế hoạch chuyển S3
   cùng lúc với Postgres ở mục 4.4/4.1c).
+
+### Đánh giá thiết kế web + admin lần 2 + tệp đính kèm cho Bài viết
+Người dùng nhờ đánh giá lại xem giao diện web/admin đã ổn chưa trước khi
+chuyển Postgres. Duyệt qua browser thật (đăng nhập admin, cả desktop lẫn
+mobile viewport) + đọc code, tìm được và vá hết các mục sau:
+
+- **Dashboard admin không actionable** (`admin/page.tsx`) — trước đây 4 KPI
+  chỉ là số tĩnh, không bấm được, "Hồ sơ tuyển sinh mới: 1" nhưng phải tự đi
+  tìm trong sidebar. Giờ mỗi KPI là `<Link>` trỏ thẳng trang xử lý tương
+  ứng, 2 KPI "mới" (tuyển sinh/liên hệ) tô màu accent khi > 0 để dễ nhận ra
+  cần xử lý; thêm KPI "Đăng ký nhận tin" (bỏ sót khi làm tính năng
+  newsletter); "Bài viết gần đây" giờ bấm vào là mở thẳng form sửa; thêm nút
+  tắt "+ Viết bài mới" đầu trang.
+- **Admin không responsive trên di động** — `AdminSidebar.tsx` trước đây cố
+  định `w-64` (256px), không breakpoint nào, vỡ layout hoàn toàn trên điện
+  thoại. Chuyển sang mô hình drawer trượt chuẩn: `AdminMobileMenuContext.tsx`
+  (mới) — Context chia sẻ trạng thái đóng/mở giữa `AdminSidebar` (đọc để
+  hiện/ẩn) và `AdminTopbar` (giờ là Client Component, có nút ☰ để bật) vì 2
+  component này nằm ở 2 nhánh khác nhau trong cây (`AdminTopbar` nằm sâu
+  trong từng `page.tsx`, không thể truyền prop qua ~25 trang). Sidebar dùng
+  `fixed ... -translate-x-full` (ẩn ngoài màn hình bên trái) mặc định, bấm
+  ☰ thêm class `translate-x-0` (trượt vào) + lớp phủ đen `fixed inset-0`
+  đằng sau (bấm ra ngoài để đóng); từ `lg:` trở lên dùng lại `lg:sticky
+  lg:translate-x-0` y hệt hành vi cũ (không đổi gì trên desktop). Tự đóng
+  drawer khi đổi trang (`useEffect` theo `pathname`). **Lưu ý khi test**:
+  hiệu ứng trượt (CSS transition) không tự mắt kiểm tra được trong sandbox
+  này vì `document.visibilityState === "hidden"` khiến trình duyệt tạm
+  dừng animation của tab ẩn — đã verify đúng bằng cách khác: class list
+  đổi đúng lúc bấm ☰, `--tw-translate-x` đổi đúng giá trị, overlay ẩn/hiện
+  đúng, tự đóng đúng khi bấm ra ngoài — chỉ riêng phần "mượt" của chuyển
+  động là chưa tự mắt xem được, cần người dùng tự thử trên điện thoại thật.
+- **Cảnh báo nội dung "chưa điền" trong `admin/trang-tinh`** — các trang
+  "3 công khai"/Giới thiệu/Liên hệ được seed sẵn ghi chú dạng
+  `[Trường điền: ...]` (đúng chủ đích — không tự bịa số liệu chính thức),
+  nhưng nếu quên thay trước khi launch thì khách xem web sẽ thấy nguyên văn
+  ngoặc vuông, trông như site lỗi. Thêm `hasPlaceholder()` (regex
+  `/\[[^\]]{2,}\]/`) hiện badge "⚠️ Chưa điền" ở danh sách + cảnh báo ngay
+  trong form khi đang sửa trang có placeholder — không tự động ẩn/xoá gì,
+  chỉ nhắc admin nhớ điền trước khi công khai thật.
+- **Tệp đính kèm cho Bài viết** (`posts.attachment_url`,
+  `posts.attachment_name`) — người dùng nhận xét nhiều trường có thông
+  báo kèm tài liệu (quyết định, biểu mẫu...) mà site chưa có. Mở rộng
+  `src/lib/media.ts`: thêm `ALLOWED_DOCUMENT_TYPES` (PDF/Word/Excel, tối
+  đa 20MB) + `type: "document"` cho `media_items` (trước chỉ "image" |
+  "video"). Admin `bai-viet` thêm field "Tệp đính kèm" — upload xong lưu
+  `attachmentName` = TÊN GỐC của file (không phải tên đã lưu trên đĩa, vốn
+  bị thêm tiền tố timestamp nên không đẹp để hiện cho khách) để hiện link
+  tải dễ đọc; có tick "Xoá" để gỡ tệp đính kèm hiện tại. Web công khai:
+  trang chi tiết `/tin-tuc/[slug]` hiện khối link tải "📎 Tài liệu đính
+  kèm", khối "Thông báo" ở Trang chủ hiện icon 📎 cạnh tiêu đề nếu bài có
+  đính kèm (đúng use-case người dùng mô tả — thông báo có tài liệu kèm
+  theo). Không làm thư viện tài liệu riêng (khác với "Thư viện điện tử" đã
+  hoãn cùng LMS) — đây chỉ là 1 file đính kèm/1 bài viết, đơn giản hơn
+  nhiều và giải quyết đúng nhu cầu "thông báo có đính kèm" người dùng nêu.
+- **Cân nhắc nhưng KHÔNG làm**: phân trang cho `/su-kien` và `/thu-vien`
+  (gallery) — khác với `/tin-tuc` (bài viết tăng nhanh theo thời gian, đã
+  phân trang ở đợt trước), sự kiện và ảnh thư viện thường tăng chậm hơn
+  nhiều ở quy mô 1 trường, chưa thấy rủi ro thật để đánh đổi thêm phức tạp
+  ngay bây giờ — để dành làm sau nếu thực tế thấy 2 danh sách này phình to.
 
 ---
 

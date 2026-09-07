@@ -556,7 +556,14 @@ export default async function HomePage() {
                     href={`/tin-tuc/${p.slug}`}
                     className="flex flex-wrap items-center justify-between gap-2 px-6 py-3.5 text-[14px] transition-colors hover:bg-white/60"
                   >
-                    <span className="font-semibold text-ink">{p.title}</span>
+                    <span className="flex items-center gap-1.5 font-semibold text-ink">
+                      {p.title}
+                      {p.attachmentUrl && (
+                        <span title="Có tài liệu đính kèm" aria-label="Có tài liệu đính kèm">
+                          📎
+                        </span>
+                      )}
+                    </span>
                     <span className="shrink-0 font-mono text-[11px] text-ink-faint">
                       {formatVNDate(p.publishedAt)}
                     </span>

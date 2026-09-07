@@ -58,6 +58,27 @@ export default async function NewsDetailPage({
         </div>
 
         <MarkdownContent content={post.content} className="mt-8" />
+
+        {post.attachmentUrl && (
+          <a
+            href={post.attachmentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 flex items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm2 transition-colors hover:border-brand-500"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/10 text-lg">
+              📎
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[12px] font-semibold uppercase tracking-wider text-ink-faint">
+                Tài liệu đính kèm
+              </span>
+              <span className="block truncate font-semibold text-brand-700">
+                {post.attachmentName || "Tải tệp đính kèm"}
+              </span>
+            </span>
+          </a>
+        )}
     </DecorativeSection>
   );
 }

@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ADMIN_NAV, SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/lib/actions/auth-actions";
+import { useAdminMobileMenu } from "@/components/admin/AdminMobileMenuContext";
 
 type AdminSidebarProps = {
   userName: string;
@@ -24,8 +25,16 @@ type AdminSidebarProps = {
  */
 export function AdminSidebar({ userName, permissions }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { mobileOpen, close } = useAdminMobileMenu();
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+
+  // Đổi trang (bấm 1 link trong menu) thì tự đóng drawer trên di động —
+  // không bắt người dùng bấm thêm 1 lần nữa để đóng.
+  useEffect(() => {
+    close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const visibleNav = ADMIN_NAV.filter(
     (entity) => entity.key === "dashboard" || permissions === null || permissions.includes(entity.key)
@@ -60,7 +69,21 @@ export function AdminSidebar({ userName, permissions }: AdminSidebarProps) {
     cn("h-1.5 w-1.5 rounded-full", active ? "bg-gradient-to-br from-accent-500 to-accent-600" : "bg-white/30");
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-brand-900 via-[#0A3D6E] to-brand-700 text-white shadow-[4px_0_24px_rgba(6,50,90,0.15)]">
+    <>
+      {/* Lớp phủ tối phía sau drawer — chỉ hiện trên di động lúc mở, bấm vào để đóng. */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-brand-900 via-[#0A3D6E] to-brand-700 text-white shadow-[4px_0_24px_rgba(6,50,90,0.15)] transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
       <Link
         href="/"
         className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5"
@@ -154,6 +177,7 @@ export function AdminSidebar({ userName, permissions }: AdminSidebarProps) {
           Thoát
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

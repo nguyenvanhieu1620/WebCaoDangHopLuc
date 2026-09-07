@@ -105,6 +105,11 @@ export default async function AdminPostsPage({
                           Đã ghim
                         </span>
                       )}
+                      {!!post.attachmentUrl && (
+                        <span className="shrink-0 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
+                          📎 Đính kèm
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 font-mono text-[11px] text-ink-faint">
                       <span>/{post.slug}</span>
@@ -275,6 +280,36 @@ export default async function AdminPostsPage({
                   images={mediaImages}
                   currentUrl={editing?.coverImageUrl}
                 />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                  Tệp đính kèm (tuỳ chọn) — PDF/Word/Excel
+                </label>
+                {editing?.attachmentUrl && (
+                  <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-line bg-paper-alt px-3 py-2 text-[12.5px]">
+                    <a
+                      href={editing.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate font-semibold text-brand-700 hover:underline"
+                    >
+                      📎 {editing.attachmentName || "Tệp đính kèm hiện tại"}
+                    </a>
+                    <label className="flex shrink-0 items-center gap-1.5 text-[11.5px] font-medium text-accent-600">
+                      <input type="checkbox" name="removeAttachment" className="h-3.5 w-3.5 rounded border-line" />
+                      Xoá
+                    </label>
+                  </div>
+                )}
+                <input
+                  name="attachment"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-[12.5px] file:font-semibold file:text-brand-700"
+                />
+                <p className="mt-1 text-[11px] text-ink-faint">
+                  VD: quyết định tuyển sinh, biểu mẫu, đề cương — hiện link tải ngay dưới bài viết. Tối đa 20MB.
+                </p>
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-ink-soft">

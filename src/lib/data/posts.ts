@@ -12,6 +12,9 @@ export type PublishedPostPreview = {
   coverImageUrl: string | null;
   categoryName: string | null;
   publishedAt: string | null;
+  /** Tệp đính kèm (PDF/Word/Excel) — VD quyết định tuyển sinh, biểu mẫu. null nếu bài không có. */
+  attachmentUrl: string | null;
+  attachmentName: string | null;
 };
 
 export type PublishedPostDetail = PublishedPostPreview & {
@@ -49,6 +52,8 @@ export async function getLatestPublishedPosts(limit: number): Promise<PublishedP
     coverImageUrl: r.coverImageUrl,
     categoryName: r.categoryId ? names.get(r.categoryId) ?? null : null,
     publishedAt: r.publishedAt,
+    attachmentUrl: r.attachmentUrl,
+    attachmentName: r.attachmentName,
   }));
 }
 
@@ -75,6 +80,8 @@ export async function getPinnedPosts(limit: number): Promise<PublishedPostPrevie
     coverImageUrl: r.coverImageUrl,
     categoryName: r.categoryId ? names.get(r.categoryId) ?? null : null,
     publishedAt: r.publishedAt,
+    attachmentUrl: r.attachmentUrl,
+    attachmentName: r.attachmentName,
   }));
 }
 
@@ -108,6 +115,8 @@ export async function getAllPublishedPosts(categorySlug?: string): Promise<Publi
     coverImageUrl: r.coverImageUrl,
     categoryName: pickLocale(category.name, category.nameEn, locale),
     publishedAt: r.publishedAt,
+    attachmentUrl: r.attachmentUrl,
+    attachmentName: r.attachmentName,
   }));
 }
 
@@ -175,6 +184,8 @@ export async function getPublishedPostsPage(
           ? names.get(r.categoryId) ?? null
           : null,
       publishedAt: r.publishedAt,
+      attachmentUrl: r.attachmentUrl,
+      attachmentName: r.attachmentName,
     })),
     currentPage,
     totalPages,
@@ -198,6 +209,8 @@ export async function getPublishedPostBySlug(slug: string): Promise<PublishedPos
     coverImageUrl: row.coverImageUrl,
     categoryName: row.categoryId ? names.get(row.categoryId) ?? null : null,
     publishedAt: row.publishedAt,
+    attachmentUrl: row.attachmentUrl,
+    attachmentName: row.attachmentName,
     content: pickLocale(row.content, row.contentEn, locale),
   };
 }

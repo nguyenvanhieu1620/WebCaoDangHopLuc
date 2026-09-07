@@ -12,20 +12,32 @@ import { slugify } from "@/lib/utils";
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"];
+/** Tệp đính kèm cho bài viết/thông báo — VD quyết định tuyển sinh, biểu mẫu, đề cương. */
+const ALLOWED_DOCUMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
 
-export type SavedMedia = { url: string; type: "image" | "video"; filename: string };
+export type SavedMedia = { url: string; type: "image" | "video" | "document"; filename: string };
 
 /** Ghi 1 file upload xuống đĩa + lưu metadata vào bảng media_items. Trả về url dùng ngay được (VD: trong <img src>). */
 export async function saveUploadedFile(file: File): Promise<SavedMedia> {
   const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
   const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
-  if (!isImage && !isVideo) {
-    throw new Error("Định dạng file không được hỗ trợ (chỉ JPG/PNG/WEBP/GIF hoặc MP4/WEBM).");
+  const isDocument = ALLOWED_DOCUMENT_TYPES.includes(file.type);
+  if (!isImage && !isVideo && !isDocument) {
+    throw new Error(
+      "Định dạng file không được hỗ trợ (chỉ JPG/PNG/WEBP/GIF, MP4/WEBM, hoặc PDF/Word/Excel)."
+    );
   }
 
-  const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
+  const maxBytes = isImage ? MAX_IMAGE_BYTES : isVideo ? MAX_VIDEO_BYTES : MAX_DOCUMENT_BYTES;
   if (file.size > maxBytes) {
     throw new Error(`File vượt quá dung lượng cho phép (tối đa ${Math.round(maxBytes / 1024 / 1024)}MB).`);
   }
@@ -39,7 +51,7 @@ export async function saveUploadedFile(file: File): Promise<SavedMedia> {
   await writeFile(path.join(UPLOAD_DIR, filename), buffer);
 
   const url = `/uploads/${filename}`;
-  const type: "image" | "video" = isImage ? "image" : "video";
+  const type: "image" | "video" | "document" = isImage ? "image" : isVideo ? "video" : "document";
 
   await db.insert(schema.mediaItems).values({ filename, url, type });
 
