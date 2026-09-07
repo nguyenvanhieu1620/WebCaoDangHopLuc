@@ -23,14 +23,19 @@
 // trường NEXT_PUBLIC_GA_MEASUREMENT_ID có giá trị) — chưa cấu hình thì CSP
 // giữ nguyên chặt, không tự mở domain ngoài cho tính năng chưa dùng.
 const hasGA = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
+// Turnstile (chống bot/spam ở form tuyển sinh/liên hệ/newsletter) cần chạy
+// script + mở iframe từ challenges.cloudflare.com — chỉ nới CSP khi thực sự
+// có gắn (xem src/lib/turnstile.ts), giữ nguyên tắc "chưa dùng thì không mở".
+const hasTurnstile = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""}${hasGA ? " https://www.googletagmanager.com" : ""}`,
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""}${hasGA ? " https://www.googletagmanager.com" : ""}${hasTurnstile ? " https://challenges.cloudflare.com" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob:${hasGA ? " https://www.google-analytics.com" : ""}`,
   "font-src 'self' data:",
-  `connect-src 'self'${hasGA ? " https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com" : ""}`,
+  `connect-src 'self'${hasGA ? " https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com" : ""}${hasTurnstile ? " https://challenges.cloudflare.com" : ""}`,
+  `frame-src 'self'${hasTurnstile ? " https://challenges.cloudflare.com" : ""}`,
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",

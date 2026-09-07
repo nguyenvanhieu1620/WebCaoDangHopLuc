@@ -1,6 +1,8 @@
 import { db, schema } from "@/lib/db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { getLocale, pickLocale } from "@/lib/locale";
+
+export const POSTS_PER_PAGE = 12;
 
 export type PublishedPostPreview = {
   id: string;
@@ -107,6 +109,76 @@ export async function getAllPublishedPosts(categorySlug?: string): Promise<Publi
     categoryName: pickLocale(category.name, category.nameEn, locale),
     publishedAt: r.publishedAt,
   }));
+}
+
+export type PublishedPostsPage = {
+  posts: PublishedPostPreview[];
+  currentPage: number;
+  totalPages: number;
+};
+
+/**
+ * Bài viết đã đăng, PHÂN TRANG — dùng cho `/tin-tuc` (`getAllPublishedPosts`
+ * không phân trang vẫn giữ nguyên cho `sitemap.ts`, cần liệt kê đủ mọi bài).
+ * Dùng LIMIT/OFFSET + 1 query COUNT riêng thay vì lấy hết rồi cắt mảng —
+ * tránh trang càng nhiều bài viết theo thời gian thì mỗi lượt tải trang
+ * càng nặng dần (xem CLAUDE.md mục 5 "Đánh giá rủi ro traffic lớn").
+ */
+export async function getPublishedPostsPage(
+  categorySlug: string | undefined,
+  page: number
+): Promise<PublishedPostsPage> {
+  let categoryId: string | undefined;
+  let categoryRow: { name: string; nameEn: string | null } | undefined;
+  if (categorySlug) {
+    const category = await db.query.categories.findFirst({
+      where: eq(schema.categories.slug, categorySlug),
+    });
+    if (!category) return { posts: [], currentPage: 1, totalPages: 0 };
+    categoryId = category.id;
+    categoryRow = category;
+  }
+
+  const whereClause = categoryId
+    ? and(eq(schema.posts.status, "published"), eq(schema.posts.categoryId, categoryId))
+    : eq(schema.posts.status, "published");
+
+  const [[{ total }], locale] = await Promise.all([
+    db.select({ total: sql<number>`count(*)` }).from(schema.posts).where(whereClause),
+    getLocale(),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / POSTS_PER_PAGE));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+
+  const rows = await db.query.posts.findMany({
+    where: whereClause,
+    orderBy: desc(schema.posts.publishedAt),
+    limit: POSTS_PER_PAGE,
+    offset: (currentPage - 1) * POSTS_PER_PAGE,
+  });
+
+  const names = categoryRow
+    ? new Map<string, string>()
+    : await categoryNameMap([...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))]);
+
+  return {
+    posts: rows.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      title: pickLocale(r.title, r.titleEn, locale),
+      excerpt: r.excerpt ? pickLocale(r.excerpt, r.excerptEn, locale) : r.excerpt,
+      coverImageUrl: r.coverImageUrl,
+      categoryName: categoryRow
+        ? pickLocale(categoryRow.name, categoryRow.nameEn, locale)
+        : r.categoryId
+          ? names.get(r.categoryId) ?? null
+          : null,
+      publishedAt: r.publishedAt,
+    })),
+    currentPage,
+    totalPages,
+  };
 }
 
 /** 1 bài viết đã đăng theo slug — dùng cho trang chi tiết /tin-tuc/[slug]. Trả về null nếu không có hoặc chưa đăng. */

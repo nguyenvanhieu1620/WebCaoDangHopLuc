@@ -31,4 +31,19 @@ if (process.env.NODE_ENV !== "production") {
   global.__libsqlClient = client;
 }
 
+/**
+ * Bật WAL (Write-Ahead Logging) — mặc định SQLite dùng rollback journal, khoá
+ * CẢ đọc lẫn ghi trong lúc có 1 lượt ghi đang chạy (rủi ro thật khi nhiều
+ * người cùng nộp hồ sơ/xem trang lúc cao điểm — xem CLAUDE.md mục 5 "Đánh
+ * giá rủi ro traffic lớn"). WAL cho phép đọc song song trong lúc đang ghi.
+ * `busy_timeout` giúp 1 lượt ghi hiếm khi trùng nhau tự đợi thay vì lỗi
+ * `SQLITE_BUSY` ngay lập tức. Không ảnh hưởng gì khi sau này chuyển hẳn sang
+ * PostgreSQL (Postgres vốn đã xử lý concurrency tốt hơn, không cần pragma
+ * này). Bắn 1 lần lúc khởi động tiến trình, không chặn import (không await ở
+ * top-level) — lỗi (VD DB_URL trỏ tới Turso remote không hỗ trợ pragma này)
+ * bị nuốt im lặng, không làm sập app.
+ */
+void client.execute("PRAGMA journal_mode = WAL").catch(() => {});
+void client.execute("PRAGMA busy_timeout = 5000").catch(() => {});
+
 export const db = drizzle(client, { schema });

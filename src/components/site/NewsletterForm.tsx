@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { TurnstileWidget } from "./TurnstileWidget";
 
 /** Form đăng ký nhận bản tin ở Footer — POST tới /api/newsletter. */
 export function NewsletterForm() {
@@ -18,6 +19,7 @@ export function NewsletterForm() {
     const payload = {
       email: String(formData.get("email") || "").trim(),
       website: String(formData.get("website") || "").trim(),
+      turnstileToken: String(formData.get("cf-turnstile-response") || "").trim(),
     };
 
     try {
@@ -69,6 +71,7 @@ export function NewsletterForm() {
           {status === "submitting" ? "..." : "Đăng ký"}
         </button>
       </div>
+      <TurnstileWidget compact />
       {status === "error" && <p className="text-[11.5px] font-semibold text-accent-200">{errorMessage}</p>}
     </form>
   );

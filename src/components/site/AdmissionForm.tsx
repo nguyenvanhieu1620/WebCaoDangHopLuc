@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { TurnstileWidget } from "./TurnstileWidget";
 
 type AdmissionFormProps = {
   programs: { slug: string; name: string }[];
@@ -32,6 +33,7 @@ export function AdmissionForm({ programs }: AdmissionFormProps) {
       program: String(formData.get("program") || "").trim(),
       note: String(formData.get("note") || "").trim(),
       website: String(formData.get("website") || "").trim(),
+      turnstileToken: String(formData.get("cf-turnstile-response") || "").trim(),
     };
 
     try {
@@ -121,6 +123,8 @@ export function AdmissionForm({ programs }: AdmissionFormProps) {
         <label className={labelClass}>Ghi chú (tuỳ chọn)</label>
         <textarea name="note" rows={3} className={inputClass} placeholder="Câu hỏi thêm nếu có..." />
       </div>
+
+      <TurnstileWidget />
 
       {status === "error" && (
         <div className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">

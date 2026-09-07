@@ -1002,6 +1002,56 @@ phần thật sự cần code, người dùng chọn làm cả 3:
   `src/lib/data/posts.ts` lấy bài đã đăng + đã ghim, Trang chủ hiện 1 khối
   danh sách gọn ngay trên khối Tin tức (chỉ hiện khi có ít nhất 1 bài ghim).
 
+### Đánh giá rủi ro traffic lớn/spam + vá 6 điểm
+Người dùng hỏi thẳng: deploy lên rồi nhiều người dùng cùng lúc hoặc bị spam
+thì có gặp trục trặc gì không. Rà lại code thật (không đoán) rồi vá hết
+những gì sửa được ngay, phần còn lại là quyết định hạ tầng (không phải lỗi
+code) thì ghi rõ ra thay vì im lặng bỏ qua:
+
+- **Bật WAL mode cho SQLite** (`src/lib/db/client.ts`) — mặc định SQLite
+  dùng rollback journal, khoá CẢ đọc lẫn ghi trong lúc có 1 lượt ghi đang
+  chạy (rủi ro thật ở cao điểm tuyển sinh, nhiều người cùng submit hồ sơ).
+  Thêm `PRAGMA journal_mode = WAL` + `PRAGMA busy_timeout = 5000` ngay sau
+  khi tạo client — WAL cho đọc song song lúc đang ghi, busy_timeout giúp 2
+  lượt ghi hiếm khi trùng nhau tự đợi thay vì lỗi `SQLITE_BUSY` ngay lập
+  tức. Chỉ là giảm nhẹ rủi ro — **không thay thế** việc chuyển hẳn sang
+  PostgreSQL (mục 4.4), SQLite vẫn giới hạn 1 writer tại 1 thời điểm dù có
+  WAL. Bắn pragma 1 lần lúc khởi động tiến trình (không await ở top-level,
+  lỗi bị nuốt im lặng — an toàn nếu sau này `DATABASE_URL` trỏ sang nguồn
+  không hỗ trợ pragma này).
+- **Giới hạn độ dài field text ở form public** (`src/lib/validate.ts`,
+  `findOversizedField()`) — trước đây `fullName`/`phone`/`note`/`message`
+  không giới hạn độ dài, 1 request có thể gửi field dài bất thường dù đã bị
+  rate-limit theo SỐ LẦN gửi (2 lớp bổ sung nhau, không thay thế nhau). Áp
+  dụng cho `/api/admissions`, `/api/contact`, `/api/newsletter`, và cap độ
+  dài CCCD ở `/api/admissions/tra-cuu`.
+- **Cloudflare Turnstile** (`src/lib/turnstile.ts`,
+  `src/components/site/TurnstileWidget.tsx`) — lớp chống bot/spam mạnh hơn
+  honeypot, cùng tinh thần "dịch vụ ngoài miễn phí, không bắt buộc" như
+  DeepL/Resend/GA: chưa cấu hình `NEXT_PUBLIC_TURNSTILE_SITE_KEY`/
+  `TURNSTILE_SECRET_KEY` thì `TurnstileWidget` trả `null` (form không hiện
+  gì thêm) và `verifyTurnstileToken()` luôn trả `true` (bỏ qua kiểm tra) —
+  form vẫn hoạt động bình thường, chỉ dựa vào honeypot như trước. Gắn vào
+  cả 3 form public (`AdmissionForm`, `ContactForm`, `NewsletterForm` —
+  riêng Newsletter dùng `data-size="compact"` cho vừa cột Footer hẹp).
+  CSP (`next.config.js`) chỉ nới domain `challenges.cloudflare.com` khi
+  thực sự có cấu hình (biến `hasTurnstile`, cùng cách làm với `hasGA`).
+- **Phân trang `/tin-tuc`** (`getPublishedPostsPage()` trong
+  `src/lib/data/posts.ts`, 12 bài/trang) — trước lấy TOÀN BỘ bài đã đăng
+  trong 1 query không giới hạn, càng nhiều bài viết theo thời gian thì mỗi
+  lượt tải trang càng nặng dần. Dùng `COUNT(*)` riêng + `LIMIT`/`OFFSET`
+  (không phải lấy hết rồi cắt mảng ở code) để thực sự giảm dữ liệu đọc mỗi
+  request. `getAllPublishedPosts()` (không phân trang) giữ nguyên, vẫn cần
+  cho `sitemap.ts` (bắt buộc liệt kê đủ mọi bài).
+- **Không tự sửa, chỉ ghi rõ ra** (cần người dùng quyết định hạ tầng, xem
+  mục 8): rate limit đang lưu trong bộ nhớ (`Map`, `src/lib/rate-limit.ts`)
+  — nếu deploy nhiều instance (serverless nhiều vùng, hoặc PM2 cluster
+  nhiều process) thì mỗi instance có bộ đếm riêng, giới hạn thực tế lỏng
+  hơn số khai báo; và `public/uploads/` là filesystem cục bộ — deploy
+  serverless (Vercel) sẽ mất file khi khởi động lại instance, chỉ ổn khi
+  deploy VPS/server chạy 1 tiến trình dài hạn (đã có kế hoạch chuyển S3
+  cùng lúc với Postgres ở mục 4.4/4.1c).
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -1048,7 +1098,7 @@ phần thật sự cần code, người dùng chọn làm cả 3:
 
 - ~~Lưu trữ media~~ — **đã quyết định**: local filesystem (`public/uploads/`) cho giai đoạn dev/SQLite hiện tại, chuyển sang S3 khi lên production cùng lúc chuyển PostgreSQL (xem mục 4.1c, 4.4).
 - **Liên kết LMS VNPT**: chỉ là link đơn giản hay cần SSO/API thật? (SRS ghi "tuỳ chọn SSO nếu VNPT hỗ trợ" — chưa xác nhận VNPT có hỗ trợ không)
-- **Domain/hosting thật**: chưa chọn nền tảng deploy (Vercel? VPS? AWS?) — ảnh hưởng cách cấu hình env, DB connection.
+- **Domain/hosting thật**: chưa chọn nền tảng deploy (Vercel? VPS? AWS?) — ảnh hưởng cách cấu hình env, DB connection. Còn ảnh hưởng thêm 2 chỗ (xem mục 5 "Đánh giá rủi ro traffic lớn/spam"): rate limit đang lưu bộ nhớ tiến trình (`Map`) nên chỉ chính xác khi deploy **1 instance/1 process** — chọn VPS chạy 1 tiến trình thì không sao, chọn serverless nhiều instance hoặc PM2 cluster nhiều worker thì giới hạn thực tế lỏng hơn khai báo (muốn chính xác tuyệt đối phải chuyển sang lưu ở Redis dùng chung); và `public/uploads/` bắt buộc phải deploy nơi có filesystem persistent (VPS/server dài hạn) — serverless (Vercel) sẽ làm mất ảnh/video admin upload.
 
 ---
 
@@ -1101,6 +1151,26 @@ Việc này cần tài khoản Google của bạn — không tự làm thay đư
 
 Có dữ liệu truy cập thường mất vài giờ mới hiện trong Google Analytics
 sau khi gắn mã lần đầu — đừng lo nếu bấm vào xem ngay chưa thấy số liệu.
+
+### Hướng dẫn tạo tài khoản Cloudflare Turnstile (chống spam form)
+1. Vào https://dash.cloudflare.com, đăng ký/đăng nhập tài khoản Cloudflare
+   (miễn phí, không cần có domain quản lý trên Cloudflare).
+2. Vào mục **Turnstile** ở menu trái → **Add site**.
+3. Đặt tên site (VD "Hợp Lực") → điền domain thật (VD `cdyduochopluc.edu.vn`)
+   — chưa deploy lên domain đó cũng điền được, không bắt buộc phải trỏ đúng
+   ngay lúc tạo.
+4. Chọn chế độ **Managed** (mặc định, cân bằng tốt giữa bảo mật và trải
+   nghiệm — không cần đổi sang Invisible/Non-interactive).
+5. Sau khi tạo xong, Cloudflare hiện 2 mã: **Site Key** (public) và
+   **Secret Key** (bí mật, không chia sẻ).
+6. Dán vào `.env`:
+   ```
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY="0x4AAAAAAA..."
+   TURNSTILE_SECRET_KEY="0x4AAAAAAA..."
+   ```
+7. Khởi động lại `npm run dev`/deploy lại — 3 form (Tuyển sinh, Liên hệ,
+   Đăng ký nhận tin) tự hiện thêm ô xác minh "không phải bot", không cần
+   sửa code gì thêm.
 
 ### Các lệnh khác
 ```bash

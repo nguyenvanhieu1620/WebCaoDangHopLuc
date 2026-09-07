@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { TurnstileWidget } from "./TurnstileWidget";
 
 const inputClass =
   "w-full rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand-500";
@@ -26,6 +27,7 @@ export function ContactForm() {
       email: String(formData.get("email") || "").trim(),
       message: String(formData.get("message") || "").trim(),
       website: String(formData.get("website") || "").trim(),
+      turnstileToken: String(formData.get("cf-turnstile-response") || "").trim(),
     };
 
     try {
@@ -96,6 +98,8 @@ export function ContactForm() {
           placeholder="Câu hỏi hoặc nội dung cần trao đổi..."
         />
       </div>
+
+      <TurnstileWidget />
 
       {status === "error" && (
         <div className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">

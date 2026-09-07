@@ -10,6 +10,8 @@ next-env.d.ts
 # Drizzle / SQLite dev DB — dữ liệu local/test, không commit (xem CLAUDE.md mục 6)
 drizzle/*.db
 drizzle/*.db-journal
+drizzle/*.db-wal
+drizzle/*.db-shm
 .env
 
 # File upload thật qua admin (public/uploads/) — dữ liệu runtime, không commit

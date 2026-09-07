@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { Reveal } from "@/components/site/Reveal";
-import { getAllPublishedPosts } from "@/lib/data/posts";
+import { getPublishedPostsPage } from "@/lib/data/posts";
 import { formatVNDate } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -20,11 +20,19 @@ export async function generateMetadata({
 export default async function NewsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; page?: string }>;
 }) {
-  const { category } = await searchParams;
-  const posts = await getAllPublishedPosts(category);
+  const { category, page } = await searchParams;
+  const pageNum = Math.max(1, Number(page) || 1);
+  const { posts, currentPage, totalPages } = await getPublishedPostsPage(category, pageNum);
   const isScholarship = category === "hoc-bong";
+  const buildPageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `/tin-tuc?${qs}` : "/tin-tuc";
+  };
 
   return (
     <DecorativeSection contentClassName="mx-auto max-w-[1220px]">
@@ -76,6 +84,36 @@ export default async function NewsPage({
                 </Link>
               </Reveal>
             ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-10 flex items-center justify-center gap-3">
+            <Link
+              href={buildPageHref(currentPage - 1)}
+              aria-disabled={currentPage <= 1}
+              className={`rounded-lg border border-line px-4 py-2 text-[13px] font-semibold ${
+                currentPage <= 1
+                  ? "pointer-events-none opacity-40"
+                  : "text-ink-soft hover:border-brand-500 hover:text-brand-700"
+              }`}
+            >
+              ← Trước
+            </Link>
+            <span className="text-[13px] font-semibold text-ink-faint">
+              Trang {currentPage}/{totalPages}
+            </span>
+            <Link
+              href={buildPageHref(currentPage + 1)}
+              aria-disabled={currentPage >= totalPages}
+              className={`rounded-lg border border-line px-4 py-2 text-[13px] font-semibold ${
+                currentPage >= totalPages
+                  ? "pointer-events-none opacity-40"
+                  : "text-ink-soft hover:border-brand-500 hover:text-brand-700"
+              }`}
+            >
+              Sau →
+            </Link>
           </div>
         )}
     </DecorativeSection>

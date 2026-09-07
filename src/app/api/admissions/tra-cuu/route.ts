@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as { idNumber?: string };
   const idNumber = (body.idNumber || "").trim();
 
-  if (!idNumber) {
+  if (!idNumber || idNumber.length > 50) {
     return NextResponse.json(
       { ok: false, error: "Vui lòng nhập số CCCD đã đăng ký." },
       { status: 400 }
