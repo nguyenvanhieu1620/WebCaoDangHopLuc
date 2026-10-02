@@ -6,6 +6,7 @@ import { TurnstileWidget } from "./TurnstileWidget";
 
 type AdmissionFormProps = {
   programs: { slug: string; name: string }[];
+  selectedProgram?: string;
 };
 
 const inputClass =
@@ -13,7 +14,7 @@ const inputClass =
 const labelClass = "mb-1.5 block text-xs font-semibold text-ink-soft";
 
 /** Form đăng ký xét tuyển công khai — POST tới /api/admissions (endpoint gọi từ bên ngoài, xem CLAUDE.md mục 6.4). */
-export function AdmissionForm({ programs }: AdmissionFormProps) {
+export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormProps) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -58,7 +59,7 @@ export function AdmissionForm({ programs }: AdmissionFormProps) {
 
   if (status === "success") {
     return (
-      <div className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
+      <div role="status" className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
         <div className="font-display text-lg font-semibold text-brand-900">
           Đã nhận hồ sơ đăng ký!
         </div>
@@ -89,45 +90,45 @@ export function AdmissionForm({ programs }: AdmissionFormProps) {
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
       <div>
-        <label className={labelClass}>Họ và tên *</label>
-        <input name="fullName" required className={inputClass} placeholder="Nguyễn Văn A" />
+        <label htmlFor="admission-name" className={labelClass}>Họ và tên *</label>
+        <input id="admission-name" name="fullName" autoComplete="name" maxLength={200} required className={inputClass} placeholder="Nguyễn Văn A" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Số điện thoại *</label>
-          <input name="phone" required className={inputClass} placeholder="09xxxxxxxx" />
+          <label htmlFor="admission-phone" className={labelClass}>Số điện thoại *</label>
+          <input id="admission-phone" name="phone" type="tel" autoComplete="tel" maxLength={30} required className={inputClass} placeholder="09xxxxxxxx" />
         </div>
         <div>
-          <label className={labelClass}>Số CCCD *</label>
-          <input name="idNumber" required className={inputClass} placeholder="0xxxxxxxxxxx" />
+          <label htmlFor="admission-cccd" className={labelClass}>Số CCCD *</label>
+          <input id="admission-cccd" name="idNumber" inputMode="numeric" pattern="[0-9]{12}" maxLength={12} title="Số CCCD gồm 12 chữ số" required className={inputClass} placeholder="12 chữ số" />
         </div>
       </div>
       <div>
-        <label className={labelClass}>Email (tuỳ chọn)</label>
-        <input name="email" type="email" className={inputClass} placeholder="ban@email.com" />
+        <label htmlFor="admission-email" className={labelClass}>Email (tuỳ chọn)</label>
+        <input id="admission-email" name="email" type="email" autoComplete="email" maxLength={254} className={inputClass} placeholder="ban@email.com" />
       </div>
       <div>
-        <label className={labelClass}>Ngành đăng ký *</label>
-        <select name="program" required className={inputClass} defaultValue="">
+        <label htmlFor="admission-program" className={labelClass}>Ngành đăng ký *</label>
+        <select id="admission-program" name="program" required className={inputClass} defaultValue={selectedProgram}>
           <option value="" disabled>
             — Chọn ngành —
           </option>
           {programs.map((p) => (
-            <option key={p.slug} value={p.name}>
+            <option key={p.slug} value={p.slug}>
               {p.name}
             </option>
           ))}
         </select>
       </div>
       <div>
-        <label className={labelClass}>Ghi chú (tuỳ chọn)</label>
-        <textarea name="note" rows={3} className={inputClass} placeholder="Câu hỏi thêm nếu có..." />
+        <label htmlFor="admission-note" className={labelClass}>Ghi chú (tuỳ chọn)</label>
+        <textarea id="admission-note" name="note" maxLength={3000} rows={3} className={inputClass} placeholder="Câu hỏi thêm nếu có..." />
       </div>
 
       <TurnstileWidget />
 
       {status === "error" && (
-        <div className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
+        <div role="alert" className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
           {errorMessage}
         </div>
       )}

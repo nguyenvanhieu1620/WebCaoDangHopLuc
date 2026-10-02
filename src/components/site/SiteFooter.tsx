@@ -98,7 +98,7 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
               <div className="mb-3 font-mono text-[11px] uppercase tracking-wider text-white/45">
                 Liên hệ
               </div>
-              <p className="text-[13.5px] leading-relaxed text-white/80">
+              <p className="break-words text-[13.5px] leading-relaxed text-white/80 [overflow-wrap:anywhere]">
                 {settings.address}
                 <br />
                 Hotline: {settings.hotline}

@@ -60,7 +60,13 @@ export default async function RootLayout({
   const locale = await getLocale();
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   return (
-    <html lang={locale} className={`${fraunces.variable} ${inter.variable} ${plexMono.variable}`}>
+    // data-scroll-behavior="smooth": Next tạm tắt cuộn mượt (globals.css) khi chuyển
+    // trang để trang mới hiện ngay từ đầu, chỉ giữ cuộn mượt cho link neo (#dang-ky…).
+    <html
+      lang={locale}
+      data-scroll-behavior="smooth"
+      className={`${fraunces.variable} ${inter.variable} ${plexMono.variable}`}
+    >
       <body className="font-sans">
         {children}
         {gaId && <GoogleAnalytics measurementId={gaId} />}

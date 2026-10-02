@@ -173,8 +173,8 @@ export default async function AdminPostsPage({
         </div>
 
         <div className="flex h-fit flex-col gap-6">
-          {/* Form thêm/sửa bài viết */}
-          <div className="rounded-2xl border border-line bg-white p-6">
+          {/* Form thêm/sửa bài viết — id để Dashboard/Ctrl+K "Viết bài mới" nhảy thẳng tới */}
+          <div id="form-bai-viet" className="scroll-mt-24 rounded-2xl border border-line bg-white p-6">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-semibold text-brand-900">
                 {editing ? "Sửa bài viết" : "Viết bài mới"}

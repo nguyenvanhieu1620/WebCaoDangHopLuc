@@ -28,7 +28,10 @@ type DecorativeSectionProps = {
  */
 export function DecorativeSection({ children, className, contentClassName }: DecorativeSectionProps) {
   return (
-    <section className={cn("relative overflow-hidden px-6 py-20 sm:px-8", className)}>
+    // `overflow-clip` (không phải overflow-hidden): vẫn cắt khối blur tràn ra
+    // ngoài nhưng KHÔNG tạo vùng cuộn riêng — nhờ vậy phần tử `sticky` bên trong
+    // (VD form đăng ký ở /tuyen-sinh) vẫn dính theo cuộn trang được.
+    <section className={cn("relative overflow-clip px-6 py-20 sm:px-8", className)}>
       <ParallaxBlur
         speed={0.12}
         className="pointer-events-none absolute -top-40 -left-28 h-[420px] w-[420px] rounded-full bg-brand-500/15 blur-[60px]"

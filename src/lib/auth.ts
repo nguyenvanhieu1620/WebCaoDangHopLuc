@@ -36,7 +36,17 @@ export type SessionPayload = {
   email: string;
   name: string;
   exp: number;
+  credentialVersion?: string;
 };
+
+/** Không lưu password hash trong token; dấu phiên bản thay đổi khi đổi mật khẩu. */
+export function credentialVersion(passwordHash: string): string {
+  return crypto.createHash("sha256").update(passwordHash).digest("hex");
+}
+
+export function isCredentialCurrent(payload: { credentialVersion?: string }, passwordHash: string): boolean {
+  return payload.credentialVersion === credentialVersion(passwordHash);
+}
 
 export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 10);
@@ -83,15 +93,15 @@ export function verifySession(cookieValue: string | undefined): SessionPayload |
 
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 phút — đủ dùng, không để link reset sống quá lâu
 
-export type ResetTokenPayload = { userId: string; exp: number };
+export type ResetTokenPayload = { userId: string; exp: number; credentialVersion: string };
 
 /**
  * Token đặt lại mật khẩu — cùng cơ chế HMAC như session nhưng KHÔNG dùng
  * chung với session (namespace riêng qua tiền tố "reset:" khi ký) để 1 token
  * loại này không thể bị hiểu nhầm/dùng thay session hay ngược lại.
  */
-export function signResetToken(userId: string): string {
-  const payload: ResetTokenPayload = { userId, exp: Date.now() + RESET_TOKEN_TTL_MS };
+export function signResetToken(userId: string, passwordHash: string): string {
+  const payload: ResetTokenPayload = { userId, exp: Date.now() + RESET_TOKEN_TTL_MS, credentialVersion: credentialVersion(passwordHash) };
   const json = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = crypto.createHmac("sha256", getSecret()).update(`reset:${json}`).digest("hex");
   return `${json}.${signature}`;
@@ -114,7 +124,7 @@ export function verifyResetToken(token: string): ResetTokenPayload | null {
 
   try {
     const payload = JSON.parse(Buffer.from(json, "base64url").toString()) as ResetTokenPayload;
-    if (payload.exp < Date.now()) return null;
+    if (typeof payload.credentialVersion !== "string" || payload.exp < Date.now()) return null;
     return payload;
   } catch {
     return null;

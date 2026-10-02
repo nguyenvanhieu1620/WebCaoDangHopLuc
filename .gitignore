@@ -12,6 +12,8 @@ drizzle/*.db
 drizzle/*.db-journal
 drizzle/*.db-wal
 drizzle/*.db-shm
+# Ghi chú dữ liệu demo (npm run demo:load) — chỉ có ý nghĩa với DB dev trên máy này
+drizzle/*.local.json
 .env
 
 # File upload thật qua admin (public/uploads/) — dữ liệu runtime, không commit

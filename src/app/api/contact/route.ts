@@ -3,23 +3,20 @@ import { db, schema } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { verifyTurnstileToken } from "@/lib/turnstile";
-import { findOversizedField } from "@/lib/validate";
+import { isValidEmail, isValidVnPhone, normalizeVnPhone, readJsonObject, readStringFields } from "@/lib/validate";
 
 /**
  * API route cho form "Liên hệ" ở trang /lien-he.
  * Lưu thật vào bảng contact_messages — admin xem/đổi trạng thái qua admin/lien-he.
+ *
+ * Payload (JSON object, mọi field là chuỗi):
+ * - name, message: bắt buộc
+ * - phone, email: tuỳ chọn
+ * - website: honeypot chống bot — field ẩn khỏi người dùng thật bằng CSS, bot tự động điền form thường vẫn điền vào.
+ * - turnstileToken: token Cloudflare Turnstile — chỉ có giá trị khi đã cấu hình NEXT_PUBLIC_TURNSTILE_SITE_KEY, xem src/lib/turnstile.ts.
  */
 
-type ContactPayload = {
-  name: string;
-  phone?: string;
-  email?: string;
-  message: string;
-  /** Honeypot chống bot — field ẩn khỏi người dùng thật bằng CSS, bot tự động điền form thường vẫn điền vào. */
-  website?: string;
-  /** Token Cloudflare Turnstile — chỉ có giá trị khi đã cấu hình NEXT_PUBLIC_TURNSTILE_SITE_KEY, xem src/lib/turnstile.ts. */
-  turnstileToken?: string;
-};
+const MAX_BODY_BYTES = 32 * 1024;
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -30,30 +27,41 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as Partial<ContactPayload>;
+  const parsed = await readJsonObject(request, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return NextResponse.json({ ok: false, error: parsed.error }, { status: parsed.status });
+  }
+  const body = parsed.data;
 
   if (body.website) {
     return NextResponse.json({ ok: true, message: "Đã gửi liên hệ.", id: "ignored" });
   }
 
-  if (!body.name || !body.message) {
+  const fields = readStringFields(body, {
+    name: { label: "họ tên", max: 200, required: true },
+    phone: { label: "số điện thoại", max: 30 },
+    email: { label: "email", max: 254, lowercase: true },
+    message: { label: "nội dung", max: 5000, required: true },
+    turnstileToken: { label: "mã xác minh", max: 4096 },
+  });
+  if (!fields.ok) {
+    const error = fields.kind === "missing" ? "Thiếu thông tin bắt buộc (họ tên, nội dung)." : fields.error;
+    return NextResponse.json({ ok: false, error }, { status: 400 });
+  }
+  const { name, email, message, turnstileToken } = fields.values;
+  const phone = normalizeVnPhone(fields.values.phone);
+
+  if (phone && !isValidVnPhone(phone)) {
     return NextResponse.json(
-      { ok: false, error: "Thiếu thông tin bắt buộc (họ tên, nội dung)." },
+      { ok: false, error: "Số điện thoại không hợp lệ (10 chữ số bắt đầu bằng 0, hoặc dạng +84)." },
       { status: 400 }
     );
   }
-
-  const oversizedField = findOversizedField({
-    name: { value: body.name, max: 200 },
-    phone: { value: body.phone || "", max: 30 },
-    email: { value: body.email || "", max: 254 },
-    message: { value: body.message, max: 5000 },
-  });
-  if (oversizedField) {
-    return NextResponse.json({ ok: false, error: "Thông tin nhập vào quá dài." }, { status: 400 });
+  if (email && !isValidEmail(email)) {
+    return NextResponse.json({ ok: false, error: "Email không hợp lệ." }, { status: 400 });
   }
 
-  if (!(await verifyTurnstileToken(body.turnstileToken || "", ip))) {
+  if (!(await verifyTurnstileToken(turnstileToken, ip))) {
     return NextResponse.json(
       { ok: false, error: "Xác minh chống spam thất bại, vui lòng thử lại." },
       { status: 400 }
@@ -63,10 +71,10 @@ export async function POST(request: Request) {
   const [created] = await db
     .insert(schema.contactMessages)
     .values({
-      name: body.name,
-      phone: body.phone || null,
-      email: body.email || null,
-      message: body.message,
+      name,
+      phone: phone || null,
+      email: email || null,
+      message,
     })
     .returning();
 

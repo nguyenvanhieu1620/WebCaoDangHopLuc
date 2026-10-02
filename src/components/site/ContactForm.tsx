@@ -52,7 +52,7 @@ export function ContactForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
+      <div role="status" className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
         <div className="font-display text-lg font-semibold text-brand-900">Đã gửi câu hỏi!</div>
         <p className="mt-2 text-[14px] text-ink-soft">
           Đội ngũ nhà trường sẽ phản hồi bạn trong thời gian sớm nhất.
@@ -71,27 +71,29 @@ export function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden" aria-hidden="true">
-        <label htmlFor="website">Để trống trường này</label>
-        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="contact-website">Để trống trường này</label>
+        <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
       <div>
-        <label className={labelClass}>Họ và tên *</label>
-        <input name="name" required className={inputClass} placeholder="Nguyễn Văn A" />
+        <label htmlFor="contact-name" className={labelClass}>Họ và tên *</label>
+        <input id="contact-name" name="name" autoComplete="name" maxLength={200} required className={inputClass} placeholder="Nguyễn Văn A" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Số điện thoại (tuỳ chọn)</label>
-          <input name="phone" className={inputClass} placeholder="09xxxxxxxx" />
+          <label htmlFor="contact-phone" className={labelClass}>Số điện thoại (tuỳ chọn)</label>
+          <input id="contact-phone" name="phone" type="tel" autoComplete="tel" maxLength={30} className={inputClass} placeholder="09xxxxxxxx" />
         </div>
         <div>
-          <label className={labelClass}>Email (tuỳ chọn)</label>
-          <input name="email" type="email" className={inputClass} placeholder="ban@email.com" />
+          <label htmlFor="contact-email" className={labelClass}>Email (tuỳ chọn)</label>
+          <input id="contact-email" name="email" type="email" autoComplete="email" maxLength={254} className={inputClass} placeholder="ban@email.com" />
         </div>
       </div>
       <div>
-        <label className={labelClass}>Nội dung *</label>
+        <label htmlFor="contact-message" className={labelClass}>Nội dung *</label>
         <textarea
           name="message"
+          id="contact-message"
+          maxLength={5000}
           required
           rows={4}
           className={inputClass}
@@ -102,7 +104,7 @@ export function ContactForm() {
       <TurnstileWidget />
 
       {status === "error" && (
-        <div className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
+        <div role="alert" className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
           {errorMessage}
         </div>
       )}

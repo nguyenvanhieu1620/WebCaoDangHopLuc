@@ -1,18 +1,23 @@
 "use client";
 
 import { useAdminMobileMenu } from "@/components/admin/AdminMobileMenuContext";
+import { useCommandPalette } from "@/components/admin/AdminCommandPalette";
+import { AdminIcon } from "@/components/admin/AdminIcon";
 
 type AdminTopbarProps = {
   title: string;
   description?: string;
+  /** Nút/thao tác riêng của trang (VD "Xuất Excel") — hiện cạnh nút Tìm nhanh. */
+  actions?: React.ReactNode;
 };
 
 /** Thanh tiêu đề trên cùng của mỗi trang trong khu vực quản trị. */
-export function AdminTopbar({ title, description }: AdminTopbarProps) {
+export function AdminTopbar({ title, description, actions }: AdminTopbarProps) {
   const { toggle } = useAdminMobileMenu();
+  const palette = useCommandPalette();
 
   return (
-    <div className="flex items-center justify-between gap-6 border-b border-line bg-white px-5 py-5 sm:px-8">
+    <div className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-line bg-white/85 px-5 py-4 backdrop-blur-xl sm:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -33,19 +38,26 @@ export function AdminTopbar({ title, description }: AdminTopbarProps) {
           )}
         </div>
       </div>
-      <div className="hidden shrink-0 items-center gap-3 sm:flex">
-        <input
-          type="text"
-          placeholder="Tìm kiếm..."
-          className="w-56 rounded-lg border border-line bg-paper px-4 py-2.5 text-sm outline-none focus:border-brand-500"
-        />
+      <div className="flex shrink-0 items-center gap-2.5">
+        {actions}
         <button
-          aria-label="Thông báo"
-          className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-line"
+          type="button"
+          onClick={palette.open}
+          aria-label="Tìm nhanh (Ctrl K)"
+          className="flex h-10 items-center gap-2 rounded-xl border border-line px-3 text-sm text-ink-faint transition-colors hover:border-brand-500 hover:text-brand-700"
         >
-          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-accent-600" />
-          🔔
+          <AdminIcon name="search" className="h-4 w-4" />
+          <span className="hidden md:inline">Tìm nhanh</span>
+          <kbd className="hidden rounded border border-line bg-paper px-1.5 py-0.5 font-mono text-[10px] md:inline">Ctrl K</kbd>
         </button>
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden h-10 items-center gap-1.5 rounded-xl border border-line px-4 text-sm font-semibold text-brand-700 hover:border-brand-500 hover:bg-brand-50 sm:flex"
+        >
+          Xem website <AdminIcon name="external" className="h-3.5 w-3.5" />
+        </a>
       </div>
     </div>
   );

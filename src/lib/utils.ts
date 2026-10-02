@@ -19,6 +19,27 @@ export function slugify(input: string): string {
     .replace(/-+/g, "-");
 }
 
+/**
+ * Phát hiện ghi chú nội bộ dạng "[Trường điền: ...]"/"[điền số liệu]" chưa
+ * được thay bằng nội dung thật. Bỏ qua link Markdown `[chữ](url)` (ngoặc
+ * vuông theo sau là "(") để không báo nhầm.
+ */
+const PLACEHOLDER_PATTERN = /\[[^\]]{2,}\](?!\()/;
+export function hasPlaceholder(content: string | null | undefined): boolean {
+  return !!content && PLACEHOLDER_PATTERN.test(content);
+}
+
+/** Chuẩn hoá chuỗi để tìm kiếm không phân biệt hoa/thường và dấu tiếng Việt ("Điều dưỡng" ~ "dieu duong"). */
+export function normalizeSearch(value: string): string {
+  return value
+    .toLocaleLowerCase("vi")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Múi giờ Việt Nam cố định UTC+7 (không có giờ mùa hè) — dùng xuyên suốt để ngày/giờ hiển thị không phụ thuộc múi giờ máy chủ đang chạy. */
 const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
 const VN_OFFSET_MINUTES = 7 * 60;
@@ -34,6 +55,27 @@ export function formatVNDateTime(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
   return `${d.toLocaleDateString("vi-VN", { timeZone: VN_TIME_ZONE })} · ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", timeZone: VN_TIME_ZONE })}`;
+}
+
+/**
+ * `created_at` mặc định của SQLite (`CURRENT_TIMESTAMP`) là giờ UTC dạng
+ * "YYYY-MM-DD HH:MM:SS" không kèm múi giờ — `new Date()` sẽ hiểu nhầm thành
+ * giờ local máy chủ, nên chuẩn hoá về ISO UTC trước khi dùng. Chuỗi đã là
+ * ISO (có "T"/"Z") thì giữ nguyên.
+ */
+export function dbTimestampToISO(value: string): string {
+  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value) ? `${value.replace(" ", "T")}Z` : value;
+}
+
+/** Định dạng `created_at` của SQLite theo giờ Việt Nam (dd/mm/yyyy · HH:mm). */
+export function formatDbDateTime(value: string | null | undefined): string {
+  return value ? formatVNDateTime(dbTimestampToISO(value)) : "";
+}
+
+/** Khoá ngày theo giờ Việt Nam dạng "YYYY-MM-DD" — dùng để gom số liệu theo ngày (biểu đồ Dashboard). */
+export function vnDateKey(iso: string): string {
+  const d = new Date(new Date(iso).getTime() + VN_OFFSET_MINUTES * 60 * 1000);
+  return d.toISOString().slice(0, 10);
 }
 
 /**

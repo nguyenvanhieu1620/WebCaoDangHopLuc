@@ -1,0 +1,11 @@
+# Prompt ảnh 3D
+
+Dùng built-in imagegen, `transparent_background: false` cho cả hai ảnh. Ảnh gốc được inspect rồi tối ưu thành WebP 1200×800 trong workspace; không thay ảnh trường đã có trong CMS.
+
+## medical-learning.webp
+
+Use case: stylized-concept. Create one premium 3D rendered illustration for a Vietnamese medical and pharmacy college website hero. Wide landscape composition 3:2. A beautifully designed isometric miniature learning laboratory on a floating circular white porcelain platform: polished cobalt blue and white microscope as central subject, glass molecular spheres connected in a delicate arc, a closed navy medical textbook, one small red-and-white capsule, subtle red heart motif. Sophisticated editorial CGI, realistic ceramic and frosted glass materials, soft studio lighting, crisp elegant shapes, restrained detail. Brand palette cobalt blue #0B6CB0, deep navy #06325A, white-blue #F7F9FB, subtle red #C41E24 accent. Clean very pale blue background, airy generous margin around objects, soft ambient shadows, visually balanced with main objects occupying middle-right and bottom-center. No people, no real buildings, no logos, no letters, no text, no watermark. It is an illustrative concept asset, not a photograph of a real school. Beautiful high quality render suitable for modern university admissions website, avoid cartoon toy clutter or excessive objects.
+
+## admissions-care.webp
+
+Use case stylized-concept. Premium editorial 3D CGI illustration for Vietnamese medical college admissions, wide landscape 3:2. A sculptural navy blue graduation cap with cobalt tassel floating gently above a white ceramic open book, alongside a curved polished blue stethoscope and a translucent small red heart, on a pale blue studio pedestal. Clean elegant design, photorealistic ceramic, glass and satin textures, soft ambient shadows, understated optimistic education and care theme. White-blue #F7F9FB background, cobalt #0B6CB0 and navy #06325A main palette, restrained #C41E24 red accents. Well composed, objects centered with wide negative space, refined material detail, realistic soft studio lighting. No text, no lettering, no school logo, no people, no hospital cross, no real buildings, no watermark. Avoid childish cartoon style or excessive clutter. This is a conceptual 3D illustration, not a real campus photograph.

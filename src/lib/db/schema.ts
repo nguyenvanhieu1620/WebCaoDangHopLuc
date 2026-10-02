@@ -129,6 +129,12 @@ export const programs = sqliteTable("programs", {
   /** Nội dung chi tiết đầy đủ — để dành cho trang chi tiết ngành đào tạo, chưa bắt buộc nhập. */
   content: text("content"),
   contentEn: text("content_en"),
+  /**
+   * Học phí dạng chữ tự do, VD "1.840.000đ/tháng" — tuỳ chọn. Để trống thì
+   * web hiện "Liên hệ" (không tự bịa số liệu học phí khi trường chưa xác nhận).
+   */
+  tuition: text("tuition"),
+  tuitionEn: text("tuition_en"),
   /** 0 = không hiện ở Trang chủ, 1 = hiện. Nếu không ngành nào featured, Trang chủ tự lấy 6 ngành đầu. */
   featured: integer("featured").notNull().default(0),
   createdAt: text("created_at")
@@ -207,6 +213,9 @@ export const navItems = sqliteTable("nav_items", {
   label: text("label").notNull(),
   labelEn: text("label_en"),
   href: text("href").notNull(),
+  /** Mô tả ngắn 1 dòng — chỉ dùng cho danh mục con, hiện dưới tên mục trong mega menu. Tuỳ chọn. */
+  description: text("description"),
+  descriptionEn: text("description_en"),
   /** null = danh mục to. Có giá trị = danh mục con thuộc nav_items.id đó. */
   parentId: text("parent_id"),
   /** Chỉ áp dụng cho danh mục to: 1 = hiện ở thanh ngang chính, 0 = nằm trong nút ☰ "Danh mục khác". */
@@ -453,6 +462,31 @@ export const testimonials = sqliteTable("testimonials", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Thông tin tuyển sinh hiển thị ở /tuyen-sinh — 3 danh sách tách bằng cột
+ * `type` (cùng pattern discriminator với `faculty_attributes`/`quick_contacts`),
+ * quản lý chung 1 trang `admin/thong-tin-tuyen-sinh`:
+ *   - "timeline": mốc thời gian tuyển sinh (`meta` = thời gian, VD "01/03 – 30/06/2026")
+ *   - "method":   phương thức xét tuyển
+ *   - "document": hồ sơ cần chuẩn bị (thường chỉ cần `title`)
+ */
+export const admissionItems = sqliteTable("admission_items", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  titleEn: text("title_en"),
+  detail: text("detail"),
+  detailEn: text("detail_en"),
+  meta: text("meta"),
+  metaEn: text("meta_en"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Hồ sơ đăng ký xét tuyển gửi từ form công khai trên website. */
 export const admissionSubmissions = sqliteTable("admission_submissions", {
   id: text("id")
@@ -497,3 +531,4 @@ export type Department = typeof departments.$inferSelect;
 export type FacultyAttribute = typeof facultyAttributes.$inferSelect;
 export type QuickContact = typeof quickContacts.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type AdmissionItem = typeof admissionItems.$inferSelect;

@@ -10,7 +10,8 @@ const TONE_CLASSES: Record<NonNullable<EyebrowProps["tone"]>, string> = {
   blue: "bg-brand-100 text-brand-800",
   red: "bg-accent-100 text-accent-700",
   dark: "bg-brand-900 text-white",
-  onDark: "bg-white/12 text-white",
+  // bg-white/12 không có trong thang opacity mặc định của Tailwind 3 → class không sinh CSS; dùng /10 + viền mảnh.
+  onDark: "bg-white/10 text-white ring-1 ring-inset ring-white/20 backdrop-blur-md",
 };
 
 const DOT_CLASSES: Record<NonNullable<EyebrowProps["tone"]>, string> = {

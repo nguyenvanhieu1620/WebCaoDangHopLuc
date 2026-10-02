@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { isValidCccd, normalizeCccd, readJsonObject, readStringFields } from "@/lib/validate";
 
 /**
  * API tra cứu kết quả xét tuyển công khai ở /tra-cuu-ket-qua — nhập CCCD,
@@ -15,6 +16,8 @@ const STATUS_LABEL: Record<string, string> = {
   contacted: "Đã liên hệ trao đổi kết quả",
 };
 
+const MAX_BODY_BYTES = 2 * 1024;
+
 export async function POST(request: Request) {
   // Giới hạn lỏng hơn form gửi dữ liệu vì tra cứu là thao tác đọc hợp lệ có
   // thể lặp lại, nhưng vẫn cần chặn dò quét số CCCD hàng loạt.
@@ -25,14 +28,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as { idNumber?: string };
-  const idNumber = (body.idNumber || "").trim();
+  const parsed = await readJsonObject(request, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return NextResponse.json({ ok: false, error: parsed.error }, { status: parsed.status });
+  }
 
-  if (!idNumber || idNumber.length > 50) {
-    return NextResponse.json(
-      { ok: false, error: "Vui lòng nhập số CCCD đã đăng ký." },
-      { status: 400 }
-    );
+  const fields = readStringFields(parsed.data, {
+    idNumber: { label: "số CCCD", max: 50, required: true },
+  });
+  if (!fields.ok) {
+    const error = fields.kind === "missing" ? "Vui lòng nhập số CCCD đã đăng ký." : fields.error;
+    return NextResponse.json({ ok: false, error }, { status: 400 });
+  }
+  const idNumber = normalizeCccd(fields.values.idNumber);
+  if (!isValidCccd(idNumber)) {
+    return NextResponse.json({ ok: false, error: "Số CCCD phải gồm đúng 12 chữ số." }, { status: 400 });
   }
 
   const rows = await db.query.admissionSubmissions.findMany({

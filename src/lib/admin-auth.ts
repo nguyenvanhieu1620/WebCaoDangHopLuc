@@ -3,8 +3,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { verifySession, isCredentialCurrent, SESSION_COOKIE_NAME } from "@/lib/auth";
 import type { AdminUser } from "@/lib/db/schema";
+import { hasPermission } from "@/lib/admin-permissions";
+export { getUserPermissions, hasPermission } from "@/lib/admin-permissions";
 
 /**
  * Lớp phân quyền theo module cho khu vực admin — mỗi tài khoản có
@@ -26,21 +28,13 @@ export const getCurrentAdminUser = cache(async (): Promise<AdminUser | null> => 
   const user = await db.query.adminUsers.findFirst({
     where: eq(schema.adminUsers.id, session.userId),
   });
-  return user ?? null;
+  return user && isCredentialCurrent(session, user.passwordHash) ? user : null;
 });
 
-export function getUserPermissions(user: Pick<AdminUser, "permissions">): string[] | null {
-  if (user.permissions === null) return null;
-  try {
-    return JSON.parse(user.permissions) as string[];
-  } catch {
-    return [];
-  }
-}
-
-export function hasPermission(user: Pick<AdminUser, "permissions">, moduleKey: string): boolean {
-  const perms = getUserPermissions(user);
-  return perms === null || perms.includes(moduleKey);
+export async function requireAdmin(): Promise<AdminUser> {
+  const user = await getCurrentAdminUser();
+  if (!user) redirect("/admin/dang-nhap");
+  return user;
 }
 
 /**
@@ -50,8 +44,7 @@ export function hasPermission(user: Pick<AdminUser, "permissions">, moduleKey: s
  * nhập nhưng thiếu quyền thì về Dashboard.
  */
 export async function requirePermission(moduleKey: string): Promise<AdminUser> {
-  const user = await getCurrentAdminUser();
-  if (!user) redirect("/admin/dang-nhap");
+  const user = await requireAdmin();
   if (!hasPermission(user, moduleKey)) redirect("/admin?khong_co_quyen=1");
   return user;
 }

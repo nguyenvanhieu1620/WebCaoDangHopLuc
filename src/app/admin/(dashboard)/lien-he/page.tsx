@@ -3,7 +3,8 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
-import { formatVNDateTime } from "@/lib/utils";
+import { formatDbDateTime } from "@/lib/utils";
+import { AdminIcon } from "@/components/admin/AdminIcon";
 import { markContactMessageAction, deleteContactMessageAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
@@ -34,8 +35,19 @@ export default async function AdminContactMessagesPage({
       <AdminTopbar
         title="Tin nhắn liên hệ"
         description="Câu hỏi gửi từ form Liên hệ trên website công khai"
+        actions={
+          <a
+            href={activeStatus === "all" ? "/admin/lien-he/xuat-csv" : `/admin/lien-he/xuat-csv?status=${activeStatus}`}
+            download
+            className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-br from-brand-700 to-brand-500 px-3.5 text-sm font-semibold text-white shadow-blue"
+          >
+            <AdminIcon name="pages" className="h-4 w-4" />
+            <span className="hidden sm:inline">Xuất Excel ({messages.length})</span>
+            <span className="sm:hidden">Excel</span>
+          </a>
+        }
       />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {STATUS_FILTERS.map((f) => (
             <a
@@ -78,7 +90,7 @@ export default async function AdminContactMessagesPage({
                     </div>
                     <div className="mt-0.5 text-[11.5px] text-ink-faint">
                       {[m.phone, m.email].filter(Boolean).join(" · ") || "Không có SĐT/email"} ·{" "}
-                      {formatVNDateTime(m.createdAt)}
+                      {formatDbDateTime(m.createdAt)}
                     </div>
                     <p className="mt-2 max-w-2xl text-[13.5px] text-ink-soft">{m.message}</p>
                   </div>

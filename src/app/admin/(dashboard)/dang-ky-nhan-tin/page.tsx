@@ -4,7 +4,7 @@ import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { CopyEmailsButton } from "@/components/admin/CopyEmailsButton";
 import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
-import { formatVNDateTime } from "@/lib/utils";
+import { formatDbDateTime } from "@/lib/utils";
 import { deleteNewsletterSubscriberAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
@@ -43,7 +43,7 @@ export default async function AdminNewsletterPage() {
                 <li key={s.id} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-ink">{s.email}</div>
-                    <div className="text-[11.5px] text-ink-faint">{formatVNDateTime(s.createdAt)}</div>
+                    <div className="text-[11.5px] text-ink-faint">{formatDbDateTime(s.createdAt)}</div>
                   </div>
                   <form
                     action={async () => {

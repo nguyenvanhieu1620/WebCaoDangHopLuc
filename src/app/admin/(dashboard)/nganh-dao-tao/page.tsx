@@ -50,7 +50,7 @@ export default async function AdminProgramsPage({
                       {p.code} — {p.name}
                     </div>
                     <div className="mt-0.5 text-[11.5px] text-ink-faint">
-                      {p.duration} · {p.intake} chỉ tiêu
+                      {p.duration} · {p.intake} chỉ tiêu · {p.tuition ? `Học phí ${p.tuition}` : "Chưa nhập học phí"}
                       {p.featured === 1 && (
                         <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 font-semibold text-brand-700">
                           Hiện ở Trang chủ
@@ -131,18 +131,34 @@ export default async function AdminProgramsPage({
                 placeholder="VD: Điều dưỡng"
               />
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chỉ tiêu</label>
-              <input
-                name="intake"
-                type="number"
-                required
-                min={1}
-                defaultValue={editing?.intake}
-                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="VD: 350"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chỉ tiêu</label>
+                <input
+                  name="intake"
+                  type="number"
+                  required
+                  min={1}
+                  defaultValue={editing?.intake}
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  placeholder="VD: 350"
+                />
+              </div>
+              <div>
+                <label htmlFor="program-tuition" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                  Học phí <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
+                </label>
+                <input
+                  id="program-tuition"
+                  name="tuition"
+                  maxLength={80}
+                  defaultValue={editing?.tuition ?? ""}
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  placeholder="VD: 1.840.000đ/tháng"
+                />
+              </div>
             </div>
+            <p className="-mt-1.5 text-[11px] text-ink-faint">Để trống học phí thì web hiện &quot;Liên hệ&quot; — chỉ nhập khi trường đã chốt mức chính thức.</p>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Mô tả ngắn</label>
               <textarea
@@ -176,7 +192,14 @@ export default async function AdminProgramsPage({
                     { viName: "name", enName: "nameEn" },
                     { viName: "summary", enName: "summaryEn" },
                     { viName: "content", enName: "contentEn" },
+                    { viName: "tuition", enName: "tuitionEn" },
                   ]}
+                />
+                <input
+                  name="tuitionEn"
+                  defaultValue={editing?.tuitionEn ?? ""}
+                  placeholder="Tuition (English), e.g. 1,840,000 VND/month"
+                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <input
                   name="nameEn"

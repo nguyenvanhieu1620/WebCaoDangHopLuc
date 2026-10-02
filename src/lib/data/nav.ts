@@ -6,6 +6,8 @@ export type NavNode = {
   id: string;
   label: string;
   href: string;
+  /** Mô tả ngắn 1 dòng (chỉ danh mục con) — hiện trong mega menu. */
+  description: string | null;
   children: NavNode[];
 };
 
@@ -20,14 +22,17 @@ export async function getNavTree(): Promise<{ primary: NavNode[]; secondary: Nav
     getLocale(),
   ]);
 
-  const label = (row: (typeof rows)[number]) => pickLocale(row.label, row.labelEn, locale);
-  const toNode = (row: (typeof rows)[number]): NavNode => ({
+  type Row = (typeof rows)[number];
+  const label = (row: Row) => pickLocale(row.label, row.labelEn, locale);
+  const description = (row: Row) => (row.description ? pickLocale(row.description, row.descriptionEn, locale) : null);
+  const toNode = (row: Row): NavNode => ({
     id: row.id,
     label: label(row),
     href: row.href,
+    description: description(row),
     children: rows
       .filter((r) => r.parentId === row.id)
-      .map((r) => ({ id: r.id, label: label(r), href: r.href, children: [] })),
+      .map((r) => ({ id: r.id, label: label(r), href: r.href, description: description(r), children: [] })),
   });
 
   const topLevel = rows.filter((r) => !r.parentId);

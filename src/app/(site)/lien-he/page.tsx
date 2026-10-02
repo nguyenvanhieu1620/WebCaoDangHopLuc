@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { PageStub } from "@/components/ui/PageStub";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
 import { getSiteSettings } from "@/lib/data/site-settings";
@@ -12,16 +11,6 @@ export const metadata: Metadata = { title: "Liên hệ" };
 
 export default async function ContactPage() {
   const [page, settings] = await Promise.all([getPageBySlug("lien-he"), getSiteSettings()]);
-
-  if (!page) {
-    return (
-      <PageStub
-        eyebrow="Liên hệ"
-        title="Liên hệ với Hợp Lực"
-        description="Thông tin liên hệ, bản đồ và form gửi câu hỏi tới nhà trường."
-      />
-    );
-  }
 
   const socialLinks = [
     { label: "Facebook", href: settings.facebookUrl },
@@ -36,14 +25,16 @@ export default async function ContactPage() {
             Liên hệ
           </Eyebrow>
           <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
-            {page.title}
+            {page?.title ?? "Liên hệ với Hợp Lực"}
           </h1>
-          {page.coverImageUrl && (
+          {page?.coverImageUrl && (
             <div className="relative mt-8 h-[240px] overflow-hidden rounded-2xl sm:h-[300px]">
               <Image src={page.coverImageUrl} alt={page.title} fill className="object-cover" />
             </div>
           )}
-          <MarkdownContent content={page.content} className="mt-8" />
+          {page?.content ? <MarkdownContent content={page.content} className="mt-8" /> : (
+            <p className="mt-6 text-base leading-relaxed text-ink-soft">Gửi câu hỏi qua form bên dưới hoặc liên hệ trực tiếp để được nhà trường hỗ trợ.</p>
+          )}
 
           <div className="mt-10 rounded-2xl border border-line bg-white p-7 shadow-sm2">
             <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
@@ -64,11 +55,11 @@ export default async function ContactPage() {
             </div>
             <div>
               <dt className="text-ink-faint">Hotline</dt>
-              <dd className="mt-0.5 font-semibold text-ink">{settings.hotline}</dd>
+              <dd className="mt-0.5 font-semibold text-ink"><a href={`tel:${settings.hotline.replace(/\s+/g, "")}`} className="hover:text-brand-700">{settings.hotline}</a></dd>
             </div>
             <div>
               <dt className="text-ink-faint">Email</dt>
-              <dd className="mt-0.5 font-semibold text-ink">{settings.email}</dd>
+              <dd className="mt-0.5 font-semibold text-ink"><a href={`mailto:${settings.email}`} className="break-all hover:text-brand-700">{settings.email}</a></dd>
             </div>
           </dl>
           {socialLinks.length > 0 && (

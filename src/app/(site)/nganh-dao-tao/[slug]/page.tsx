@@ -5,12 +5,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Button } from "@/components/ui/Button";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
-import { getAllProgramSlugs, getProgramBySlug } from "@/lib/data/programs";
-
-export async function generateStaticParams() {
-  const slugs = await getAllProgramSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
+import { getProgramBySlug } from "@/lib/data/programs";
 
 export async function generateMetadata({
   params,
@@ -50,7 +45,7 @@ export default async function ProgramDetailPage({
           {program.summary}
         </p>
 
-        <div className="mt-8 grid grid-cols-2 gap-4 rounded-2xl border border-line bg-white p-6 sm:grid-cols-2">
+        <div className="mt-8 grid grid-cols-2 gap-4 rounded-2xl border border-line bg-white p-6 sm:grid-cols-3">
           <div>
             <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
               Thời gian đào tạo
@@ -62,6 +57,14 @@ export default async function ProgramDetailPage({
               Chỉ tiêu tuyển sinh
             </div>
             <div className="mt-1 text-lg font-semibold text-ink">{program.intake}</div>
+          </div>
+          <div className="col-span-2 sm:col-span-1">
+            <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
+              Học phí
+            </div>
+            <div className="mt-1 text-lg font-semibold text-ink">
+              {program.tuition ?? <Link href="/lien-he" className="text-brand-700 hover:underline">Liên hệ tư vấn</Link>}
+            </div>
           </div>
         </div>
 
@@ -75,7 +78,7 @@ export default async function ProgramDetailPage({
         )}
 
         <div className="mt-10 flex flex-wrap gap-3 border-t border-line pt-8">
-          <Button href="/tuyen-sinh">Đăng ký xét tuyển ngành này →</Button>
+          <Button href={`/tuyen-sinh?nganh=${encodeURIComponent(program.slug)}#dang-ky`}>Đăng ký xét tuyển ngành này →</Button>
           <Button href="/nganh-dao-tao" variant="outline">
             Xem các ngành khác
           </Button>

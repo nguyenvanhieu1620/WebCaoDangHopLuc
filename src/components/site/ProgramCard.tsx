@@ -20,16 +20,25 @@ type ProgramCardProps = {
  */
 export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCardProps) {
   return (
-    <Reveal delay={delay}>
+    <Reveal delay={delay} className="h-full">
       <Link
         href={`/nganh-dao-tao/${p.slug}`}
-        onMouseMove={(e) => {
+        onPointerMove={(e) => {
+          if (e.pointerType !== "mouse" || !window.matchMedia("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)").matches) return;
           const rect = e.currentTarget.getBoundingClientRect();
           e.currentTarget.style.setProperty("--spot-x", `${e.clientX - rect.left}px`);
           e.currentTarget.style.setProperty("--spot-y", `${e.clientY - rect.top}px`);
+          const x = Math.max(-0.5, Math.min(0.5, (e.clientX - rect.left) / rect.width - 0.5));
+          const y = Math.max(-0.5, Math.min(0.5, (e.clientY - rect.top) / rect.height - 0.5));
+          e.currentTarget.style.setProperty("--tilt-x", `${-y * 8}deg`);
+          e.currentTarget.style.setProperty("--tilt-y", `${x * 8}deg`);
+        }}
+        onPointerLeave={(e) => {
+          e.currentTarget.style.setProperty("--tilt-x", "0deg");
+          e.currentTarget.style.setProperty("--tilt-y", "0deg");
         }}
         className={cn(
-          "group relative block overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 transition-transform hover:-translate-y-1.5",
+          "program-card-depth group relative block h-full overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700",
           gradientClass
         )}
       >

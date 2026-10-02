@@ -40,59 +40,67 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3
  * theo khối thực thể".
  */
 export type AdminNavLeaf = { key: string; label: string; href: string };
-/** Entity có `href` = link thẳng (không có children); entity có `children` = khối thu gọn (header chỉ để bấm mở/đóng, không phải link). */
+/**
+ * Entity có `href` = link thẳng (không có children); entity có `children` = khối thu gọn (header chỉ để bấm mở/đóng, không phải link).
+ * `section` chỉ là nhãn nhóm hiển thị trong sidebar (tiêu đề nhỏ phía trên các entity liền kề cùng nhóm) — không ảnh hưởng phân quyền.
+ */
 export type AdminNavEntity =
-  | (AdminNavLeaf & { children?: undefined })
-  | { key: string; label: string; href?: undefined; children: AdminNavLeaf[] };
+  | (AdminNavLeaf & { section?: string; children?: undefined })
+  | { key: string; label: string; section?: string; href?: undefined; children: AdminNavLeaf[] };
 
 export const ADMIN_NAV: AdminNavEntity[] = [
   { key: "dashboard", label: "Dashboard", href: "/admin" },
   {
     key: "posts",
     label: "Bài viết",
+    section: "Nội dung",
     children: [
       { key: "posts-list", label: "Bài viết", href: "/admin/bai-viet" },
       { key: "posts-categories", label: "Danh mục", href: "/admin/danh-muc" },
     ],
   },
-  { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao" },
+  { key: "events", label: "Sự kiện", href: "/admin/su-kien", section: "Nội dung" },
+  { key: "faq", label: "Câu hỏi thường gặp", href: "/admin/faq", section: "Nội dung" },
+  { key: "pages", label: "Trang tĩnh", href: "/admin/trang-tinh", section: "Nội dung" },
+  { key: "media", label: "Thư viện media", href: "/admin/media", section: "Nội dung" },
+  { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao", section: "Đào tạo" },
   {
     key: "faculty",
     label: "Giảng viên",
+    section: "Đào tạo",
     children: [
       { key: "faculty-list", label: "Đội ngũ giảng viên", href: "/admin/giang-vien" },
       { key: "departments", label: "Khoa / Bộ môn", href: "/admin/khoa" },
       { key: "faculty-attributes", label: "Học hàm / Học vị / Chức vụ", href: "/admin/danh-hieu" },
     ],
   },
-  { key: "partners", label: "Đối tác", href: "/admin/doi-tac" },
-  { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia" },
-  { key: "events", label: "Sự kiện", href: "/admin/su-kien" },
-  { key: "faq", label: "Câu hỏi thường gặp", href: "/admin/faq" },
+  {
+    key: "admissions-contact",
+    label: "Tuyển sinh & Liên hệ",
+    section: "Tuyển sinh",
+    children: [
+      { key: "admissions", label: "Đăng ký tuyển sinh", href: "/admin/tuyen-sinh" },
+      { key: "admission-info", label: "Thông tin tuyển sinh", href: "/admin/thong-tin-tuyen-sinh" },
+      { key: "contact-messages", label: "Tin nhắn liên hệ", href: "/admin/lien-he" },
+      { key: "quick-contacts", label: "Liên hệ nhanh", href: "/admin/lien-he-nhanh" },
+      { key: "newsletter", label: "Đăng ký nhận tin", href: "/admin/dang-ky-nhan-tin" },
+    ],
+  },
   {
     key: "homepage",
     label: "Trang chủ",
+    section: "Giao diện",
     children: [
       { key: "hero-banner", label: "Banner Trang chủ", href: "/admin/banner-trang-chu" },
       { key: "gallery", label: "Thư viện ảnh Trang chủ", href: "/admin/thu-vien-trang-chu" },
       { key: "homepage-content", label: "Nội dung Trang chủ", href: "/admin/trang-chu" },
     ],
   },
-  { key: "media", label: "Thư viện media", href: "/admin/media" },
-  { key: "pages", label: "Trang tĩnh", href: "/admin/trang-tinh" },
-  { key: "menu", label: "Menu chính", href: "/admin/menu" },
-  {
-    key: "admissions-contact",
-    label: "Tuyển sinh & Liên hệ",
-    children: [
-      { key: "admissions", label: "Đăng ký tuyển sinh", href: "/admin/tuyen-sinh" },
-      { key: "contact-messages", label: "Tin nhắn liên hệ", href: "/admin/lien-he" },
-      { key: "quick-contacts", label: "Liên hệ nhanh", href: "/admin/lien-he-nhanh" },
-      { key: "newsletter", label: "Đăng ký nhận tin", href: "/admin/dang-ky-nhan-tin" },
-    ],
-  },
-  { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat" },
-  { key: "users", label: "Người dùng", href: "/admin/nguoi-dung" },
+  { key: "menu", label: "Menu chính", href: "/admin/menu", section: "Giao diện" },
+  { key: "partners", label: "Đối tác", href: "/admin/doi-tac", section: "Giao diện" },
+  { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia", section: "Giao diện" },
+  { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat", section: "Hệ thống" },
+  { key: "users", label: "Người dùng", href: "/admin/nguoi-dung", section: "Hệ thống" },
 ];
 
 /**

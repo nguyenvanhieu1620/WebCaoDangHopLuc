@@ -162,17 +162,41 @@ export default async function AdminMenuPage({
                 placeholder="VD: /nganh-dao-tao"
               />
             </div>
+            <div>
+              <label htmlFor="nav-description" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Mô tả ngắn <span className="font-normal text-ink-faint">(tuỳ chọn — chỉ hiện ở danh mục con, dưới tên mục trong menu thả xuống)</span>
+              </label>
+              <input
+                id="nav-description"
+                name="description"
+                maxLength={90}
+                defaultValue={editing?.description ?? ""}
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                placeholder="VD: Mã 6720301 · 3 năm"
+              />
+            </div>
             <details className="rounded-lg border border-line p-3">
               <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
-                🇬🇧 Tên hiển thị tiếng Anh (tuỳ chọn)
+                🇬🇧 Bản tiếng Anh (tuỳ chọn)
               </summary>
               <div className="mt-3">
-                <AutoTranslateButton pairs={[{ viName: "label", enName: "labelEn" }]} />
+                <AutoTranslateButton
+                  pairs={[
+                    { viName: "label", enName: "labelEn" },
+                    { viName: "description", enName: "descriptionEn" },
+                  ]}
+                />
               </div>
               <input
                 name="labelEn"
                 defaultValue={editing?.labelEn ?? ""}
                 placeholder="VD: Programs"
+                className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              />
+              <input
+                name="descriptionEn"
+                defaultValue={editing?.descriptionEn ?? ""}
+                placeholder="Short description (English)"
                 className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
               />
             </details>

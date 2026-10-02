@@ -47,6 +47,11 @@ export function LookupForm() {
     <div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
         <input
+          aria-label="Số CCCD đã đăng ký"
+          inputMode="numeric"
+          pattern="[0-9]{12}"
+          maxLength={12}
+          title="Số CCCD gồm 12 chữ số"
           value={idNumber}
           onChange={(e) => setIdNumber(e.target.value)}
           required
@@ -66,13 +71,13 @@ export function LookupForm() {
       </form>
 
       {status === "error" && (
-        <div className="mt-4 rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
+        <div role="alert" className="mt-4 rounded-xl bg-accent-100 px-4 py-3 text-sm font-semibold text-accent-700">
           {errorMessage}
         </div>
       )}
 
       {status === "done" && (
-        <div className="mt-6">
+        <div role="status" className="mt-6">
           {results.length === 0 ? (
             <div className="rounded-xl border border-line bg-white p-6 text-center text-sm text-ink-faint">
               Không tìm thấy hồ sơ nào với số CCCD này. Kiểm tra lại số đã nhập

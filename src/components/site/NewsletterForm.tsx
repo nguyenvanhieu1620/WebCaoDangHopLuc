@@ -43,7 +43,7 @@ export function NewsletterForm() {
   }
 
   if (status === "success") {
-    return <p className="text-[13px] font-semibold text-white/90">Đã đăng ký nhận tin, cảm ơn bạn!</p>;
+    return <p role="status" className="text-[13px] font-semibold text-white/90">Đã đăng ký nhận tin, cảm ơn bạn!</p>;
   }
 
   return (
@@ -55,6 +55,9 @@ export function NewsletterForm() {
       <div className="flex gap-2">
         <input
           name="email"
+          aria-label="Email đăng ký nhận tin"
+          autoComplete="email"
+          maxLength={254}
           type="email"
           required
           placeholder="Email của bạn"
@@ -72,7 +75,7 @@ export function NewsletterForm() {
         </button>
       </div>
       <TurnstileWidget compact />
-      {status === "error" && <p className="text-[11.5px] font-semibold text-accent-200">{errorMessage}</p>}
+      {status === "error" && <p role="alert" className="text-[11.5px] font-semibold text-accent-200">{errorMessage}</p>}
     </form>
   );
 }

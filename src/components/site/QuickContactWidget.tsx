@@ -71,7 +71,8 @@ export function QuickContactWidget({ contacts }: QuickContactWidgetProps) {
   if (contacts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-5 z-40 flex flex-col items-center gap-3 sm:right-6">
+    // Trên mobile nâng lên trên thanh MobileActionBar (dính đáy, ~72px) để không chồng nhau.
+    <div className="fixed bottom-[92px] right-4 z-40 flex flex-col items-center gap-3 sm:right-6 lg:bottom-6">
       {contacts.map((c, i) => {
         const style = TYPE_STYLE[c.type] ?? TYPE_STYLE.custom;
         const isExternal = c.href.startsWith("http");

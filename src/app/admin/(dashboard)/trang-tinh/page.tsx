@@ -8,14 +8,9 @@ import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { upsertPageAction, deletePageAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
+import { hasPlaceholder } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Quản lý trang tĩnh" };
-
-/** Phát hiện nội dung còn dạng "[điền số liệu]"/"[Trường điền: ...]" — ghi chú nội bộ chưa được thay bằng nội dung thật, để cảnh báo admin trước khi khách xem thấy nguyên văn. */
-const PLACEHOLDER_PATTERN = /\[[^\]]{2,}\]/;
-function hasPlaceholder(content: string): boolean {
-  return PLACEHOLDER_PATTERN.test(content);
-}
 
 export default async function AdminPagesPage({
   searchParams,

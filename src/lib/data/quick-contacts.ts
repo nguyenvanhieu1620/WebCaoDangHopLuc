@@ -9,5 +9,6 @@ export async function getQuickContacts(): Promise<QuickContact[]> {
     db.query.quickContacts.findMany({ orderBy: asc(schema.quickContacts.sortOrder) }),
     getLocale(),
   ]);
-  return rows.map((r) => ({ ...r, label: pickLocale(r.label, r.labelEn, locale) }));
+  return rows.filter((r) => r.href.trim() && r.href.trim() !== "#")
+    .map((r) => ({ ...r, href: r.href.trim(), label: pickLocale(r.label, r.labelEn, locale) }));
 }

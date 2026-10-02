@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Form from "next/form";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState, type FocusEvent, type KeyboardEvent } from "react";
 import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -27,11 +28,164 @@ type SiteHeaderProps = {
  * truyền prop thủ công ở từng trang.
  * `settings` (hotline/email/banner thông báo) lấy từ DB ở layout cha, quản lý
  * qua admin/cai-dat.
+ *
+ * Bàn phím: dropdown danh mục to mở cả khi hover lẫn khi focus nằm trong
+ * khối (Tab tới), Escape đóng rồi trả focus về mục cha. Nút ☰ "Danh mục
+ * khác" là nút disclosure — Enter/click mở/đóng qua state (`aria-expanded`),
+ * tự đóng khi focus/bấm chuột ra ngoài hoặc khi rê sang danh mục to khác
+ * (tránh 2 dropdown chồng lên nhau).
+ *
+ * Danh mục to có từ `MEGA_MIN_CHILDREN` mục con trở lên hiện dạng mega menu
+ * (lưới 2 cột kèm mô tả ngắn `nav_items.description` + khối kêu gọi tuyển
+ * sinh). Nút kính lúp (hoặc phím "/", Ctrl+K) mở ô tìm kiếm → /tim-kiem.
  */
+const SECONDARY_ID = "__secondary";
+
+const LABELS = {
+  vi: {
+    mainNav: "Menu chính",
+    more: "Danh mục khác",
+    openMenu: "Mở menu",
+    closeMenu: "Đóng menu",
+    expand: (label: string) => `Mở rộng ${label}`,
+    collapse: (label: string) => `Thu gọn ${label}`,
+    search: "Tìm kiếm",
+    searchPlaceholder: "Tìm ngành học, tin tức, học phí, hồ sơ…",
+    searchSubmit: "Tìm",
+    viewAll: (label: string) => `Xem tất cả ${label.toLocaleLowerCase("vi")}`,
+    promoEyebrow: "Tuyển sinh",
+    promoTitle: "Bắt đầu hành trình y dược của bạn",
+    promoCta: "Đăng ký xét tuyển",
+    explore: "Khám phá thêm",
+    hotlineLabel: "Gọi tư vấn tuyển sinh",
+  },
+  en: {
+    mainNav: "Main navigation",
+    more: "More sections",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+    expand: (label: string) => `Expand ${label}`,
+    collapse: (label: string) => `Collapse ${label}`,
+    search: "Search",
+    searchPlaceholder: "Search programs, news, tuition…",
+    searchSubmit: "Search",
+    viewAll: (label: string) => `View all ${label.toLowerCase()}`,
+    promoEyebrow: "Admissions",
+    promoTitle: "Start your healthcare journey",
+    promoCta: "Apply now",
+    explore: "Explore more",
+    hotlineLabel: "Admissions hotline",
+  },
+} as const;
+
+/** Danh mục to có từ chừng này mục con trở lên thì hiện dạng mega menu (lưới + khối giới thiệu). */
+const MEGA_MIN_CHILDREN = 4;
+
+const PANEL_HIDDEN = "invisible opacity-0";
+const PANEL_REVEAL_ON_GROUP =
+  "group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100";
+
 export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
   const pathname = usePathname();
+  const t = LABELS[locale] ?? LABELS.vi;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [secondaryOpen, setSecondaryOpen] = useState(false);
+  const [hoveredPrimary, setHoveredPrimary] = useState<string | null>(null);
+  // Dropdown vừa bị Escape đóng — tạm tắt hover/focus-within của khối đó cho
+  // tới khi chuột/focus rời khỏi khối, nếu không CSS sẽ hiện lại ngay.
+  const [dismissedId, setDismissedId] = useState<string | null>(null);
+  // Ô tìm kiếm gắn với URL lúc mở: điều hướng sang trang khác (VD gửi tìm kiếm
+  // → /tim-kiem) thì tự đóng mà không cần effect hay onSubmit (đóng ngay trong
+  // onSubmit sẽ gỡ form khỏi DOM trước khi kịp gửi → mất lượt tìm kiếm).
+  const [searchOpenAt, setSearchOpenAt] = useState<string | null>(null);
+  const searchOpen = searchOpenAt === pathname;
+  const setSearchOpen = (next: boolean | ((open: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(searchOpen) : next;
+    setSearchOpenAt(value ? pathname : null);
+  };
+  const secondaryWrapperRef = useRef<HTMLDivElement>(null);
+  const secondaryButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileButtonRef = useRef<HTMLButtonElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Phím tắt mở ô tìm kiếm: "/" hoặc Ctrl/⌘+K (khi không đang gõ trong ô nhập).
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") || (e.key === "/" && !typing)) {
+        e.preventDefault();
+        // Đọc URL hiện tại trực tiếp (effect chỉ đăng ký 1 lần, `pathname` trong closure sẽ cũ sau khi chuyển trang).
+        setSearchOpenAt(window.location.pathname);
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!secondaryOpen && !mobileOpen && !hoveredPrimary && !searchOpen) return;
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (searchOpen) {
+        setSearchOpenAt(null);
+        searchButtonRef.current?.focus();
+      }
+      if (hoveredPrimary) setDismissedId(hoveredPrimary);
+      if (secondaryOpen) {
+        setSecondaryOpen(false);
+        setDismissedId(SECONDARY_ID);
+        secondaryButtonRef.current?.focus();
+      }
+      if (mobileOpen) {
+        setMobileOpen(false);
+        mobileButtonRef.current?.focus();
+      }
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      if (secondaryOpen && !secondaryWrapperRef.current?.contains(e.target as Node)) {
+        setSecondaryOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [secondaryOpen, mobileOpen, hoveredPrimary, searchOpen]);
+
+  const clearDismissed = (id: string) =>
+    setDismissedId((prev) => (prev === id ? null : prev));
+
+  const leftGroup = (e: FocusEvent<HTMLDivElement>) =>
+    !e.currentTarget.contains(e.relatedTarget as Node | null);
+
+  const onPrimaryKeyDown = (id: string) => (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Escape") return;
+    setDismissedId(id);
+    e.currentTarget.querySelector<HTMLAnchorElement>("a")?.focus();
+  };
+
+  const onSecondaryKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Escape") return;
+    e.stopPropagation();
+    setSecondaryOpen(false);
+    setDismissedId(SECONDARY_ID);
+    secondaryButtonRef.current?.focus();
+  };
+
+  const toggleSecondary = () => {
+    if (secondaryOpen) {
+      setSecondaryOpen(false);
+      setDismissedId(SECONDARY_ID);
+    } else {
+      setSecondaryOpen(true);
+      clearDismissed(SECONDARY_ID);
+    }
+  };
 
   const matches = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -47,10 +201,9 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
     });
   };
 
-  const mobileItems = [...navTree.primary, ...navTree.secondary];
 
   return (
-    <div className="sticky top-0 z-50 font-sans">
+    <div className="sticky top-0 z-50 font-sans" style={{ viewTransitionName: "site-header" }}>
       {/* Thanh thông báo */}
       <div className="bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 text-white">
         <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-6 py-2 font-mono text-[11px] uppercase tracking-wider sm:px-8">
@@ -64,7 +217,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
       </div>
 
       {/* Thanh điều hướng chính */}
-      <div className="border-b border-brand-700/10 bg-paper/80 shadow-[0_4px_28px_rgba(6,50,90,0.07)] backdrop-blur-xl">
+      <div className="border-b border-brand-700/10 bg-paper/90 shadow-[0_4px_28px_rgba(6,50,90,0.07)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-6 px-6 py-3 sm:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2.5">
             <Image
@@ -85,9 +238,19 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
             </div>
           </Link>
 
-          <nav className="hidden flex-1 flex-wrap items-center justify-center gap-1 lg:flex">
+          <nav
+            aria-label={t.mainNav}
+            className="hidden flex-1 flex-wrap items-center justify-center gap-1 lg:flex"
+          >
             {navTree.primary.map((item) => (
-              <div key={item.id} className="group relative">
+              <div
+                key={item.id}
+                className="group relative"
+                onMouseEnter={() => { setSecondaryOpen(false); setHoveredPrimary(item.id); }}
+                onMouseLeave={() => { clearDismissed(item.id); setHoveredPrimary(null); }}
+                onBlur={(e) => leftGroup(e) && clearDismissed(item.id)}
+                onKeyDown={item.children.length > 0 ? onPrimaryKeyDown(item.id) : undefined}
+              >
                 <Link
                   href={item.href}
                   className={cn(
@@ -104,21 +267,88 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                     </svg>
                   )}
                 </Link>
-                {item.children.length > 0 && (
-                  <div className="invisible absolute left-0 top-full z-50 min-w-[220px] pt-2 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100">
+                {item.children.length >= MEGA_MIN_CHILDREN && (
+                  <div
+                    className={cn(
+                      "mega-panel absolute left-1/2 top-full z-50 w-[min(720px,92vw)] -translate-x-1/2 pt-3",
+                      PANEL_HIDDEN,
+                      dismissedId !== item.id && PANEL_REVEAL_ON_GROUP
+                    )}
+                  >
+                    <div className="grid grid-cols-[1fr_230px] overflow-hidden rounded-[22px] border border-brand-700/10 bg-white shadow-[0_30px_70px_-20px_rgba(6,50,90,0.35)]">
+                      <div className="grid grid-cols-2 gap-1 p-3">
+                        {item.children.map((child, i) => (
+                          <Link
+                            key={child.id}
+                            href={child.href}
+                            className={cn(
+                              "group/item flex items-start gap-3 rounded-xl px-3 py-3 transition-colors",
+                              matches(child.href) ? "bg-brand-50" : "hover:bg-brand-50"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br font-mono text-[11px] font-semibold text-white shadow-sm2 transition-transform group-hover/item:-translate-y-0.5 group-hover/item:rotate-[-4deg]",
+                                i % 3 === 2 ? "from-accent-700 to-accent-500" : i % 3 === 1 ? "from-brand-900 to-brand-600" : "from-brand-800 to-brand-500"
+                              )}
+                            >
+                              {String(i + 1).padStart(2, "0")}
+                            </span>
+                            <span className="min-w-0">
+                              <span className={cn("block text-[13.5px] font-semibold", matches(child.href) ? "text-brand-700" : "text-ink group-hover/item:text-brand-700")}>
+                                {child.label}
+                              </span>
+                              {child.description && (
+                                <span className="mt-0.5 block truncate text-[11.5px] text-ink-faint">{child.description}</span>
+                              )}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 p-5 text-white">
+                        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-500/40 blur-[40px]" />
+                        <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-brand-500/50 blur-[40px]" />
+                        <div className="relative">
+                          <div className="font-mono text-[10px] uppercase tracking-wider text-brand-200">{t.promoEyebrow}</div>
+                          <div className="mt-2 font-display text-[19px] font-semibold leading-snug">{t.promoTitle}</div>
+                        </div>
+                        <div className="relative mt-5 space-y-2">
+                          <Link
+                            href="/tuyen-sinh#dang-ky"
+                            className="block rounded-xl bg-gradient-to-br from-accent-600 to-accent-500 px-3.5 py-2.5 text-center text-[13px] font-bold text-white shadow-red"
+                          >
+                            {t.promoCta}
+                          </Link>
+                          <Link href={item.href} className="block text-center text-[12.5px] font-semibold text-brand-100 hover:text-white">
+                            {t.viewAll(item.label)} →
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {item.children.length > 0 && item.children.length < MEGA_MIN_CHILDREN && (
+                  <div
+                    className={cn(
+                      "mega-panel absolute left-0 top-full z-50 min-w-[240px] pt-3",
+                      PANEL_HIDDEN,
+                      dismissedId !== item.id && PANEL_REVEAL_ON_GROUP
+                    )}
+                  >
                     <div className="rounded-2xl border border-brand-700/10 bg-white p-2 shadow-lg2">
                       {item.children.map((child) => (
                         <Link
                           key={child.id}
                           href={child.href}
                           className={cn(
-                            "block rounded-lg px-3.5 py-2.5 text-[13.5px] font-semibold",
+                            "block rounded-lg px-3.5 py-2.5",
                             matches(child.href)
                               ? "bg-brand-50 text-brand-700"
                               : "text-ink hover:bg-brand-50 hover:text-brand-700"
                           )}
                         >
-                          {child.label}
+                          <span className="block text-[13.5px] font-semibold">{child.label}</span>
+                          {child.description && <span className="block text-[11.5px] text-ink-faint">{child.description}</span>}
                         </Link>
                       ))}
                     </div>
@@ -128,13 +358,32 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
             ))}
 
             {navTree.secondary.length > 0 && (
-              <div className="group relative">
+              <div
+                ref={secondaryWrapperRef}
+                className="group relative"
+                onMouseEnter={() => { clearDismissed(SECONDARY_ID); setSecondaryOpen(true); }}
+                onMouseLeave={() => {
+                  clearDismissed(SECONDARY_ID);
+                  if (!secondaryWrapperRef.current?.contains(document.activeElement)) setSecondaryOpen(false);
+                }}
+                onBlur={(e) => {
+                  if (!leftGroup(e)) return;
+                  setSecondaryOpen(false);
+                  clearDismissed(SECONDARY_ID);
+                }}
+                onKeyDown={onSecondaryKeyDown}
+              >
                 <button
+                  ref={secondaryButtonRef}
                   type="button"
-                  aria-label="Danh mục khác"
+                  aria-label={t.more}
+                  aria-haspopup="true"
+                  aria-expanded={secondaryOpen}
+                  aria-controls="site-secondary-nav"
+                  onClick={toggleSecondary}
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
-                    navTree.secondary.some(isActive)
+                    navTree.secondary.some(isActive) || secondaryOpen
                       ? "bg-brand-50 text-brand-700"
                       : "text-ink hover:bg-brand-50 hover:text-brand-700"
                   )}
@@ -145,12 +394,27 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                     <span className="block h-0.5 w-4 bg-current" />
                   </div>
                 </button>
-                <div className="invisible absolute right-0 top-full z-50 min-w-[240px] pt-2 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100">
+                {/* Mở bằng state (click/Enter) hoặc hover; focus-within trên
+                    chính panel giữ nó mở khi Tab qua các link bên trong. */}
+                <div
+                  id="site-secondary-nav"
+                  className={cn(
+                    "absolute right-0 top-full z-50 min-w-[240px] pt-2 transition-opacity duration-150",
+                    secondaryOpen
+                      ? "visible opacity-100"
+                      : cn(
+                          PANEL_HIDDEN,
+                          "focus-within:visible focus-within:opacity-100",
+                          dismissedId !== SECONDARY_ID && "group-hover:visible group-hover:opacity-100"
+                        )
+                  )}
+                >
                   <div className="rounded-2xl border border-brand-700/10 bg-white p-2 shadow-lg2">
                     {navTree.secondary.map((item) => (
                       <div key={item.id} className="py-1">
                         <Link
                           href={item.href}
+                          onClick={() => setSecondaryOpen(false)}
                           className={cn(
                             "block rounded-lg px-3.5 py-2.5 text-[13.5px] font-semibold",
                             matches(item.href)
@@ -166,6 +430,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                               <Link
                                 key={child.id}
                                 href={child.href}
+                                onClick={() => setSecondaryOpen(false)}
                                 className={cn(
                                   "block rounded-lg px-3 py-2 text-[13px] font-medium",
                                   matches(child.href)
@@ -186,16 +451,42 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
             )}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2.5">
+            <button
+              ref={searchButtonRef}
+              type="button"
+              aria-label={t.search}
+              aria-expanded={searchOpen}
+              aria-controls="site-search-panel"
+              onClick={() => {
+                setSearchOpen((v) => !v);
+                setMobileOpen(false);
+              }}
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-lg border transition-colors",
+                searchOpen ? "border-brand-500 bg-brand-50 text-brand-700" : "border-line text-ink hover:border-brand-500 hover:text-brand-700"
+              )}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-4-4" strokeLinecap="round" />
+              </svg>
+            </button>
             <Button href="/tuyen-sinh" className="hidden sm:inline-flex">
               Đăng ký xét tuyển
             </Button>
             <button
-              aria-label="Mở menu"
-              onClick={() => setMobileOpen((v) => !v)}
+              ref={mobileButtonRef}
+              type="button"
+              aria-label={mobileOpen ? t.closeMenu : t.openMenu}
+              aria-expanded={mobileOpen}
+              aria-controls="site-mobile-nav"
+              onClick={() => {
+                setMobileOpen((v) => !v);
+                setSearchOpen(false);
+              }}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-line lg:hidden"
             >
-              <span className="sr-only">Menu</span>
               <div className="space-y-1.5">
                 <span className="block h-0.5 w-5 bg-ink" />
                 <span className="block h-0.5 w-5 bg-ink" />
@@ -205,17 +496,58 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
           </div>
         </div>
 
+        {/* Ô tìm kiếm thả xuống — GET /tim-kiem, không cần JS để tìm (chỉ để mở/đóng). */}
+        {searchOpen && (
+          <div id="site-search-panel" className="search-drop border-t border-line bg-white/95 backdrop-blur-xl">
+            <Form
+              action="/tim-kiem"
+              role="search"
+              className="mx-auto flex max-w-[860px] items-center gap-2 px-6 py-4 sm:px-8"
+            >
+              <label htmlFor="header-search" className="sr-only">{t.search}</label>
+              <div className="flex flex-1 items-center gap-2.5 rounded-xl border border-line bg-paper px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-ink-faint" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M20 20l-4-4" strokeLinecap="round" />
+                </svg>
+                <input
+                  id="header-search"
+                  name="q"
+                  type="search"
+                  autoFocus
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  placeholder={t.searchPlaceholder}
+                  className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-faint"
+                />
+                <kbd className="hidden rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint sm:inline">Esc</kbd>
+              </div>
+              <button type="submit" className="h-11 rounded-xl bg-brand-700 px-5 text-sm font-bold text-white hover:bg-brand-800">
+                {t.searchSubmit}
+              </button>
+            </Form>
+          </div>
+        )}
+
         {/* Menu mobile */}
         {mobileOpen && (
-          <nav className="flex flex-col gap-1 border-t border-line bg-white px-6 py-4 lg:hidden">
-            {mobileItems.map((item) => (
+          // Tự cuộn trong khung màn hình (header dính nên menu dài hơn màn hình sẽ bị
+          // khuất phần cuối nếu không cuộn riêng); pb chừa chỗ cho thanh MobileActionBar.
+          <nav
+            id="site-mobile-nav"
+            aria-label={t.mainNav}
+            className="max-h-[calc(100dvh-104px)] overflow-y-auto overscroll-contain border-t border-line bg-white px-5 pb-28 pt-3 lg:hidden"
+          >
+            <div className="flex flex-col gap-0.5">
+            {navTree.primary.map((item) => (
               <div key={item.id}>
                 <div className="flex items-center justify-between">
                   <Link
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold",
+                      "flex-1 rounded-xl px-3 py-3 text-[15px] font-semibold",
                       isActive(item) ? "bg-brand-50 text-brand-700" : "text-ink"
                     )}
                   >
@@ -224,7 +556,9 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                   {item.children.length > 0 && (
                     <button
                       type="button"
-                      aria-label={`Mở rộng ${item.label}`}
+                      aria-label={expanded.has(item.id) ? t.collapse(item.label) : t.expand(item.label)}
+                      aria-expanded={expanded.has(item.id)}
+                      aria-controls={`site-mobile-sub-${item.id}`}
                       onClick={() => toggleExpanded(item.id)}
                       className="flex h-9 w-9 shrink-0 items-center justify-center text-ink-soft"
                     >
@@ -241,27 +575,63 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                   )}
                 </div>
                 {item.children.length > 0 && expanded.has(item.id) && (
-                  <div className="ml-3 space-y-1 border-l border-line pl-3">
+                  <div id={`site-mobile-sub-${item.id}`} className="search-drop ml-3 space-y-0.5 border-l-2 border-brand-100 pl-3">
                     {item.children.map((child) => (
                       <Link
                         key={child.id}
                         href={child.href}
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          "block rounded-lg px-3 py-2 text-[13.5px] font-medium",
+                          "block rounded-lg px-3 py-2",
                           matches(child.href) ? "text-brand-700" : "text-ink-soft"
                         )}
                       >
-                        {child.label}
+                        <span className="block text-[14px] font-medium">{child.label}</span>
+                        {child.description && <span className="block text-[11.5px] text-ink-faint">{child.description}</span>}
                       </Link>
                     ))}
                   </div>
                 )}
               </div>
             ))}
-            <Button href="/tuyen-sinh" className="mt-2 justify-center">
-              Đăng ký xét tuyển
-            </Button>
+            </div>
+
+            {/* Danh mục phụ (nút ☰ trên desktop) — lưới 2 cột cho gọn thay vì nối dài danh sách. */}
+            {navTree.secondary.length > 0 && (
+              <div className="mt-4 border-t border-line pt-4">
+                <div className="mb-2.5 px-1 font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-faint">{t.explore}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {navTree.secondary.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "rounded-xl border px-3 py-2.5 text-[13.5px] font-semibold",
+                        isActive(item) ? "border-brand-500 bg-brand-50 text-brand-700" : "border-line bg-paper text-ink"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <a
+              href={`tel:${settings.hotline.replace(/\s+/g, "")}`}
+              className="mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-br from-brand-900 to-brand-700 px-5 py-4 text-white"
+            >
+              <span>
+                <span className="block font-mono text-[10.5px] uppercase tracking-wider text-brand-200">{t.hotlineLabel}</span>
+                <span className="block font-display text-[20px] font-semibold">{settings.hotline}</span>
+              </span>
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </a>
           </nav>
         )}
       </div>

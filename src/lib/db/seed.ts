@@ -22,6 +22,7 @@ import {
   events,
   faqs,
   quickContacts,
+  admissionItems,
 } from "./schema";
 
 /**
@@ -1102,6 +1103,101 @@ Bạn có quyền yêu cầu xem, chỉnh sửa hoặc xoá thông tin cá nhân
   } else {
     console.log("• Đã có nút liên hệ nhanh, bỏ qua.");
   }
+
+  // Thông tin tuyển sinh (/tuyen-sinh, admin/thong-tin-tuyen-sinh). Mốc thời
+  // gian cố ý để placeholder "[Trường điền: ...]" — không tự bịa ngày tuyển
+  // sinh chính thức; web công khai tự hiện "Đang cập nhật" thay cho
+  // placeholder, admin thấy cảnh báo "Chưa điền". Hồ sơ/phương thức là danh
+  // sách mẫu phổ biến của khối cao đẳng — trường cần rà lại trước khi công bố.
+  const existingAdmissionItems = await db.query.admissionItems.findMany();
+  if (existingAdmissionItems.length === 0) {
+    await db.insert(admissionItems).values([
+      {
+        type: "timeline",
+        title: "Đăng ký trực tuyến",
+        titleEn: "Register online",
+        detail: "Điền form đăng ký ngay trên website — chỉ mất khoảng 2 phút.",
+        detailEn: "Fill in the registration form on this website — it takes about 2 minutes.",
+        meta: "[Trường điền: thời gian mở cổng đăng ký]",
+        sortOrder: 0,
+      },
+      {
+        type: "timeline",
+        title: "Tư vấn & hướng dẫn hồ sơ",
+        titleEn: "Counselling & document guidance",
+        detail: "Cán bộ tuyển sinh liên hệ để tư vấn ngành học và hướng dẫn chuẩn bị hồ sơ.",
+        detailEn: "Our admissions team contacts you to advise on programs and required documents.",
+        meta: "[Trường điền: thời gian]",
+        sortOrder: 1,
+      },
+      {
+        type: "timeline",
+        title: "Nộp hồ sơ xét tuyển",
+        titleEn: "Submit your application",
+        detail: "Nộp hồ sơ trực tiếp tại trường hoặc qua đường bưu điện.",
+        detailEn: "Submit documents in person at the college or by post.",
+        meta: "[Trường điền: hạn nộp hồ sơ]",
+        sortOrder: 2,
+      },
+      {
+        type: "timeline",
+        title: "Thông báo kết quả & nhập học",
+        titleEn: "Results & enrolment",
+        detail: "Tra cứu trạng thái hồ sơ trên website và làm thủ tục nhập học theo giấy báo.",
+        detailEn: "Check your application status online and enrol following the admission letter.",
+        meta: "[Trường điền: thời gian nhập học]",
+        sortOrder: 3,
+      },
+      {
+        type: "method",
+        title: "Xét tuyển học bạ THPT",
+        titleEn: "High-school transcript review",
+        detail: "Xét kết quả học tập THPT ghi trong học bạ. Đăng ký trực tuyến, cán bộ tuyển sinh sẽ hướng dẫn chi tiết.",
+        detailEn: "Based on your high-school academic record. Register online and our team will guide you through the details.",
+        sortOrder: 0,
+      },
+      {
+        type: "method",
+        title: "Đối tượng tuyển sinh",
+        titleEn: "Eligibility",
+        detail: "Thí sinh đã tốt nghiệp THPT hoặc tương đương.",
+        detailEn: "Applicants who have completed upper-secondary school (THPT) or equivalent.",
+        sortOrder: 1,
+      },
+      { type: "document", title: "Phiếu đăng ký xét tuyển (theo mẫu của trường)", titleEn: "Application form (college template)", sortOrder: 0 },
+      { type: "document", title: "Bản sao học bạ THPT có chứng thực", titleEn: "Certified copy of high-school transcript", sortOrder: 1 },
+      { type: "document", title: "Bản sao bằng tốt nghiệp THPT hoặc giấy chứng nhận tốt nghiệp tạm thời", titleEn: "Copy of high-school diploma or temporary graduation certificate", sortOrder: 2 },
+      { type: "document", title: "Bản sao Căn cước công dân", titleEn: "Copy of citizen ID card", sortOrder: 3 },
+      { type: "document", title: "Giấy khám sức khoẻ", titleEn: "Health check certificate", sortOrder: 4 },
+      { type: "document", title: "Ảnh chân dung 3x4", titleEn: "3x4 portrait photos", sortOrder: 5 },
+    ]);
+    console.log("✓ Tạo thông tin tuyển sinh mẫu (mốc thời gian để placeholder chờ trường điền)");
+  } else {
+    console.log("• Đã có thông tin tuyển sinh, bỏ qua.");
+  }
+
+  // Mô tả ngắn cho các mục menu con trỏ tới ngành đào tạo (hiện trong mega
+  // menu) — ghép từ mã ngành + thời gian học đã có trong bảng `programs`,
+  // không thêm thông tin mới. Chỉ điền mục đang trống.
+  const allPrograms = await db.query.programs.findMany();
+  const navChildren = await db.query.navItems.findMany({
+    where: (n, { isNotNull }) => isNotNull(n.parentId),
+  });
+  let navDescCount = 0;
+  for (const item of navChildren) {
+    if (item.description) continue;
+    const program = allPrograms.find((p) => item.href === `/nganh-dao-tao/${p.slug}`);
+    if (!program) continue;
+    await db
+      .update(navItems)
+      .set({
+        description: `Mã ${program.code} · ${program.duration}`,
+        descriptionEn: `Code ${program.code} · ${program.duration.replace("năm", "years")}`,
+      })
+      .where(eq(navItems.id, item.id));
+    navDescCount++;
+  }
+  console.log(navDescCount ? `✓ Backfill mô tả mega menu cho ${navDescCount} ngành` : "• Mô tả mega menu đã có, bỏ qua.");
 
   console.log("Seed hoàn tất.");
 }

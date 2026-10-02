@@ -4,8 +4,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { verifyPassword, signSession, SESSION_COOKIE_NAME, SESSION_TTL_MS } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { verifyPassword, signSession, credentialVersion, SESSION_COOKIE_NAME, SESSION_TTL_MS } from "@/lib/auth";
+import { checkRateLimit, getClientIp, isRateLimited, resetRateLimit } from "@/lib/rate-limit";
 
 export type LoginState = { error?: string };
 
@@ -21,14 +21,14 @@ export async function loginAction(
     return { error: "Vui lòng nhập đầy đủ tài khoản và mật khẩu." };
   }
 
-  // Chặn dò mật khẩu (brute-force) — giới hạn theo IP lẫn theo email, vì
-  // chỉ chặn theo IP thì 1 người dùng chung mạng (VD văn phòng) có thể vô
-  // tình bị khoá lây khi người khác gõ sai nhiều lần.
+  // Chỉ đếm xác thực thất bại; giới hạn theo email và IP xác định được.
   const headerStore = await headers();
-  const ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIp({ headers: headerStore });
+  const emailKey = `login-email:${email}`;
+  const ipKey = `login-ip:${ip}`;
   if (
-    !checkRateLimit(`login-ip:${ip}`, 20, 10 * 60 * 1000) ||
-    !checkRateLimit(`login-email:${email}`, 5, 10 * 60 * 1000)
+    (ip !== "unknown" && isRateLimited(ipKey, 20)) ||
+    isRateLimited(emailKey, 5)
   ) {
     return { error: "Bạn thử sai quá nhiều lần, vui lòng đợi ít phút rồi thử lại." };
   }
@@ -38,13 +38,19 @@ export async function loginAction(
   });
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    checkRateLimit(emailKey, 5, 10 * 60 * 1000);
+    // An unidentified IP must not lock every administrator into one bucket.
+    if (ip !== "unknown") checkRateLimit(ipKey, 20, 10 * 60 * 1000);
     return { error: "Sai tài khoản hoặc mật khẩu." };
   }
+
+  resetRateLimit(emailKey);
 
   const sessionValue = signSession({
     userId: user.id,
     email: user.email,
     name: user.name,
+    credentialVersion: credentialVersion(user.passwordHash),
   });
 
   const cookieStore = await cookies();

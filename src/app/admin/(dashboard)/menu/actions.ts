@@ -16,20 +16,36 @@ export async function upsertNavItemAction(formData: FormData) {
   const isPrimary = formData.get("isPrimary") === "on" ? 1 : 0;
   const sortOrder = Number(formData.get("sortOrder") || 0);
   const labelEn = String(formData.get("labelEn") || "").trim();
+  const description = String(formData.get("description") || "").trim().slice(0, 90);
+  const descriptionEn = String(formData.get("descriptionEn") || "").trim().slice(0, 90);
 
   if (!label || !href) return;
 
-  const [labelEnFinal] = await autoFillTranslations([{ vi: label, en: labelEn }]);
+  const [labelEnFinal, descriptionEnFinal] = await autoFillTranslations([
+    { vi: label, en: labelEn },
+    { vi: description, en: descriptionEn },
+  ]);
 
   if (id) {
     await db
       .update(schema.navItems)
-      .set({ label, labelEn: labelEnFinal || null, href, parentId, isPrimary, sortOrder })
+      .set({
+        label,
+        labelEn: labelEnFinal || null,
+        description: description || null,
+        descriptionEn: descriptionEnFinal || null,
+        href,
+        parentId,
+        isPrimary,
+        sortOrder,
+      })
       .where(eq(schema.navItems.id, id));
   } else {
     await db.insert(schema.navItems).values({
       label,
       labelEn: labelEnFinal || null,
+      description: description || null,
+      descriptionEn: descriptionEnFinal || null,
       href,
       parentId,
       isPrimary,

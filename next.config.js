@@ -42,9 +42,23 @@ const CSP = [
   "object-src 'none'",
 ].join("; ");
 
+/**
+ * Cho phép mở `npm run dev` trên ĐIỆN THOẠI THẬT cùng mạng Wi-Fi/LAN qua
+ * http://<IP-máy-tính>:3000 — Next.js 16 mặc định chặn tài nguyên dev (JS,
+ * HMR) khi truy cập bằng host khác `localhost`, khiến trang hiện ra nhưng
+ * không chạy JS (mất hiệu ứng, form, menu). Tự lấy mọi IPv4 LAN của máy đang
+ * chạy dev (đổi mạng/DHCP đổi IP vẫn đúng, không phải sửa tay). Tuỳ chọn này
+ * chỉ có tác dụng ở chế độ dev, không ảnh hưởng production.
+ */
+const lanDevOrigins = Object.values(require("node:os").networkInterfaces())
+  .flat()
+  .filter((net) => net && net.family === "IPv4" && !net.internal)
+  .map((net) => net.address);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: lanDevOrigins,
   async headers() {
     return [
       {

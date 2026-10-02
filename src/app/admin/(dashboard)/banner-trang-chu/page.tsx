@@ -33,7 +33,7 @@ export default async function AdminHeroBannerPage({
     <div>
       <AdminTopbar
         title="Banner Trang chủ"
-        description="Nhiều ảnh banner xoay vòng ở khối Hero Trang chủ — chưa thêm ảnh nào thì Trang chủ tự dùng lại ảnh Hero cũ (Nội dung Trang chủ)"
+        description="Ảnh banner tràn toàn màn hình ở đầu Trang chủ, tự chuyển 6,5 giây/ảnh — chưa có ảnh nào thì dùng ảnh Hero cũ hoặc ảnh minh hoạ tạm"
       />
       <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
         <div className="rounded-2xl border border-line bg-white">
@@ -115,6 +115,11 @@ export default async function AdminHeroBannerPage({
                 images={mediaImages}
                 currentUrl={editing?.imageUrl}
               />
+              <div className="mt-2 rounded-lg bg-brand-50 px-3 py-2.5 text-[11.5px] leading-relaxed text-brand-800">
+                <strong>Banner phủ kín toàn màn hình</strong> — nên dùng ảnh ngang, tối thiểu <strong>1920×1080</strong> (tỉ lệ 16:9), dung lượng
+                dưới ~1MB. Chữ tiêu đề nằm bên trái trên lớp phủ xanh đậm, nên chọn ảnh có <strong>chủ thể lệch sang phải</strong> (sinh viên,
+                giảng viên, phòng thực hành…) để không bị chữ che.
+              </div>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">

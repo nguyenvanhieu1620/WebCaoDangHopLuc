@@ -21,13 +21,16 @@ export async function upsertProgramAction(formData: FormData) {
   const nameEn = String(formData.get("nameEn") || "").trim();
   const summaryEn = String(formData.get("summaryEn") || "").trim();
   const contentEn = String(formData.get("contentEn") || "").trim();
+  const tuition = String(formData.get("tuition") || "").trim().slice(0, 80);
+  const tuitionEn = String(formData.get("tuitionEn") || "").trim().slice(0, 80);
 
   if (!code || !name || !duration || !summary || !intake) return;
 
-  const [nameEnFinal, summaryEnFinal, contentEnFinal] = await autoFillTranslations([
+  const [nameEnFinal, summaryEnFinal, contentEnFinal, tuitionEnFinal] = await autoFillTranslations([
     { vi: name, en: nameEn },
     { vi: summary, en: summaryEn },
     { vi: content, en: contentEn },
+    { vi: tuition, en: tuitionEn },
   ]);
 
   if (id) {
@@ -43,6 +46,8 @@ export async function upsertProgramAction(formData: FormData) {
         summaryEn: summaryEnFinal || null,
         content: content || null,
         contentEn: contentEnFinal || null,
+        tuition: tuition || null,
+        tuitionEn: tuitionEnFinal || null,
         featured: featured ? 1 : 0,
         updatedAt: new Date().toISOString(),
       })
@@ -68,6 +73,8 @@ export async function upsertProgramAction(formData: FormData) {
       summaryEn: summaryEnFinal || null,
       content: content || null,
       contentEn: contentEnFinal || null,
+      tuition: tuition || null,
+      tuitionEn: tuitionEnFinal || null,
       featured: featured ? 1 : 0,
     });
   }
@@ -75,6 +82,7 @@ export async function upsertProgramAction(formData: FormData) {
   revalidatePath("/admin/nganh-dao-tao");
   revalidatePath("/");
   revalidatePath("/nganh-dao-tao");
+  revalidatePath("/tuyen-sinh");
 
   redirect("/admin/nganh-dao-tao");
 }

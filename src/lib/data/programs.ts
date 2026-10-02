@@ -9,6 +9,7 @@ function localize(p: Program, locale: "vi" | "en"): Program {
     name: pickLocale(p.name, p.nameEn, locale),
     summary: pickLocale(p.summary, p.summaryEn, locale),
     content: p.content ? pickLocale(p.content, p.contentEn, locale) : p.content,
+    tuition: p.tuition ? pickLocale(p.tuition, p.tuitionEn, locale) : p.tuition,
   };
 }
 

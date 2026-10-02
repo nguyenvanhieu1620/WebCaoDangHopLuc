@@ -9,9 +9,30 @@
  * Redis/DB dùng chung.
  */
 
+import { isIP } from "node:net";
+
 type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
+
+/** Check without consuming an attempt; authentication records failures only. */
+export function isRateLimited(key: string, limit: number): boolean {
+  const bucket = buckets.get(key);
+  return !!bucket && bucket.resetAt > Date.now() && bucket.count >= limit;
+}
+
+export function resetRateLimit(key: string): void {
+  buckets.delete(key);
+}
+let warnedUnknownIp = false;
+
+function unknownIp(): string {
+  if (process.env.NODE_ENV === "production" && !warnedUnknownIp) {
+    warnedUnknownIp = true;
+    console.warn("Chưa xác định IP qua proxy tin cậy: các request dùng chung rate limit. Kiểm tra TRUST_PROXY_HOPS và cấu hình proxy trước khi public.");
+  }
+  return "unknown";
+}
 
 /** Dọn bớt bucket đã hết hạn khi Map phình to, tránh rò rỉ bộ nhớ dài hạn. */
 function pruneExpired(now: number) {
@@ -36,9 +57,15 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): bo
   return true;
 }
 
-/** Lấy địa chỉ IP client từ header proxy chuẩn (Vercel/Nginx đều set x-forwarded-for). */
-export function getClientIp(request: Request): string {
-  const xff = request.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  return request.headers.get("x-real-ip") || "unknown";
+/**
+ * Chỉ tin số hop proxy đã cấu hình, đếm từ PHẢI của X-Forwarded-For.
+ * Proxy phải append IP nguồn thật hoặc ghi đè header; origin phải chặn truy
+ * cập trực tiếp. Mặc định không tin header và dùng bucket chung "unknown".
+ */
+export function getClientIp(request: { headers: Headers }): string {
+  const hops = Number(process.env.TRUST_PROXY_HOPS ?? "0");
+  if (!Number.isInteger(hops) || hops < 1 || hops > 16) return unknownIp();
+  const chain = request.headers.get("x-forwarded-for")?.split(",").map((ip) => ip.trim()) ?? [];
+  const ip = chain[chain.length - hops];
+  return ip && isIP(ip) ? ip : unknownIp();
 }

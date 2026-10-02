@@ -3,9 +3,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
-import { hashPassword, signResetToken, verifyResetToken } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { and, eq } from "drizzle-orm";
+import { hashPassword, signResetToken, verifyResetToken, isCredentialCurrent } from "@/lib/auth";
+import { escapeHtml } from "@/lib/email";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import { SITE, SITE_URL } from "@/lib/constants";
 
@@ -31,7 +32,7 @@ export async function requestPasswordResetAction(
   }
 
   const headerStore = await headers();
-  const ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIp({ headers: headerStore });
   if (
     !checkRateLimit(`reset-req-ip:${ip}`, 10, 10 * 60 * 1000) ||
     !checkRateLimit(`reset-req-email:${email}`, 3, 10 * 60 * 1000)
@@ -41,12 +42,12 @@ export async function requestPasswordResetAction(
 
   const user = await db.query.adminUsers.findFirst({ where: eq(schema.adminUsers.email, email) });
   if (user) {
-    const token = signResetToken(user.id);
+    const token = signResetToken(user.id, user.passwordHash);
     const resetLink = `${SITE_URL}/admin/dat-lai-mat-khau?token=${token}`;
     await sendEmail({
       to: user.email,
       subject: `Đặt lại mật khẩu quản trị — ${SITE.name}`,
-      html: `<p>Xin chào ${user.name},</p>
+      html: `<p>Xin chào ${escapeHtml(user.name)},</p>
         <p>Có yêu cầu đặt lại mật khẩu cho tài khoản quản trị của bạn. Bấm vào liên kết dưới đây để đặt mật khẩu mới (liên kết có hiệu lực trong 30 phút):</p>
         <p><a href="${resetLink}">${resetLink}</a></p>
         <p>Nếu bạn không yêu cầu việc này, có thể bỏ qua email này — mật khẩu hiện tại vẫn không đổi.</p>`,
@@ -85,10 +86,17 @@ export async function resetPasswordAction(
     return { error: "Không tìm thấy tài khoản." };
   }
 
-  await db
+  if (!isCredentialCurrent(payload, user.passwordHash)) {
+    return { error: "Liên kết đã được sử dụng hoặc mật khẩu đã thay đổi — yêu cầu liên kết mới." };
+  }
+
+  const changed = await db
     .update(schema.adminUsers)
     .set({ passwordHash: await hashPassword(password) })
-    .where(eq(schema.adminUsers.id, user.id));
+    .where(and(eq(schema.adminUsers.id, user.id), eq(schema.adminUsers.passwordHash, user.passwordHash)))
+    .returning({ id: schema.adminUsers.id });
+
+  if (!changed.length) return { error: "Mật khẩu đã thay đổi — vui lòng yêu cầu liên kết mới." };
 
   redirect("/admin/dang-nhap?reset=1");
 }

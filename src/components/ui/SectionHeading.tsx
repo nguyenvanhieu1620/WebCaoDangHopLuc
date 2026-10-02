@@ -25,11 +25,15 @@ export function SectionHeading({
   onDark = false,
   className,
 }: SectionHeadingProps) {
+  // `cn()` chỉ nối chuỗi (không gộp như tailwind-merge) — nếu truyền `mb-0` mà
+  // vẫn giữ `mb-14` mặc định thì mb-14 thắng trong CSS sinh ra. Có class mb-*
+  // truyền vào thì bỏ hẳn mặc định.
+  const customMargin = /(^|\s)mb-/.test(className ?? "");
   return (
     <div
       className={cn(
-        "mb-14",
-        align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-xl",
+        !customMargin && "mb-14",
+        align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl",
         className
       )}
     >
@@ -40,7 +44,7 @@ export function SectionHeading({
       )}
       <h2
         className={cn(
-          "font-display text-4xl font-semibold leading-tight",
+          "text-balance font-display text-[32px] font-semibold leading-[1.1] tracking-tight sm:text-[42px]",
           onDark ? "text-white" : "text-brand-900"
         )}
       >

@@ -16,6 +16,11 @@ const config: Config = {
           700: "#0B6CB0", // xanh chủ đạo — logo, link, nút phụ
           600: "#0E7FC4",
           500: "#1E9AD6", // xanh nhạt — gradient accent
+          // 400/300/200: bổ sung vì code đã dùng (ImagePlaceholder, media, blockquote)
+          // nhưng trước đây chưa khai báo nên class không sinh ra CSS.
+          400: "#4DB0E0",
+          300: "#8ACBEB",
+          200: "#BFE1F4",
           100: "#E4F1FA",
           50: "#F2F8FC",
         },
@@ -23,7 +28,10 @@ const config: Config = {
           700: "#9C161B",
           600: "#C41E24", // đỏ chủ đạo — CTA, nhấn mạnh
           500: "#E8562F", // cam-đỏ — gradient partner của accent-600
+          400: "#EF7A5A",
+          200: "#F7C4BA",
           100: "#FCE7E5",
+          50: "#FEF5F4",
         },
         paper: {
           DEFAULT: "#F7F9FB", // nền trang

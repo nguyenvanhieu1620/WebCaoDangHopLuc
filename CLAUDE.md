@@ -87,7 +87,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 - **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
-### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 22 bảng
+### 4.1b Các bảng DB hiện tại (`src/lib/db/schema.ts`) — 23 bảng
 `admin_users`, `posts` (có thêm `category_id`, `cover_image_url`), `pages`
 (có thêm `cover_image_url` — trang tĩnh giờ cũng thêm ảnh được, không chỉ
 text), `media_items` (giờ dùng thật — xem 4.1c), `admission_submissions`,
@@ -117,7 +117,10 @@ trường khác"). Thêm ở đợt đánh giá thiết kế lần 2: cột
 `posts.attachment_url`/`posts.attachment_name` (tệp đính kèm), `type` của
 `media_items` giờ có thêm giá trị `"document"` ngoài `"image"`/`"video"`
 (xem mục 5 "Đánh giá thiết kế web + admin lần 2 + tệp đính kèm cho Bài
-viết").
+viết"). Thêm ở đợt "pro hơn + 3D" (migration `0015_bitter_longshot.sql`):
+bảng mới `admission_items` (mốc thời gian/phương thức/hồ sơ tuyển sinh), cột
+`programs.tuition`/`tuition_en` và `nav_items.description`/`description_en`
+(xem mục 5 "Đợt pro hơn + 3D").
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -190,7 +193,7 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 - **LMS** (`/lms`) — trang hướng dẫn + nút link tới `site_settings.lmsUrl` (cột mới, quản lý qua `admin/cai-dat`); chưa cấu hình thì tự hiện thông báo "chưa cập nhật" thay vì nút link hỏng
 - Quản lý tuyển sinh (`admin/tuyen-sinh`) — danh sách hồ sơ (có cột CCCD), đổi trạng thái (Mới/Đã xem/Đã liên hệ)
 - API `/api/admissions` — nhận form đăng ký tuyển sinh từ site công khai, lưu DB thật
-- Database: 21 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
+- Database: 23 bảng (xem mục 4.1b), đã seed dữ liệu mẫu (xem mục 9 — tài khoản test)
 - Workflow migration versioned (`db:generate` + `db:migrate`) — **đã thực sự triển khai** (trước đây chỉ ghi trong tài liệu nhưng `package.json` còn thiếu, gây lỗi thật khi lỡ chạy `db:push` trên DB đã tồn tại — xem mục 4.2)
 
 **Tất cả các trang công khai trong SRS Giai đoạn 1 giờ đã có nội dung thật —
@@ -1115,6 +1118,161 @@ mobile viewport) + đọc code, tìm được và vá hết các mục sau:
   nhiều ở quy mô 1 trường, chưa thấy rủi ro thật để đánh đổi thêm phức tạp
   ngay bây giờ — để dành làm sau nếu thực tế thấy 2 danh sách này phình to.
 
+### Đợt "pro hơn + 3D" (01/10/2026) — tham khảo trường y dược VN + CMS chuẩn
+Người dùng nhờ đánh giá lại, đối chiếu dự án tương tự (duochn.edu.vn,
+tuetinh.edu.vn, các mẫu đoạt giải trên Concept3D/Webby/Awwwards; CMS
+Strapi/Directus/Payload) rồi chọn qua `AskUserQuestion` **toàn bộ** các hạng
+mục dưới đây. Đã test qua trình duyệt thật (desktop + mobile 375px):
+
+- **Cảnh 3D bằng Canvas tự viết** (`src/components/site/DnaScene3D.tsx`, prop
+  `theme="light" | "dark"`) — người dùng chọn phương án này thay vì
+  three.js/WebGL (không thêm dependency). Chuỗi xoắn DNA + phân tử + vòng quỹ
+  đạo + bụi sáng, phép chiếu phối cảnh tự viết, quả cầu vẽ từ sprite dựng sẵn.
+  Nghiêng theo chuột (chỉ thiết bị có chuột), xoắn thêm theo cuộn. Vẽ ngay 1
+  khung tĩnh lúc mount (đúng bài học "hẹn giờ dự phòng" — không phụ thuộc
+  rAF), chỉ chạy vòng lặp khi trong khung nhìn + tab hiện,
+  `prefers-reduced-motion` → khung tĩnh. Component bọc canvas trong div
+  (canvas là phần tử "replaced", absolute + inset không tự giãn) — đặt vị
+  trí/kích thước ở `className`, đừng đặt trên canvas. **Vị trí hiện tại: khối
+  nền tối "Vì sao chọn Hợp Lực" giữa Trang chủ** (xem mục "Banner lớn + dời
+  3D" ngay dưới) — ban đầu đặt ở Hero nhưng người dùng muốn banner ảnh lớn.
+- **`TiltCard`** (`src/components/site/TiltCard.tsx`) — tổng quát hoá hiệu ứng
+  nghiêng 3D của `ProgramCard` + vệt sáng glare; con có class `tilt-pop` nổi
+  lên (translateZ) khi hover. Dùng ở thẻ "Vì sao chọn", giảng viên, tin tức,
+  sự kiện (Trang chủ) và phương thức xét tuyển. CSS ở `globals.css` mục
+  `.tilt-3d` — chỉ bật với chuột + không giảm chuyển động.
+- **Chuyển trang mượt** — `src/app/(site)/template.tsx` bọc `<ViewTransition
+  enter="page-enter" exit="page-exit">` (React canary có sẵn trong Next 16,
+  không cần cấu hình), header neo cố định qua `viewTransitionName:
+  "site-header"`. Đã xác nhận `document.startViewTransition` được gọi khi bấm
+  link. `<html data-scroll-behavior="smooth">` để Next tắt cuộn mượt lúc
+  chuyển trang (hết cảnh báo console).
+- **Mega menu** — danh mục to có ≥ `MEGA_MIN_CHILDREN` (4) mục con hiện lưới
+  2 cột + mô tả ngắn + khối CTA tuyển sinh; ít hơn thì dropdown gọn. Cột mới
+  `nav_items.description`/`description_en` (admin/menu có ô "Mô tả ngắn"),
+  seed tự ghép "Mã {code} · {duration}" cho mục con trỏ tới ngành. Hiệu ứng
+  trượt dùng CSS `translate` (không phải `transform`) để không đè
+  `-translate-x-1/2` của Tailwind.
+- **Tìm kiếm toàn site** — `/tim-kiem` + `src/lib/data/search.ts`
+  (`searchSite`): ngành, bài đã đăng, sự kiện, giảng viên, trang tĩnh có
+  route công khai, FAQ. Tìm **không dấu** (`normalizeSearch` trong utils), mọi
+  từ phải có (AND), khớp nguyên cụm từ được ưu tiên, tô đậm đúng trên chữ có
+  dấu (bảng ánh xạ vị trí). Trang `noindex`. Header có nút kính lúp + phím
+  tắt "/" hoặc Ctrl+K. **Bài học thật**: đừng đóng panel tìm kiếm trong
+  `onSubmit` — React gỡ form khỏi DOM trước khi trình duyệt kịp gửi; panel
+  đóng theo URL (`searchOpenAt === pathname`). Dùng `next/form` để gửi
+  bằng điều hướng client (có View Transition).
+- **Thanh CTA dính đáy mobile** (`MobileActionBar.tsx`, chỉ `< lg`) — Gọi /
+  Zalo (chưa cấu hình thì thay bằng Tra cứu) / Đăng ký. `(site)/layout.tsx`
+  thêm `pb-[76px] lg:pb-0`; `QuickContactWidget` nâng lên `bottom-[92px]`
+  trên mobile để không chồng.
+- **Tuyển sinh rõ ràng hơn** — bảng mới **`admission_items`** (discriminator
+  `type`: `timeline`/`method`/`document`, cột `meta` = thời gian), admin
+  `admin/thong-tin-tuyen-sinh` (khối Tuyển sinh & Liên hệ), data layer
+  `src/lib/data/admission-info.ts`. Cột mới **`programs.tuition`/`tuition_en`**
+  (text tự do, để trống → web hiện "Liên hệ"). `/tuyen-sinh` dựng lại: dòng
+  thời gian, phương thức, hồ sơ dạng checklist, bảng chỉ tiêu + học phí,
+  form dính bên phải (desktop). **Mốc thời gian seed cố ý là placeholder
+  `[Trường điền: …]`** — data layer KHÔNG BAO GIỜ trả placeholder ra web công
+  khai (thời gian → `null` → hiện "Đang cập nhật"; tiêu đề còn placeholder →
+  ẩn cả mục), admin thấy cảnh báo "⚠️ Chưa điền". Hồ sơ/phương thức seed là
+  danh sách phổ biến khối cao đẳng — **trường cần rà lại trước khi công bố**.
+  `DecorativeSection` đổi `overflow-hidden` → **`overflow-clip`** (vẫn cắt blur
+  nhưng không tạo vùng cuộn) — nếu không, `sticky` bên trong không dính.
+- **Admin — sidebar**: `ADMIN_NAV` thêm trường `section` (Nội dung / Đào tạo /
+  Tuyển sinh / Giao diện / Hệ thống) chỉ để hiện tiêu đề nhóm — **cấu trúc
+  khối thực thể giữ nguyên**, module phân quyền không đổi. Icon vẽ inline ở
+  `AdminIcon.tsx` theo key entity (key chưa có icon → chấm tròn). Badge đỏ số
+  hồ sơ/tin nhắn mới (đếm ở `admin/(dashboard)/layout.tsx`, chỉ khi có quyền).
+- **Admin — bảng lệnh Ctrl+K / "/"** (`AdminCommandPalette.tsx`, provider bọc
+  layout; Sidebar/Topbar mở qua `useCommandPalette()`): nhảy tới trang + thao
+  tác nhanh + tìm bản ghi qua `adminSearchAction`
+  (`src/lib/actions/admin-search-actions.ts`) — **chỉ trả nhóm thuộc module
+  được cấp quyền**. Topbar giờ sticky + nhận prop `actions` cho nút riêng
+  của trang.
+- **Admin — Dashboard mới**: lời chào, KPI có xu hướng 7 ngày + sparkline,
+  biểu đồ cột hồ sơ 30 ngày, hồ sơ theo ngành, "Việc cần xử lý" (hồ sơ/tin
+  nhắn mới, bài nháp, trang/thông tin tuyển sinh còn placeholder, ngành chưa
+  có học phí, chưa có banner). Biểu đồ SVG tự vẽ (`DashboardCharts.tsx`),
+  không thêm thư viện; mọi query theo quyền.
+- **Admin — Xuất Excel**: `GET /admin/tuyen-sinh/xuat-csv` và
+  `/admin/lien-he/xuat-csv` (route handler, `requirePermission`), áp dụng
+  đúng bộ lọc đang xem (`tuyen-sinh/filter.ts` dùng chung với trang). `src/lib/csv.ts`:
+  BOM UTF-8 + CRLF; chặn CSV injection (ô bắt đầu `= + - @` thêm `'`);
+  **`digitsCell()` cho SĐT/CCCD** để Excel không xoá số 0 đầu / đổi CCCD
+  thành `3,82E+11`.
+- **Lỗi thật đã sửa kèm**: 7 shade màu code đã dùng nhưng chưa khai báo
+  (`brand-200/300/400`, `accent-50/200/400`) → class không sinh CSS (ô KPI
+  "hồ sơ mới" không đổi màu, khối "Thông báo" mất nền) — đã thêm token.
+  Giờ `created_at` SQLite (UTC không múi giờ) hiển thị lệch 7 tiếng ở
+  `admin/lien-he`/`dang-ky-nhan-tin` — dùng chung `formatDbDateTime()`
+  (`utils.ts`, cùng `dbTimestampToISO`/`vnDateKey`). `hasPlaceholder()` chuyển
+  vào `utils.ts` và bỏ qua link Markdown `[chữ](url)` (trước báo nhầm).
+- Test mới `tests/ui-helpers.test.ts` (CSV, placeholder, tìm không dấu, múi
+  giờ) — `npm test` 42/42.
+- **Chưa làm / hạn chế**: chưa chạy `npm run build` (dùng tsc + lint + test +
+  trình duyệt dev); cảm giác 3D/tilt/chuyển trang mới xác nhận trên Chromium
+  dev, chưa thử Safari/Firefox/điện thoại thật. Search lọc trong JS — khi lên
+  PostgreSQL có thể đổi sang full-text ngay trong `search.ts`.
+
+### Banner lớn + dời 3D + làm Trang chủ "pro" hơn (01/10/2026, lượt 2)
+Người dùng: "banner phải to lên vì nó đại diện của trang, còn 3D đặt chỗ nào
+hợp lý, giao diện vẫn chưa thấy pro". Đã làm (test trình duyệt desktop +
+mobile 375px, kể cả 2 banner tạm `audit-tmp-*` thêm vào DB dev rồi xoá ngay):
+
+- **`HeroBanner.tsx`** thay `HeroImageCarousel` (đã xoá file): banner **tràn
+  toàn màn hình** (desktop `h-[calc(100svh-104px)]` tối đa 880px; mobile cao
+  theo nội dung, tối thiểu 640px để chữ không đè thanh điều khiển). Ảnh phủ
+  kín + lớp phủ gradient xanh đậm trái/đáy + hạt nhiễu; chữ Hero (CMS) + 2 CTA
+  + 2 chỉ số nằm đè bên trái. Nhiều banner: crossfade 1,4s, Ken Burns CSS chạy
+  liên tục (không reset scale khi đổi ảnh → không giật), thanh tiến trình từng
+  banner, "01 / 03", chú thích + "Xem chi tiết" (= `linkUrl`, ảnh nền không
+  còn là link vì đè CTA), nút ←/→/tạm dừng (mobile căn trái — bên phải có nút
+  liên hệ nhanh cố định). Thứ tự nguồn ảnh: `hero_banners` → `heroImageUrl` →
+  ảnh minh hoạ `/images/3d/medical-learning.webp` (tạm, tới khi có ảnh thật).
+  Admin banner có hướng dẫn: ảnh ngang ≥ 1920×1080, chủ thể lệch phải.
+- **Công cụ nhanh** thành thanh trắng nổi đè mép dưới banner (`-mt-12`).
+- **Đối tác** thành dải chạy ngang vô tận (`.marquee`, lặp danh sách ≥ 8
+  mục/nửa rồi nhân đôi, dịch -50%; hover tạm dừng; reduced-motion → đứng yên,
+  ẩn bản sao `.marquee-dup`).
+- **3D chuyển xuống khối "Vì sao chọn Hợp Lực" nền tối** (gộp 2 khối cũ "4 chỉ
+  số" + "3 điểm mạnh"): trái = tiêu đề + 3 điểm mạnh dạng danh sách đánh số;
+  phải = `DnaScene3D theme="dark"` với 4 chỉ số thẻ kính tối nổi quanh (mobile:
+  lưới 2×2 dưới mô hình). Lý do: các mẫu web đoạt giải dùng 3D tạo không khí
+  cho 1 khối kể chuyện, banner đầu trang dành cho ảnh thật.
+- Sứ mệnh/Tầm nhìn dạng trích dẫn chữ lớn; **Tin tức + Thông báo gộp 1 khối
+  kiểu tạp chí** (1 tin nổi bật ngang lớn + tin nhỏ; bảng Thông báo bên phải
+  có ô lịch ngày/tháng); nút "Xem tất cả" dạng viên thuốc (`PillLink`);
+  `SectionHeading` to hơn (32→42px, `text-balance`) — áp dụng toàn site.
+- Lỗi sửa kèm: `Eyebrow tone="onDark"` dùng `bg-white/12` (không có trong
+  thang opacity Tailwind 3 → mất nền) → `bg-white/10` + viền; footer tràn
+  ngang ~22px ở khổ ~785px do email không ngắt dòng → `[overflow-wrap:anywhere]`.
+
+### Rà soát trên điện thoại (giả lập 390×844 / 375×667, UA Android + cảm ứng)
+- **Danh sách thẻ trên mobile vuốt ngang** (ngành, giảng viên, sự kiện —
+  hằng số `MOBILE_SWIPE_ROW`/`MOBILE_SWIPE_ITEM` trong `(site)/page.tsx`,
+  snap từng thẻ, thẻ sau lộ 1 phần; từ `sm` trở lại lưới). "4 bước" trên
+  mobile thành danh sách số-trái chữ-phải. Trang chủ mobile 13.678px → ~11.100px.
+- **`SectionHeading` bỏ `mb-14` mặc định khi `className` có `mb-*`** — trước
+  đây truyền `mb-0` không có tác dụng (`cn()` không gộp class, `mb-14` thắng
+  trong CSS) → khoảng trống ~80px giữa tiêu đề và nút ở mọi khối. **Bài học
+  chung: đừng truyền 2 class cùng thuộc tính rồi trông chờ class sau thắng**
+  (cùng nguyên nhân với ô bento `h-[160px]` + `h-full` co thành vạch mỏng —
+  bento giờ đặt chiều cao qua `auto-rows-*`).
+- **Menu mobile**: tự cuộn trong khung màn hình (`max-h-[calc(100dvh-104px)]`
+  — header dính, menu dài hơn màn hình sẽ khuất phần cuối), danh mục to giữ
+  dạng danh sách, danh mục phụ thành lưới 2 cột "Khám phá thêm", thẻ gọi
+  hotline cuối menu; bỏ nút "Đăng ký" trùng với `MobileActionBar`.
+- **Ô nhập ≥ 16px trên màn hình < 640px** (`globals.css`) — Safari iOS tự
+  phóng to trang khi chạm ô nhập chữ < 16px.
+- **Mở dev trên điện thoại thật**: `next.config.js` có `allowedDevOrigins`
+  tự lấy mọi IPv4 LAN của máy (Next 16 mặc định chặn JS/HMR khi truy cập
+  bằng IP thay vì localhost → trang hiện nhưng mất hiệu ứng/form). Điện thoại
+  cùng mạng mở `http://<IP-máy>:3000`; đổi `next.config.js` phải khởi động lại
+  `npm run dev`; Windows Firewall có thể hỏi cho phép Node.js lần đầu. Chưa
+  kiểm chứng trên máy thật trong phiên này (máy dev nối Ethernet 10.1.10.x —
+  điện thoại phải vào được cùng dải mạng).
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -1140,6 +1298,14 @@ mobile viewport) + đọc code, tìm được và vá hết các mục sau:
     thay vì tự viết `<section className="px-6 py-20 sm:px-8">` trần — giữ
     đồng bộ hiệu ứng cuộn + trang trí gradient blur với các trang con khác
     (xem mục 5 "Mở rộng hiệu ứng + trang trí ra toàn bộ trang con").
+13. **Thẻ nội dung mới ở web công khai muốn có chiều sâu 3D**: bọc trong
+    `<TiltCard>` thay vì tự viết `hover:-translate-y-*` (2 transform sẽ đè
+    nhau). Ghi chú nội bộ dạng `[Trường điền: …]` không được lộ ra web công
+    khai — lọc ở data layer bằng `hasPlaceholder()` (`src/lib/utils.ts`).
+    Hiển thị `created_at` SQLite luôn qua `formatDbDateTime()`.
+14. **Trang admin mới có danh sách lớn cần đưa ra Excel**: route handler
+    `xuat-csv/route.ts` cạnh `page.tsx`, gọi `requirePermission`, dùng
+    `toCsv`/`digitsCell` (`src/lib/csv.ts`), lọc chung 1 hàm với trang.
 
 ---
 
@@ -1235,6 +1401,21 @@ sau khi gắn mã lần đầu — đừng lo nếu bấm vào xem ngay chưa th
    Đăng ký nhận tin) tự hiện thêm ô xác minh "không phải bot", không cần
    sửa code gì thêm.
 
+### Dữ liệu demo để xem trực quan (chỉ DB dev)
+```bash
+npm run demo:load    # tải 15 ảnh Unsplash miễn phí (~3,6MB) + nạp bài viết, sự kiện, thư viện, ảnh giảng viên, học phí, mốc tuyển sinh, ~22 hồ sơ, tin nhắn
+npm run demo:clean   # xoá đúng dữ liệu demo + trả giá trị gốc các bản ghi có sẵn đã bị sửa
+```
+`src/lib/db/demo-data.ts` ghi lại mọi thay đổi vào `drizzle/demo-manifest.local.json`
+(không commit). Ảnh demo có đường dẫn `/uploads/demo-*`; banner/bài viết/sự
+kiện/thư viện tạo TAY qua admin bằng ảnh demo, và tệp tải lên có tên `demo-*`
+(lưu thành `<timestamp>-demo-*`), cũng được `demo:clean` nhận ra và xoá theo.
+Đợt 02/10/2026: đã nạp demo + tạo thật qua admin 3 banner và 1 bài viết có ảnh
++ PDF đính kèm (đang còn trong DB dev, người dùng chọn "giữ lại + có lệnh
+xoá"). **Ảnh chân dung giảng viên demo là người mẫu ảnh Unsplash, không phải
+giảng viên thật — tuyệt đối không để lên môi trường công khai**; chạy
+`demo:clean` trước khi nhập dữ liệu thật/deploy.
+
 ### Các lệnh khác
 ```bash
 npm run build       # build production
@@ -1266,3 +1447,18 @@ gặp lỗi junction point, nhờ người dùng tự chạy `npm run dev` thay 
 tự chạy. Trên máy thật của người dùng (ngoài sandbox hoàn toàn), cả
 `npm run build` lẫn `npm run dev` đều chạy bình thường không cần thao tác gì
 thêm.
+
+## 10. Cập nhật chức năng và giao diện tháng 10/2026
+
+- Codex điều phối và tích hợp; Claude triển khai bộ kiểm tra đầu vào cho bốn API công khai, test helper, rồi review chéo chỉ đọc qua CLI.
+- Dashboard dùng requireAdmin() và chỉ query/hiện KPI, bản nháp, liên kết thuộc module được cấp quyền. Layout chặn tài khoản đã bị xoá; parser quyền từ chối JSON sai cấu trúc.
+- Session và token reset có phiên bản mật khẩu SHA-256 từ hash bcrypt. Đổi mật khẩu làm mất hiệu lực phiên/token cũ; reset có điều kiện cập nhật theo hash hiện tại để chống dùng lại đồng thời. Cookie cũ trước cập nhật cần đăng nhập lại. Quyền users vẫn là quyền quản trị cấp cao.
+- Action dịch yêu cầu tài khoản có quyền nội dung, giới hạn payload và tần suất. API công khai trả 400/413 cho dữ liệu sai hoặc quá lớn, chuẩn hoá dữ liệu và xác nhận ngành có trong DB. Newsletter chèn bỏ qua xung đột email khi gửi đồng thời.
+- Đăng ký ngành dùng slug ổn định giữa VI/EN; từ trang chi tiết tới form chọn sẵn ngành. API vẫn nhận tên Việt/Anh của client cũ và lưu tên Việt chuẩn.
+- Liên hệ luôn giữ form kể cả thiếu bản ghi CMS. Liên hệ nhanh lọc href rỗng/#. Thanh admin thay ô tìm kiếm/chuông chưa có xử lý bằng liên kết xem website.
+- Thẻ ngành có CSS perspective nghiêng nhẹ theo chuột; không thêm dependency 3D. Tắt trên thiết bị cảm ứng và khi chọn giảm chuyển động. Các form thêm nhãn, giới hạn nhập và thông báo lỗi/thành công cho trình đọc màn hình.
+- TRUST_PROXY_HOPS mặc định 0: không tin header IP, dùng bucket chung. Khi triển khai, xác định số proxy tin cậy từ phải của XFF, proxy phải ghi/append IP thật và chặn truy cập trực tiếp vào origin. Rate limit vẫn trong bộ nhớ, cần storage dùng chung nếu chạy nhiều instance.
+- Trang chi tiết ngành render theo request; bỏ generateStaticParams() để build không query DB. Build vẫn cần tải Google Fonts khi cache chưa có.
+- npm test chạy test helper, API với SQLite trong bộ nhớ, quyền, token và rate limit. Không đọc/ghi DB thật hoặc gửi email. TypeScript, lint và build là các kiểm tra riêng.
+- Ghi chú upload cũ ở mục 4.1c đã lỗi thời: ImagePicker và resolveImageUrl cho phép chọn ảnh từ thư viện, ưu tiên file mới, rồi ảnh được chọn, rồi ảnh cũ.
+- Còn cần cho production: PostgreSQL/storage bền vững theo quyết định dự án, cấu hình email/Turnstile/proxy, duyệt nội dung và ảnh thật. Chưa xác minh hiệu ứng 3D bằng trình duyệt thật trong phiên này.
