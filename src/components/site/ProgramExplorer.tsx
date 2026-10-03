@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/lib/locale";
+import { programGradient } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-type ProgramOption = { slug: string; name: string; summary: string; duration: string; intake: number };
+type ProgramOption = { slug: string; code: string; name: string; summary: string; duration: string; intake: number; imageUrl: string | null };
 
 const text = {
   vi: { search: "Tìm ngành học", placeholder: "Tên ngành hoặc lĩnh vực bạn quan tâm…", compare: "So sánh", selected: "ngành đã chọn", hint: "Chọn tối đa 3 ngành để so sánh thời gian học và chỉ tiêu.", clear: "Bỏ chọn tất cả", empty: "Không tìm thấy ngành phù hợp. Hãy thử từ khóa khác.", duration: "Thời gian học", intake: "Chỉ tiêu", details: "Khám phá ngành", apply: "Đăng ký ngành này", count: "ngành phù hợp", comparison: "So sánh ngành đã chọn", remove: "Bỏ chọn" },
@@ -55,11 +58,25 @@ export function ProgramExplorer({ programs, locale = "vi" }: { programs: Program
       {matches.length === 0 ? <p role="status" className="rounded-2xl border border-line bg-white p-8 text-center text-ink-soft">{t.empty}</p> : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {matches.map((p, i) => (
-            <article key={p.slug} className="flex flex-col rounded-2xl border border-line bg-white p-6 shadow-sm2 transition-shadow hover:shadow-md2">
+            <article key={p.slug} className="group flex flex-col overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2">
+              {/* Đầu thẻ: ảnh ngành (admin/nganh-dao-tao) hoặc khối màu gradient xoay vòng khi chưa có ảnh.
+                  Màu theo thứ tự gốc của ngành (không theo vị trí sau khi lọc) để màu không đổi khi gõ tìm. */}
+              <Link href={`/nganh-dao-tao/${p.slug}`} tabIndex={-1} aria-hidden="true" className={cn("img-reveal img-shine relative block h-[170px] bg-gradient-to-br", programGradient(programs.indexOf(p)))}>
+                {p.imageUrl ? (
+                  <Image src={p.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                ) : (
+                  <span className="absolute -bottom-8 -right-6 font-display text-[110px] font-bold leading-none text-white/15">{p.code}</span>
+                )}
+                <span className="absolute left-4 top-4 z-[4] rounded-full bg-white/20 px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider text-white ring-1 ring-inset ring-white/30 backdrop-blur-md">
+                  {p.code}
+                </span>
+              </Link>
+              <div className="flex flex-1 flex-col p-6">
               <div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-brand-700">{String(i + 1).padStart(2, "0")} / {p.duration}</span><label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-ink-soft"><input type="checkbox" checked={selected.includes(p.slug)} disabled={!selected.includes(p.slug) && selected.length >= 3} onChange={() => toggle(p.slug)} aria-label={`${t.compare} ${p.name}`} className="h-4 w-4 accent-brand-700" />{t.compare}</label></div>
               <h2 className="mt-5 font-display text-2xl font-semibold text-brand-900">{p.name}</h2>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">{p.summary}</p>
               <div className="mt-5 flex items-center justify-between gap-2 border-t border-line pt-4 text-sm"><span className="text-ink-soft">{t.intake}: <strong className="text-ink">{p.intake}</strong></span><Link href={`/nganh-dao-tao/${p.slug}`} className="font-semibold text-brand-700 hover:underline">{t.details} →</Link></div>
+              </div>
             </article>
           ))}
         </div>

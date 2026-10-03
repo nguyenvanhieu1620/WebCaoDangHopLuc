@@ -45,7 +45,7 @@ export default async function AdminQuickContactsPage({
         title="Liên hệ nhanh"
         description="Các nút nổi góc màn hình ở mọi trang công khai — bấm nút + để xoè ra"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">Danh sách ({all.length})</span>

@@ -1,7 +1,7 @@
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { getLocale, pickLocale } from "@/lib/locale";
-import { hasPlaceholder, normalizeSearch } from "@/lib/utils";
+import { hasPlaceholder, normalizeSearch, staticPageHref } from "@/lib/utils";
 
 export type SearchResultType = "program" | "post" | "event" | "faculty" | "page" | "faq";
 
@@ -21,11 +21,7 @@ const SEARCH_MAX_LENGTH = 100;
 const MAX_RESULTS = 40;
 
 /** Trang tĩnh nào có route công khai — trang không có route thì không đưa vào kết quả. */
-function pageHref(slug: string): string | null {
-  if (slug.startsWith("cong-khai-")) return `/cong-khai/${slug}`;
-  if (["gioi-thieu", "lien-he", "chinh-sach-bao-mat"].includes(slug)) return `/${slug}`;
-  return null;
-}
+const pageHref = staticPageHref;
 
 /** Bỏ cú pháp Markdown để làm đoạn trích dễ đọc. */
 function stripMarkdown(md: string): string {

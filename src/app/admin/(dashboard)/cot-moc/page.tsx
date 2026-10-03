@@ -49,7 +49,7 @@ export default async function AdminMilestonesPage({
         title="Cột mốc phát triển"
         description="Dòng thời gian ở trang Giới thiệu — web hiện theo năm, trong năm theo vị trí (số nhỏ hiện trước)"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_420px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">

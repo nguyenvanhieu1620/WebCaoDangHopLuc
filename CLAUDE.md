@@ -139,7 +139,11 @@ bảng mới `admission_items` (mốc thời gian/phương thức/hồ sơ tuy�
 (đều nullable, xem mục 5 "Đợt tham khảo VinUni"). Thêm ở đợt VinUni lượt 2
 (migration `0017_rich_wolfpack.sql`): bảng mới **`milestones`** (Cột mốc —
 dòng thời gian /gioi-thieu, có `*_en`) và cột `site_settings.page_banner_url`
-(ảnh nền mặc định cho banner trang con) — tổng cộng giờ là **24 bảng**.
+(ảnh nền mặc định cho banner trang con) — tổng cộng giờ là **24 bảng**. Migration
+`0018_jittery_crusher_hogan.sql`: cột `programs.image_url` (ảnh ngành, nullable — xem
+mục 5 "Ảnh cho ngành đào tạo"). Migration `0019_fuzzy_lady_ursula.sql`: bảng mới
+**`page_banners`** (`key` = mã trang con, `image_url`) — giờ là **25 bảng** (xem mục 5
+"Banner riêng từng trang con").
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -1369,8 +1373,8 @@ vị trí thứ 3. Người dùng chọn qua `AskUserQuestion` **tất cả** h�
 - **`PageHero`** (`src/components/site/PageHero.tsx`, async server component) —
   banner ảnh + breadcrumb "Trang chủ › …" + tiêu đề cho **toàn bộ 21 trang con**
   (kể cả `(site)/not-found.tsx`, `PageStub`). Ảnh: ảnh bìa riêng của trang (trang
-  tĩnh/bài viết/sự kiện) → `site_settings.pageBannerUrl` (admin/cai-dat, ô mới) →
-  nền gradient xanh + lưới. Tiêu đề/mô tả cũ trong thân trang đã dời lên banner;
+  tĩnh/bài viết/sự kiện) → `site_settings.pageBannerUrl` (lúc đầu ở admin/cai-dat, nay
+  ở admin/banner-trang-con — xem "Banner riêng từng trang con") → nền gradient xanh + lưới. Tiêu đề/mô tả cũ trong thân trang đã dời lên banner;
   chi tiết ngành/sự kiện có thêm cột thông tin dính bên phải; chi tiết giảng viên
   ảnh khung vòm. **Header giờ trong suốt ở MỌI trang** (`SiteHeader.tsx` bỏ hẳn
   nhánh giao diện sáng) — xem quy ước #12.
@@ -1440,6 +1444,55 @@ nhìn thì chạy lên (translate 100% chiều cao) + rõ dần trong 1s, mỗi 
   `transform`/`transition`/`opacity` của Tailwind (bị đè). `@media print` hiện hết;
   `prefers-reduced-motion` hiện ngay không chuyển động.
 
+### Ảnh cho ngành đào tạo (03/10/2026)
+Người dùng: "các ngành đào tạo nên có ảnh tự set được cho sinh động".
+- Cột `programs.image_url` + admin `nganh-dao-tao`: `ImagePicker` (tải lên / chọn từ
+  thư viện, tick "Gỡ ảnh"), danh sách có ảnh thu nhỏ; sửa ngành không đụng ô ảnh thì
+  giữ ảnh cũ (`resolveImageUrl`). Dashboard thêm nhắc việc "X ngành chưa có ảnh".
+- `ProgramCard` (slider Trang chủ): có ảnh → ảnh tràn mép trên thẻ (168px) + nhãn kính
+  mã ngành/thời gian, thân thẻ vẫn khối màu `programGradient`; không ảnh → như cũ.
+  Slider đổi chiều cao cố định → `min-h-*` (các thẻ tự bằng nhau theo thẻ cao nhất).
+- `ProgramExplorer` (`/nganh-dao-tao`): đầu thẻ là ảnh, hoặc khối màu + mã ngành chữ mờ
+  khi chưa có ảnh (màu theo thứ tự gốc, không đổi khi lọc). Trang chi tiết: banner
+  `PageHero` dùng ảnh ngành (không có → ảnh banner mặc định) **và** hiện ảnh rõ nét
+  (không phủ màu) ở đầu nội dung (16:9, nhãn mã ngành) + đầu khung "Xét tuyển ngành"
+  dính bên phải — người dùng yêu cầu thêm vì ảnh nền banner bị lớp tối che khó thấy.
+- `demo:load` gắn 6 ảnh demo cho 6 ngành (trả lại khi `demo:clean`).
+- Sửa kèm (lỗi bố cục admin có từ trước, lộ rõ với Montserrat): mọi khung "danh sách +
+  form" `lg:grid-cols-[1fr_…]` → **`minmax(0,1fr)`** (tiêu đề dài `truncate` từng kéo
+  giãn cột, đẩy form ra ngoài ở 1024–1280px); ô chọn file `ImagePicker` `max-w-full`;
+  hàng bài viết `flex-wrap` dưới `sm`; ô nhập ở `danh-hieu` `min-w-0`. Đã quét 25 trang
+  admin × 3 khổ (360/1024/1280) không còn tràn ngang. **Khung admin mới dạng danh sách
+  + form: luôn dùng `minmax(0,1fr)`, không dùng `1fr` trần.**
+
+### Banner riêng từng trang con (03/10/2026)
+Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con".
+- Bảng **`page_banners`** (`key` = mã trong **`PAGE_BANNER_SLOTS`**, `src/lib/constants.ts`
+  — 12 trang chức năng: Ngành đào tạo, Tuyển sinh, Tra cứu, Tin tức, Sự kiện, Giảng
+  viên, Thư viện, FAQ, Công khai, LMS, Tìm kiếm, 404). Data layer
+  `src/lib/data/page-banners.ts` (`getPageBannerMap()` bọc `cache()` — 1 query/request).
+- **`PageHero` nhận `bannerKey`**; thứ tự ảnh: `imageUrl` (ảnh riêng của bài viết / sự
+  kiện / ngành / trang tĩnh) → banner của `bannerKey` → `site_settings.page_banner_url`
+  (mặc định) → nền gradient. Trang chi tiết dùng key của mục cha (bài không có ảnh bìa
+  → banner "Tin tức"; trang giảng viên → "Đội ngũ giảng viên"; trang công khai chưa có
+  ảnh bìa → "Công khai").
+- **Admin `admin/banner-trang-con`** (khối Giao diện, module quyền mới `page-banners` —
+  tài khoản đã có danh sách quyền cụ thể phải được cấp thêm ở admin/nguoi-dung): 1 thẻ
+  = 1 form (xem trước ảnh đang dùng + nhãn "Ảnh riêng"/"Đang dùng ảnh mặc định", tải /
+  chọn ảnh, "Gỡ ảnh riêng", "Xem trang ↗"); lưu xong ở lại trang, thẻ vừa lưu tô viền.
+  Gồm: ảnh mặc định (chuyển từ admin/cai-dat về đây — Cài đặt chung giờ chỉ còn link
+  sang), 12 trang chức năng, và các **trang tĩnh có route** (`staticPageHref()` trong
+  utils — sửa thẳng `pages.cover_image_url`, cùng field với admin/trang-tinh, không lưu
+  trùng). `demo:clean` gỡ banner/ảnh bìa trỏ ảnh demo.
+- **Lỗi thật phát hiện khi test, đã sửa — tải ảnh > 1MB trong MỌI form admin đều lỗi
+  âm thầm**: Next mặc định chỉ nhận body Server Action 1MB (và 10MB qua `proxy.ts`), dù
+  `media.ts` cho phép ảnh 10MB / tài liệu 20MB / video 50MB. `next.config.js` thêm
+  `experimental.serverActions.bodySizeLimit` + `experimental.proxyClientMaxBodySize`
+  = `"55mb"`. Đã kiểm chứng bằng bản production (`next build` + `next start`): ảnh
+  2,24MB tải lên được. **Cần khởi động lại `npm run dev` để áp dụng.**
+- **Thêm trang con mới**: thêm 1 dòng vào `PAGE_BANNER_SLOTS` + truyền `bannerKey` cho
+  `<PageHero>` của trang đó (quy ước #12).
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -1467,6 +1520,8 @@ nhìn thì chạy lên (translate 100% chiều cao) + rõ dần trong 1s, mỗi 
     Không tự viết `<section className="px-6 py-20 sm:px-8">` trần (xem mục 5 "Đợt
     VinUni lượt 2" và "Mở rộng hiệu ứng + trang trí ra toàn bộ trang con").
     Link "Xem tất cả" đầu khối dùng `<MoreLink>`; ảnh trong thẻ thêm `img-shine`.
+    Trang mới cần banner đổi được trong admin: thêm vào `PAGE_BANNER_SLOTS` + truyền
+    `bannerKey` cho `PageHero` (xem mục 5 "Banner riêng từng trang con").
 13. **Thẻ nội dung mới ở web công khai muốn có chiều sâu 3D**: bọc trong
     `<TiltCard>` thay vì tự viết `hover:-translate-y-*` (2 transform sẽ đè
     nhau). Ghi chú nội bộ dạng `[Trường điền: …]` không được lộ ra web công

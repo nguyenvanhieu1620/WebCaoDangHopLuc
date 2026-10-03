@@ -52,6 +52,17 @@ export function youtubeId(url: string | null | undefined): string | null {
   return id && /^[\w-]{11}$/.test(id) ? id : null;
 }
 
+/**
+ * Đường dẫn công khai của 1 trang tĩnh (bảng `pages`) theo slug — `null` nếu trang
+ * đó không có route trên web (chỉ là nội dung dùng nội bộ). Dùng chung cho tìm
+ * kiếm toàn site và admin "Banner trang con".
+ */
+export function staticPageHref(slug: string): string | null {
+  if (slug.startsWith("cong-khai-")) return `/cong-khai/${slug}`;
+  if (["gioi-thieu", "lien-he", "chinh-sach-bao-mat"].includes(slug)) return `/${slug}`;
+  return null;
+}
+
 /** Chuẩn hoá chuỗi để tìm kiếm không phân biệt hoa/thường và dấu tiếng Việt ("Điều dưỡng" ~ "dieu duong"). */
 export function normalizeSearch(value: string): string {
   return value

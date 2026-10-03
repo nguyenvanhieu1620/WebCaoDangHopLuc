@@ -77,11 +77,12 @@ function AttributeSection({
           name="name"
           required
           placeholder={placeholder}
-          className="flex-1 rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
+          // min-w-0: ô nhập có độ rộng mặc định của trình duyệt, không co thì đẩy nút "Thêm" ra ngoài khung trên mobile.
+          className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-brand-500"
         />
         <button
           type="submit"
-          className="rounded-lg bg-brand-700 px-3.5 py-2 text-[13px] font-semibold text-white"
+          className="shrink-0 rounded-lg bg-brand-700 px-3.5 py-2 text-[13px] font-semibold text-white"
         >
           Thêm
         </button>

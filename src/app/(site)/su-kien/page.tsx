@@ -33,7 +33,7 @@ export default async function EventsPage() {
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="su-kien"
         crumbs={[{ label: "Sự kiện" }]}
         eyebrow="Lịch sự kiện"
         title="Sự kiện & hoạt động của trường"

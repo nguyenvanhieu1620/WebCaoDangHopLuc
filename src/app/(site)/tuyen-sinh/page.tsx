@@ -108,7 +108,7 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
 
   return (
     <>
-    <PageHero crumbs={[{ label: t.eyebrow }]} eyebrow={t.eyebrow} title={t.title} description={t.intro}>
+    <PageHero bannerKey="tuyen-sinh" crumbs={[{ label: t.eyebrow }]} eyebrow={t.eyebrow} title={t.title} description={t.intro}>
       <div className="flex flex-wrap items-center gap-3">
         <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-md">
           <span className="font-mono text-[20px] font-semibold text-white">{programs.length}</span>{" "}

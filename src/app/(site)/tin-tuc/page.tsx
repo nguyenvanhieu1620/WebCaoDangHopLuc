@@ -59,7 +59,7 @@ export default async function NewsPage({
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="tin-tuc"
         crumbs={activeCategory ? [{ label: "Tin tức", href: "/tin-tuc" }, { label: activeCategory.name }] : [{ label: "Tin tức" }]}
         eyebrow={activeCategory ? "Chuyên mục" : "Tin tức & sự kiện"}
         title={

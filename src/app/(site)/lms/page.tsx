@@ -12,7 +12,7 @@ export default async function LmsPage() {
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="lms"
         crumbs={[{ label: "Cổng LMS VNPT" }]}
         eyebrow="Học trực tuyến"
         title="Cổng LMS VNPT"

@@ -3,7 +3,8 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { upsertProgramAction, deleteProgramAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
@@ -22,6 +23,10 @@ export default async function AdminProgramsPage({
   const editing = edit
     ? await db.query.programs.findFirst({ where: eq(schema.programs.id, edit) })
     : null;
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
@@ -29,7 +34,7 @@ export default async function AdminProgramsPage({
         title="Ngành đào tạo"
         description="Quản lý danh sách ngành đào tạo hiển thị ở Trang chủ & /nganh-dao-tao"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         {/* Danh sách ngành */}
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
@@ -45,6 +50,15 @@ export default async function AdminProgramsPage({
             <ul className="divide-y divide-line">
               {allPrograms.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="flex min-w-0 items-center gap-3.5">
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- ảnh nhỏ trong admin, không cần tối ưu
+                    <img src={p.imageUrl} alt="" className="h-11 w-16 shrink-0 rounded-lg object-cover" />
+                  ) : (
+                    <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-line text-[10px] text-ink-faint">
+                      Chưa ảnh
+                    </span>
+                  )}
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-ink">
                       {p.code} — {p.name}
@@ -57,6 +71,7 @@ export default async function AdminProgramsPage({
                         </span>
                       )}
                     </div>
+                  </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <a
@@ -160,6 +175,21 @@ export default async function AdminProgramsPage({
             </div>
             <p className="-mt-1.5 text-[11px] text-ink-faint">Để trống học phí thì web hiện &quot;Liên hệ&quot; — chỉ nhập khi trường đã chốt mức chính thức.</p>
             <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Ảnh ngành <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
+              </label>
+              <ImagePicker fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
+              <p className="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+                Hiện ở đầu thẻ ngành (Trang chủ, trang Ngành đào tạo) và làm nền banner trang chi tiết ngành. Nên dùng ảnh ngang
+                ≥ 1200×800, chủ thể ở giữa (thẻ cắt bớt 2 mép trên/dưới). Để trống thì thẻ chỉ có khối màu như cũ.
+              </p>
+              {editing?.imageUrl && (
+                <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
+                  <input type="checkbox" name="removeImage" className="h-4 w-4 rounded border-line" /> Gỡ ảnh hiện tại
+                </label>
+              )}
+            </div>
+            <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Mô tả ngắn</label>
               <textarea
                 name="summary"
@@ -179,7 +209,7 @@ export default async function AdminProgramsPage({
                 rows={4}
                 defaultValue={editing?.content ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="Dành cho trang chi tiết ngành đào tạo (làm sau) — có thể để trống"
+                placeholder="Hiện ở trang chi tiết ngành (hỗ trợ Markdown: ## Tiêu đề, - gạch đầu dòng) — có thể để trống"
               />
             </div>
             <details className="rounded-lg border border-line p-3">

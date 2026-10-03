@@ -27,7 +27,7 @@ export default async function AdminFaqPage({
         title="Câu hỏi thường gặp"
         description="Danh sách FAQ hiển thị ở /faq — vị trí càng nhỏ hiện càng trước"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">

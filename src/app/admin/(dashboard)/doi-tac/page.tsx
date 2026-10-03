@@ -34,7 +34,7 @@ export default async function AdminPartnersPage({
         title="Đối tác"
         description="Dải logo/tên đối tác chạy ngang ở Trang chủ — vị trí càng nhỏ hiện càng trước"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">

@@ -11,7 +11,7 @@ export default async function FaqPage() {
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="faq"
         crumbs={[{ label: "Câu hỏi thường gặp" }]}
         eyebrow="Hỏi đáp"
         title="Câu hỏi thường gặp"

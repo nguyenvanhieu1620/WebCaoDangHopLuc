@@ -105,6 +105,7 @@ export const ADMIN_NAV: AdminNavEntity[] = [
     ],
   },
   { key: "menu", label: "Menu chính", href: "/admin/menu", section: "Giao diện" },
+  { key: "page-banners", label: "Banner trang con", href: "/admin/banner-trang-con", section: "Giao diện" },
   { key: "partners", label: "Đối tác", href: "/admin/doi-tac", section: "Giao diện" },
   { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia", section: "Giao diện" },
   { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat", section: "Hệ thống" },
@@ -125,6 +126,30 @@ export const PERMISSION_MODULES: { key: string; label: string }[] = ADMIN_NAV.fi
  * admin/nganh-dao-tao) — KHÔNG còn mảng tĩnh ở đây. Lấy dữ liệu qua
  * src/lib/data/programs.ts (page/component không gọi `db` trực tiếp).
  */
+
+/**
+ * Các trang con có banner riêng đặt được ở admin/banner-trang-con (bảng `page_banners`,
+ * khoá = `key`). `note`: trang chi tiết nào dùng chung banner này khi mục đó không có
+ * ảnh riêng. Trang tĩnh (Giới thiệu, Liên hệ, Chính sách, Công khai/…) không có ở đây —
+ * banner của chúng là ảnh bìa trang tĩnh (`pages.cover_image_url`), admin đó vẫn liệt kê.
+ * Thêm trang con mới: thêm 1 dòng ở đây + truyền `bannerKey` cho `<PageHero>` của trang đó.
+ */
+export const PAGE_BANNER_SLOTS = [
+  { key: "nganh-dao-tao", label: "Ngành đào tạo", path: "/nganh-dao-tao", note: "Cả trang chi tiết ngành chưa có ảnh ngành" },
+  { key: "tuyen-sinh", label: "Tuyển sinh", path: "/tuyen-sinh" },
+  { key: "tra-cuu-ket-qua", label: "Tra cứu kết quả", path: "/tra-cuu-ket-qua" },
+  { key: "tin-tuc", label: "Tin tức", path: "/tin-tuc", note: "Cả bài viết không có ảnh bìa" },
+  { key: "su-kien", label: "Sự kiện", path: "/su-kien", note: "Cả sự kiện không có ảnh bìa" },
+  { key: "doi-ngu-giang-vien", label: "Đội ngũ giảng viên", path: "/doi-ngu-giang-vien", note: "Cả trang chi tiết từng giảng viên" },
+  { key: "thu-vien", label: "Thư viện ảnh & video", path: "/thu-vien" },
+  { key: "faq", label: "Câu hỏi thường gặp", path: "/faq" },
+  { key: "cong-khai", label: "Công khai (mục lục)", path: "/cong-khai", note: "Cả trang công khai chưa có ảnh bìa riêng" },
+  { key: "lms", label: "Cổng LMS", path: "/lms" },
+  { key: "tim-kiem", label: "Tìm kiếm", path: "/tim-kiem" },
+  { key: "khong-tim-thay", label: "Trang không tìm thấy (404)", path: "/trang-khong-ton-tai" },
+] as const;
+
+export type PageBannerKey = (typeof PAGE_BANNER_SLOTS)[number]["key"];
 
 /** Gradient màu thẻ ngành — tự xoay vòng theo vị trí, không cần khai báo thủ công. */
 export const PROGRAM_GRADIENT_CYCLE = [

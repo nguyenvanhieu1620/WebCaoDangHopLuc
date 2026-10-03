@@ -32,7 +32,7 @@ export default async function FacultyDetailPage({
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="doi-ngu-giang-vien"
         crumbs={[{ label: "Đội ngũ giảng viên", href: "/doi-ngu-giang-vien" }, { label: displayName }]}
         eyebrow={department ? department.name : "Đội ngũ giảng viên"}
         title={displayName}

@@ -135,6 +135,11 @@ export const programs = sqliteTable("programs", {
    */
   tuition: text("tuition"),
   tuitionEn: text("tuition_en"),
+  /**
+   * Ảnh minh hoạ ngành (tuỳ chọn) — hiện ở đầu thẻ ngành (Trang chủ, /nganh-dao-tao) và
+   * làm nền banner trang chi tiết. Để trống thì thẻ chỉ có khối màu gradient như cũ.
+   */
+  imageUrl: text("image_url"),
   /** 0 = không hiện ở Trang chủ, 1 = hiện. Nếu không ngành nào featured, Trang chủ tự lấy 6 ngành đầu. */
   featured: integer("featured").notNull().default(0),
   createdAt: text("created_at")
@@ -519,6 +524,20 @@ export const milestones = sqliteTable("milestones", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Ảnh banner riêng cho từng trang con (PageHero) — 1 dòng / 1 trang, `key` là mã
+ * trang trong `PAGE_BANNER_SLOTS` (src/lib/constants.ts, VD "tin-tuc"). Quản lý qua
+ * admin/banner-trang-con; dòng tạo khi admin lưu lần đầu. Trang tĩnh (Giới thiệu,
+ * Liên hệ, Công khai…) KHÔNG lưu ở đây mà dùng `pages.cover_image_url` sẵn có.
+ */
+export const pageBanners = sqliteTable("page_banners", {
+  key: text("key").primaryKey(),
+  imageUrl: text("image_url"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Hồ sơ đăng ký xét tuyển gửi từ form công khai trên website. */
 export const admissionSubmissions = sqliteTable("admission_submissions", {
   id: text("id")
@@ -565,3 +584,4 @@ export type QuickContact = typeof quickContacts.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type AdmissionItem = typeof admissionItems.$inferSelect;
 export type Milestone = typeof milestones.$inferSelect;
+export type PageBanner = typeof pageBanners.$inferSelect;

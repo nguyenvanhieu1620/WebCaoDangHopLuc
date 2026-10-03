@@ -56,7 +56,8 @@ export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl
               setShowLibrary(false);
             }
           }}
-          className="text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
+          // max-w-full: ô chọn file có độ rộng cố định của trình duyệt, lố khung ở màn hình ~345px.
+          className="min-w-0 max-w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-paper-alt file:px-3 file:py-2 file:text-[12.5px] file:font-semibold file:text-brand-700"
         />
         {images.length > 0 && (
           <button

@@ -64,7 +64,7 @@ export default async function FacultyPage() {
 
   return (
     <>
-    <PageHero
+    <PageHero bannerKey="doi-ngu-giang-vien"
       crumbs={[{ label: "Đội ngũ giảng viên" }]}
       eyebrow="Đội ngũ giảng viên"
       title="Đội ngũ giảng viên giàu kinh nghiệm lâm sàng"

@@ -14,7 +14,7 @@ export default async function GalleryPage() {
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="thu-vien"
         crumbs={[{ label: "Thư viện" }]}
         eyebrow="Thư viện"
         title="Thư viện ảnh & video"

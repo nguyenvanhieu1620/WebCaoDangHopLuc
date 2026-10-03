@@ -14,7 +14,7 @@ export default async function ProgramsPage() {
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="nganh-dao-tao"
         crumbs={[{ label: en ? "Programs" : "Ngành đào tạo" }]}
         eyebrow={en ? "Study programs" : "Ngành đào tạo"}
         title={en ? `${programs.length} pathways into healthcare` : `${programs.length} ngành khối sức khỏe giàu cơ hội`}
@@ -30,7 +30,7 @@ export default async function ProgramsPage() {
             Chưa có ngành đào tạo nào — quản lý qua admin/nganh-dao-tao.
           </div>
         ) : (
-          <ProgramExplorer programs={programs.map(({ slug, name, summary, duration, intake }) => ({ slug, name, summary, duration, intake }))} locale={locale} />
+          <ProgramExplorer programs={programs.map(({ slug, code, name, summary, duration, intake, imageUrl }) => ({ slug, code, name, summary, duration, intake, imageUrl }))} locale={locale} />
         )}
       </DecorativeSection>
     </>

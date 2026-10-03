@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { resolveImageUrl } from "@/lib/media";
 import { redirect } from "next/navigation";
 
 export async function upsertProgramAction(formData: FormData) {
@@ -25,6 +26,13 @@ export async function upsertProgramAction(formData: FormData) {
   const tuitionEn = String(formData.get("tuitionEn") || "").trim().slice(0, 80);
 
   if (!code || !name || !duration || !summary || !intake) return;
+
+  // Ảnh ngành: file mới tải lên > ảnh chọn từ thư viện > giữ ảnh cũ (khi sửa); tick "Gỡ ảnh" thì bỏ.
+  const current = id ? await db.query.programs.findFirst({ where: eq(schema.programs.id, id) }) : null;
+  const imageUrl =
+    formData.get("removeImage") === "on"
+      ? null
+      : await resolveImageUrl(formData, "image", "imageExisting", current?.imageUrl ?? null);
 
   const [nameEnFinal, summaryEnFinal, contentEnFinal, tuitionEnFinal] = await autoFillTranslations([
     { vi: name, en: nameEn },
@@ -48,6 +56,7 @@ export async function upsertProgramAction(formData: FormData) {
         contentEn: contentEnFinal || null,
         tuition: tuition || null,
         tuitionEn: tuitionEnFinal || null,
+        imageUrl,
         featured: featured ? 1 : 0,
         updatedAt: new Date().toISOString(),
       })
@@ -75,6 +84,7 @@ export async function upsertProgramAction(formData: FormData) {
       contentEn: contentEnFinal || null,
       tuition: tuition || null,
       tuitionEn: tuitionEnFinal || null,
+      imageUrl,
       featured: featured ? 1 : 0,
     });
   }

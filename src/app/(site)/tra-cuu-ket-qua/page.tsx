@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Tra cứu kết quả xét tuyển" 
 export default function AdmissionsLookupPage() {
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="tra-cuu-ket-qua"
         crumbs={[{ label: "Tuyển sinh", href: "/tuyen-sinh" }, { label: "Tra cứu kết quả" }]}
         eyebrow="Tra cứu kết quả"
         title="Tra cứu kết quả xét tuyển"

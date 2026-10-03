@@ -6,7 +6,6 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
-import { resolveImageUrl } from "@/lib/media";
 
 export async function updateSiteSettingsAction(formData: FormData) {
   await requirePermission("site-settings");
@@ -21,12 +20,6 @@ export async function updateSiteSettingsAction(formData: FormData) {
   const lmsUrl = String(formData.get("lmsUrl") || "").trim() || "#";
 
   if (!hotline || !email || !address || !announcement) return;
-
-  const current = await db.query.siteSettings.findFirst({ where: eq(schema.siteSettings.id, "main") });
-  const pageBannerUrl =
-    formData.get("removePageBanner") === "on"
-      ? null
-      : await resolveImageUrl(formData, "pageBanner", "pageBannerExisting", current?.pageBannerUrl ?? null);
 
   const [announcementEnFinal] = await autoFillTranslations([
     { vi: announcement, en: announcementEn },
@@ -44,7 +37,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
       zaloUrl,
       youtubeUrl,
       lmsUrl,
-      pageBannerUrl,
+      // pageBannerUrl KHÔNG sửa ở đây — quản lý ở admin/banner-trang-con.
       updatedAt: new Date().toISOString(),
     })
     .where(eq(schema.siteSettings.id, "main"));

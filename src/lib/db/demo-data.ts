@@ -52,7 +52,11 @@ type Manifest = {
   loadedAt: string;
   mediaIds: string[];
   /** `milestones` có từ đợt VinUni lượt 2 — manifest cũ không có, xem `loadExtras()`. */
-  created: Record<"posts" | "events" | "gallery" | "admissions" | "contacts" | "newsletter", string[]> & { milestones?: string[] };
+  created: Record<"posts" | "events" | "gallery" | "admissions" | "contacts" | "newsletter", string[]> & {
+    milestones?: string[];
+    /** Slug các ngành đã gắn ảnh demo (đánh dấu đã chạy bước này; giá trị cũ nằm trong `restored`). */
+    programImages?: string[];
+  };
   restored: { table: TableKey; id: string; field: string; value: string | null }[];
 };
 
@@ -109,13 +113,42 @@ async function patchRecord(manifest: Manifest, table: TableKey, id: string, fiel
 }
 
 /**
- * Phần demo thêm ở đợt VinUni lượt 2: vài "Mốc mẫu" cho dòng thời gian /gioi-thieu
- * + ảnh banner mặc định cho trang con. Chạy cả khi DB đã nạp demo từ trước
- * (manifest cũ chưa có `milestones`) — không phải xoá rồi tải lại ảnh.
- * Nội dung ghi rõ là MẪU, không phải lịch sử thật của trường.
+ * Phần demo bổ sung sau lần nạp đầu — mỗi bước tự đánh dấu trong manifest nên chạy
+ * cả khi DB đã nạp demo từ trước (không phải xoá rồi tải lại ảnh):
+ * - VinUni lượt 2: vài "Mốc mẫu" cho /gioi-thieu + ảnh banner mặc định trang con
+ *   (nội dung ghi rõ là MẪU, không phải lịch sử thật của trường);
+ * - ảnh minh hoạ cho 6 ngành đào tạo (`programs.imageUrl`, trả lại giá trị gốc khi clean).
  */
 async function loadExtras(manifest: Manifest) {
-  if (manifest.created.milestones) return false;
+  let changed = false;
+  if (!manifest.created.milestones) {
+    await loadMilestonesAndBanner(manifest);
+    changed = true;
+  }
+  if (!manifest.created.programImages) {
+    // Ảnh minh hoạ chung chung (đã tải sẵn) cho từng ngành — chỉ gắn khi ngành chưa có ảnh thật.
+    const imageBySlug: Record<string, string> = {
+      "dieu-duong": "banner-dieu-duong",
+      duoc: "g-dung-cu",
+      "xet-nghiem-y-hoc": "g-kinh-hien-vi",
+      "ho-sinh": "post-so-cuu",
+      "phuc-hoi-chuc-nang": "banner-thuc-hanh",
+      "y-si-da-khoa": "g-mo-phong",
+    };
+    const done: string[] = [];
+    for (const p of await db.query.programs.findMany()) {
+      if (imageBySlug[p.slug] && !p.imageUrl) {
+        await patchRecord(manifest, "programs", p.id, "imageUrl", url(imageBySlug[p.slug]));
+        done.push(p.slug);
+      }
+    }
+    manifest.created.programImages = done;
+    changed = true;
+  }
+  return changed;
+}
+
+async function loadMilestonesAndBanner(manifest: Manifest) {
   const sample = "Nội dung minh hoạ cho dòng thời gian — thay bằng mốc thật trong admin › Trang tĩnh › Cột mốc.";
   const items: (typeof s.milestones.$inferInsert)[] = [
     { id: "demo-milestone-1", year: 2020, period: "Tháng 9", title: "Mốc mẫu: khai giảng khoá đầu tiên", description: sample, imageUrl: url("g-tan-sinh-vien"), sortOrder: 0 },
@@ -136,7 +169,7 @@ async function load() {
     const existing: Manifest = JSON.parse(await readFile(MANIFEST, "utf8"));
     if (await loadExtras(existing)) {
       await writeFile(MANIFEST, JSON.stringify(existing, null, 2));
-      console.log("✓ Đã bổ sung dữ liệu demo mới (cột mốc mẫu + ảnh banner trang con) vào bộ demo đang có.");
+      console.log("✓ Đã bổ sung phần demo mới (cột mốc mẫu, ảnh banner trang con, ảnh ngành) vào bộ demo đang có.");
     } else {
       console.log("Đã nạp dữ liệu demo từ trước — chạy `npm run demo:clean` rồi nạp lại nếu muốn làm mới.");
     }
@@ -360,8 +393,11 @@ async function clean() {
   await db.delete(s.heroBanners).where(like(s.heroBanners.imageUrl, `${DEMO_URL_PREFIX}%`));
   await db.delete(s.galleryItems).where(like(s.galleryItems.imageUrl, `${DEMO_URL_PREFIX}%`));
   await db.delete(s.milestones).where(like(s.milestones.imageUrl, `${DEMO_URL_PREFIX}%`));
-  // Banner trang con chọn tay trong admin/cai-dat bằng ảnh demo → gỡ (ảnh sắp bị xoá bên dưới).
+  // Banner trang con / ảnh ngành chọn tay trong admin bằng ảnh demo → gỡ (ảnh sắp bị xoá bên dưới).
   await db.update(s.siteSettings).set({ pageBannerUrl: null }).where(like(s.siteSettings.pageBannerUrl, `${DEMO_URL_PREFIX}%`));
+  await db.update(s.programs).set({ imageUrl: null }).where(like(s.programs.imageUrl, `${DEMO_URL_PREFIX}%`));
+  await db.delete(s.pageBanners).where(like(s.pageBanners.imageUrl, `${DEMO_URL_PREFIX}%`));
+  await db.update(s.pages).set({ coverImageUrl: null }).where(like(s.pages.coverImageUrl, `${DEMO_URL_PREFIX}%`));
   await db
     .delete(s.posts)
     .where(keep.length ? and(like(s.posts.coverImageUrl, `${DEMO_URL_PREFIX}%`), notInArray(s.posts.id, keep)) : like(s.posts.coverImageUrl, `${DEMO_URL_PREFIX}%`));

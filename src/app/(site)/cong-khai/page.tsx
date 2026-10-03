@@ -15,7 +15,7 @@ export default async function CongKhaiPage() {
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="cong-khai"
         crumbs={[{ label: "Công khai" }]}
         eyebrow="Công khai"
         title="Thông tin công khai theo quy định"

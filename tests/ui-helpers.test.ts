@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { toCsv, digitsCell } from "../src/lib/csv";
-import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeSearch, vnDateKey, youtubeId } from "../src/lib/utils";
+import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeSearch, staticPageHref, vnDateKey, youtubeId } from "../src/lib/utils";
 
 test("CSV có BOM, CRLF, nháy kép được nhân đôi", () => {
   const csv = toCsv(["Họ tên", "Ghi chú"], [["Nguyễn Văn An", 'nói "xin chào"\nxuống dòng']]);
@@ -62,4 +62,12 @@ test("youtubeId nhận các dạng link YouTube phổ biến, link khác trả n
   assert.equal(youtubeId("https://www.youtube.com/watch?v=short"), null, "ID sai độ dài");
   assert.equal(youtubeId("không phải link"), null);
   assert.equal(youtubeId(null), null);
+});
+
+test("staticPageHref chỉ trả đường dẫn cho trang tĩnh có route công khai", () => {
+  assert.equal(staticPageHref("gioi-thieu"), "/gioi-thieu");
+  assert.equal(staticPageHref("lien-he"), "/lien-he");
+  assert.equal(staticPageHref("chinh-sach-bao-mat"), "/chinh-sach-bao-mat");
+  assert.equal(staticPageHref("cong-khai-tai-chinh"), "/cong-khai/cong-khai-tai-chinh");
+  assert.equal(staticPageHref("trang-noi-bo"), null);
 });

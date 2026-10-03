@@ -37,7 +37,7 @@ export default async function AdminAdmissionInfoPage({
         title="Thông tin tuyển sinh"
         description="Mốc thời gian, phương thức và hồ sơ hiển thị ở trang /tuyen-sinh"
       />
-      <div className="grid grid-cols-1 gap-6 p-5 sm:p-8 xl:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-6 p-5 sm:p-8 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-6">
           {placeholderCount > 0 && (
             <div className="rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-[13px] text-accent-700">

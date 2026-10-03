@@ -87,7 +87,7 @@ export default async function AdminDashboardPage({
     canAdmissions ? db.select({ value: count() }).from(schema.newsletterSubscribers) : [],
     canAdmissions ? db.query.admissionItems.findMany({ columns: { title: true, detail: true, meta: true } }) : [],
     can("pages") ? db.query.pages.findMany({ columns: { content: true } }) : [],
-    can("programs") ? db.query.programs.findMany({ columns: { tuition: true, content: true } }) : [],
+    can("programs") ? db.query.programs.findMany({ columns: { tuition: true, content: true, imageUrl: true } }) : [],
     can("homepage") ? db.select({ value: count() }).from(schema.heroBanners) : [],
     can("events") ? db.query.events.findMany({ columns: { startAt: true } }) : [],
   ]);
@@ -158,6 +158,7 @@ export default async function AdminDashboardPage({
     { show: pagesNeedFill > 0, label: `${pagesNeedFill} trang tĩnh còn nội dung "[Trường điền…]"`, href: "/admin/trang-tinh", tone: "brand" },
     { show: infoNeedFill > 0, label: `${infoNeedFill} mục thông tin tuyển sinh chưa điền`, href: "/admin/thong-tin-tuyen-sinh", tone: "brand" },
     { show: programs.some((p) => !p.tuition), label: `${programs.filter((p) => !p.tuition).length} ngành chưa nhập học phí (web đang hiện "Liên hệ")`, href: "/admin/nganh-dao-tao", tone: "brand" },
+    { show: programs.some((p) => !p.imageUrl), label: `${programs.filter((p) => !p.imageUrl).length} ngành chưa có ảnh (thẻ ngành chỉ hiện khối màu)`, href: "/admin/nganh-dao-tao", tone: "brand" },
     { show: can("homepage") && (banners[0]?.value ?? 0) === 0, label: "Trang chủ chưa có ảnh banner thật (đang dùng hình 3D minh hoạ)", href: "/admin/banner-trang-chu", tone: "brand" },
   ].filter((t) => t.show);
 

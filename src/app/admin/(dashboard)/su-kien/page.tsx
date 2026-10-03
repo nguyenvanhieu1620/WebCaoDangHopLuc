@@ -31,7 +31,7 @@ export default async function AdminEventsPage({
   return (
     <div>
       <AdminTopbar title="Sự kiện" description="Lịch sự kiện hiển thị ở /su-kien — khác Tin tức" />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">

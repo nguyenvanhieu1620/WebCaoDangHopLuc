@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { getSiteSettings } from "@/lib/data/site-settings";
+import { getPageBanner } from "@/lib/data/page-banners";
+import type { PageBannerKey } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export type Crumb = { label: string; href?: string };
@@ -13,8 +15,14 @@ type PageHeroProps = {
   crumbs: Crumb[];
   eyebrow?: string;
   description?: ReactNode;
-  /** Ảnh bìa riêng của trang (VD ảnh bìa bài viết/trang tĩnh). Không có → ảnh mặc định ở admin/cai-dat → nền gradient. */
+  /** Ảnh bìa riêng của trang/mục (VD ảnh bìa bài viết, trang tĩnh, ảnh ngành) — ưu tiên cao nhất. */
   imageUrl?: string | null;
+  /**
+   * Mã trang trong `PAGE_BANNER_SLOTS` — banner riêng của trang/chuyên mục đặt ở
+   * admin/banner-trang-con. Thứ tự: `imageUrl` → banner của `bannerKey` → ảnh mặc
+   * định chung → nền gradient xanh.
+   */
+  bannerKey?: PageBannerKey;
   /** "article": tiêu đề nhỏ hơn cho trang chi tiết có tiêu đề dài (bài viết, sự kiện). */
   variant?: "default" | "article";
   /** Dòng phụ dưới tiêu đề (VD ngày đăng, chuyên mục, nút). */
@@ -28,9 +36,10 @@ type PageHeroProps = {
  * điều hướng trong suốt của SiteHeader; header chữ trắng nên trang con nào
  * cũng phải mở đầu bằng khối nền tối này (hoặc HeroBanner ở Trang chủ).
  */
-export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, variant = "default", children }: PageHeroProps) {
-  const fallback = imageUrl ? null : (await getSiteSettings()).pageBannerUrl;
-  const bg = imageUrl || fallback || null;
+export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, bannerKey, variant = "default", children }: PageHeroProps) {
+  const sectionBanner = !imageUrl && bannerKey ? await getPageBanner(bannerKey) : null;
+  const fallback = imageUrl || sectionBanner ? null : (await getSiteSettings()).pageBannerUrl;
+  const bg = imageUrl || sectionBanner || fallback || null;
   const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
 
   return (

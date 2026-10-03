@@ -100,7 +100,7 @@ export default async function SearchPage({
 
   return (
     <>
-    <PageHero crumbs={[{ label: t.eyebrow }]} eyebrow={t.eyebrow} title={t.heading}>
+    <PageHero bannerKey="tim-kiem" crumbs={[{ label: t.eyebrow }]} eyebrow={t.eyebrow} title={t.heading}>
       <Form action="/tim-kiem" role="search" className="group relative max-w-3xl">
         <div className="pointer-events-none absolute -inset-1 rounded-[22px] bg-gradient-to-r from-brand-500/30 via-brand-700/20 to-accent-500/30 opacity-0 blur-md transition-opacity duration-300 group-focus-within:opacity-100" />
         <div className="relative flex items-center gap-2 rounded-2xl border border-line bg-white/90 p-2 shadow-md2 backdrop-blur">

@@ -62,6 +62,14 @@ const lanDevOrigins = Object.values(require("node:os").networkInterfaces())
 const nextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: lanDevOrigins,
+  experimental: {
+    // Form admin tải ảnh/video/tài liệu qua Server Action. Mặc định Next chỉ nhận
+    // body 1MB (Server Action) / 10MB (request đi qua proxy.ts) → ảnh > 1MB lỗi âm
+    // thầm dù src/lib/media.ts cho phép ảnh 10MB, tài liệu 20MB, video 50MB. Nâng lên
+    // 55MB cho khớp mức tối đa đó (+ phần dư của các field khác trong form).
+    serverActions: { bodySizeLimit: "55mb" },
+    proxyClientMaxBodySize: "55mb",
+  },
   async headers() {
     return [
       {

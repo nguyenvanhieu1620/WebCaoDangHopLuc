@@ -26,7 +26,7 @@ export default async function CongKhaiDetailPage({
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="cong-khai"
         crumbs={[{ label: "Công khai", href: "/cong-khai" }, { label: page.title }]}
         eyebrow="Công khai"
         title={page.title}

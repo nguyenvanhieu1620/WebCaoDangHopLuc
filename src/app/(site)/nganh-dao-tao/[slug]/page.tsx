@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { PageHero } from "@/components/site/PageHero";
+import { Reveal } from "@/components/site/Reveal";
 import { getProgramBySlug } from "@/lib/data/programs";
 
 export async function generateMetadata({
@@ -34,11 +36,12 @@ export default async function ProgramDetailPage({
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="nganh-dao-tao"
         crumbs={[{ label: "Ngành đào tạo", href: "/nganh-dao-tao" }, { label: program.name }]}
         eyebrow={`Mã ngành ${program.code}`}
         title={program.name}
         description={program.summary}
+        imageUrl={program.imageUrl}
       >
         {/* Thông số chính ngay trên banner — dạng thẻ kính */}
         <dl className="flex flex-wrap gap-3">
@@ -51,8 +54,27 @@ export default async function ProgramDetailPage({
         </dl>
       </PageHero>
 
-      <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[1fr_320px] lg:gap-14">
+      <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-14">
         <div className="min-w-0">
+          {/* Ảnh ngành hiện RÕ ở đầu nội dung (banner phía trên phủ lớp màu tối nên ảnh khó thấy). */}
+          {program.imageUrl && (
+            <Reveal className="mb-10">
+              <figure className="img-reveal img-shine relative aspect-[16/9] overflow-clip rounded-[24px] shadow-md2">
+                <Image
+                  src={program.imageUrl}
+                  alt={`Ngành ${program.name}`}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 800px"
+                  className="object-cover"
+                />
+                <figcaption className="absolute bottom-4 left-4 z-[4] flex items-center gap-2 rounded-full bg-brand-900/70 py-1.5 pl-1.5 pr-4 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/20 backdrop-blur-md">
+                  <span className="rounded-full bg-accent-600 px-2.5 py-0.5 font-mono text-[10.5px] uppercase tracking-wider">{program.code}</span>
+                  Ngành {program.name}
+                </figcaption>
+              </figure>
+            </Reveal>
+          )}
           {program.content ? (
             <MarkdownContent content={program.content} />
           ) : (
@@ -63,7 +85,14 @@ export default async function ProgramDetailPage({
           )}
         </div>
 
-        <aside className="h-fit rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-28">
+        <aside className="h-fit overflow-clip rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-28">
+          {/* Ảnh nhỏ đầu khung — khung dính theo khi cuộn nên đọc tới đâu vẫn thấy ảnh ngành. */}
+          {program.imageUrl && (
+            <div className="relative -mx-6 -mt-6 mb-5 h-[150px]">
+              <Image src={program.imageUrl} alt="" fill sizes="320px" className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-900/45 to-transparent" />
+            </div>
+          )}
           <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Xét tuyển ngành</div>
           <div className="mt-2 font-display text-[22px] font-semibold leading-snug text-brand-900">{program.name}</div>
           <dl className="mt-5 divide-y divide-line border-y border-line text-[14px]">

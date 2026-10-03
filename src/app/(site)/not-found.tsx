@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Không tìm thấy trang" };
 export default function SiteNotFound() {
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="khong-tim-thay"
         crumbs={[{ label: "404" }]}
         eyebrow="Lỗi 404"
         title="Không tìm thấy trang này"

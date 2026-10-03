@@ -54,7 +54,8 @@ export default async function AdminPostsPage({
   return (
     <div>
       <AdminTopbar title="Bài viết" description="Quản lý tin tức & thông báo trên website" />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
+      {/* minmax(0,1fr): tiêu đề bài dài (truncate = không xuống dòng) không được kéo giãn cột danh sách, đẩy form bên phải ra ngoài. */}
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Danh sách bài viết */}
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
@@ -96,7 +97,8 @@ export default async function AdminPostsPage({
           ) : (
             <ul className="divide-y divide-line">
               {filteredPosts.map((post) => (
-                <li key={post.id} className="flex items-center justify-between gap-4 px-6 py-4">
+                // flex-wrap trên mobile: cụm nút Sửa/Đăng/Xoá xuống dòng riêng thay vì đẩy tràn khung (màn ~345px).
+                <li key={post.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 px-6 py-4 sm:flex-nowrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="truncate text-sm font-medium text-ink">{post.title}</span>

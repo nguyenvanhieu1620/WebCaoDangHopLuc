@@ -29,7 +29,7 @@ export default async function NewsDetailPage({
   return (
     <>
       {/* Ảnh bìa bài viết làm nền banner — tiêu đề, chuyên mục, ngày đăng đè lên (kiểu tạp chí). */}
-      <PageHero
+      <PageHero bannerKey="tin-tuc"
         crumbs={[{ label: "Tin tức", href: "/tin-tuc" }, { label: post.title }]}
         title={post.title}
         imageUrl={post.coverImageUrl}

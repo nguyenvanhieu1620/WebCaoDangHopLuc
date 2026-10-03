@@ -36,7 +36,7 @@ export default async function AdminPagesPage({
         title="Trang tĩnh"
         description="Sửa nội dung các trang: Công khai, Giới thiệu, Liên hệ... — sửa xong hiện ngay trên web công khai theo đúng slug"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         {/* Danh sách trang */}
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">

@@ -30,7 +30,7 @@ export default async function AdminUsersPage({
         title="Người dùng"
         description="Tài khoản đăng nhập khu vực quản trị + quyền truy cập từng phần"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_460px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_460px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">Danh sách ({all.length})</span>

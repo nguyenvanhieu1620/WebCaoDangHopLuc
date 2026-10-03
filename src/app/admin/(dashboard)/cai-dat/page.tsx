@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
-import { desc, eq } from "drizzle-orm";
-import { ImagePicker } from "@/components/admin/ImagePicker";
+import { eq } from "drizzle-orm";
 import { updateSiteSettingsAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
@@ -22,10 +21,6 @@ export default async function AdminSiteSettingsPage({
   if (!settings) {
     throw new Error("Chưa có dữ liệu site_settings — chạy `npm run db:seed` trước.");
   }
-  const mediaImages = await db.query.mediaItems.findMany({
-    where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
-  });
 
   return (
     <div>
@@ -142,20 +137,11 @@ export default async function AdminSiteSettingsPage({
               className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
             />
           </div>
-          <div className="border-t border-line pt-4">
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
-              Ảnh banner mặc định cho trang con <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
-            </label>
-            <p className="mb-2.5 text-[11.5px] leading-relaxed text-ink-faint">
-              Dùng làm nền banner đầu các trang (Tin tức, Ngành đào tạo, Liên hệ…) khi trang đó không có ảnh bìa riêng. Để trống thì
-              banner dùng nền xanh gradient. Nên dùng ảnh ngang ≥ 1920×600, chủ thể lệch phải (bên trái phủ tối để đặt chữ).
-            </p>
-            <ImagePicker fileFieldName="pageBanner" pickedFieldName="pageBannerExisting" images={mediaImages} currentUrl={settings.pageBannerUrl} />
-            {settings.pageBannerUrl && (
-              <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
-                <input type="checkbox" name="removePageBanner" className="h-4 w-4 rounded border-line" /> Gỡ ảnh banner mặc định
-              </label>
-            )}
+          <div className="border-t border-line pt-4 text-[12.5px] text-ink-soft">
+            Ảnh banner đầu các trang con (ảnh mặc định + ảnh riêng từng trang) quản lý ở{" "}
+            <a href="/admin/banner-trang-con" className="font-semibold text-brand-700 hover:underline">
+              Giao diện › Banner trang con →
+            </a>
           </div>
           <button
             type="submit"

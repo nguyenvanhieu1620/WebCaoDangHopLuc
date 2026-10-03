@@ -35,7 +35,7 @@ export default async function AdminHeroBannerPage({
         title="Banner Trang chủ"
         description="Ảnh banner tràn toàn màn hình ở đầu Trang chủ, tự chuyển 6,5 giây/ảnh — chưa có ảnh nào thì dùng ảnh Hero cũ hoặc ảnh minh hoạ tạm"
       />
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="rounded-2xl border border-line bg-white">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <span className="text-sm font-semibold text-brand-900">

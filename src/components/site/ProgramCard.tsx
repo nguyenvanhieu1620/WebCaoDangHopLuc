@@ -1,12 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 import type { Program } from "@/lib/db/schema";
 
 type ProgramCardProps = {
-  program: Pick<Program, "slug" | "code" | "name" | "summary" | "duration" | "intake">;
+  program: Pick<Program, "slug" | "code" | "name" | "summary" | "duration" | "intake"> & { imageUrl?: string | null };
   gradientClass: string;
   delay?: number;
 };
@@ -17,6 +18,8 @@ type ProgramCardProps = {
  * theo con trỏ chuột (`--spot-x`/`--spot-y` cập nhật qua `onMouseMove`, chỉ
  * CSS thuần vẽ vệt sáng tròn, không thêm thư viện ngoài). Client Component
  * vì cần `onMouseMove` — không gắn được từ Server Component.
+ * Ngành có ảnh (admin/nganh-dao-tao) thì đầu thẻ là ảnh thật, thân thẻ vẫn là
+ * khối màu gradient xoay vòng; chưa có ảnh thì chỉ có khối màu như cũ.
  */
 export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCardProps) {
   return (
@@ -52,11 +55,30 @@ export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCar
           }}
         />
         <div className="pointer-events-none absolute -bottom-10 -right-10 h-[150px] w-[150px] rounded-full bg-white/10" />
-        <div className="relative flex items-center justify-between font-mono text-[10.5px] uppercase tracking-wider text-white/85">
-          <span>{p.code}</span>
-          <span>{p.duration}</span>
-        </div>
-        <h3 className="relative mt-3.5 font-display text-[22px] font-bold">{p.name}</h3>
+        {p.imageUrl ? (
+          // Có ảnh: ảnh tràn sát mép trên thẻ (bù -mx/-mt đúng bằng p-7), mã ngành + thời gian thành nhãn kính đè lên ảnh.
+          <div className="img-shine relative -mx-7 -mt-7 mb-5 h-[168px] shrink-0">
+            <Image
+              src={p.imageUrl}
+              alt={p.name}
+              fill
+              sizes="(max-width: 640px) 82vw, (max-width: 1024px) 46vw, 400px"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              draggable={false}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/55 via-transparent to-brand-900/20" />
+            <div className="absolute inset-x-4 top-4 z-[4] flex items-center justify-between font-mono text-[10.5px] font-semibold uppercase tracking-wider">
+              <span className="rounded-full bg-white/20 px-2.5 py-1 ring-1 ring-inset ring-white/30 backdrop-blur-md">{p.code}</span>
+              <span className="rounded-full bg-white/20 px-2.5 py-1 ring-1 ring-inset ring-white/30 backdrop-blur-md">{p.duration}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="relative flex items-center justify-between font-mono text-[10.5px] uppercase tracking-wider text-white/85">
+            <span>{p.code}</span>
+            <span>{p.duration}</span>
+          </div>
+        )}
+        <h3 className={cn("relative font-display text-[22px] font-bold", !p.imageUrl && "mt-3.5")}>{p.name}</h3>
         <p className="relative mt-2.5 max-w-[220px] text-[13px] leading-relaxed text-white/90">
           {p.summary}
         </p>

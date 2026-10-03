@@ -528,7 +528,7 @@ export default async function HomePage() {
               <MoreLink href="/nganh-dao-tao">Xem tất cả ngành</MoreLink>
             </Reveal>
           </div>
-          <EdgeSlider label="Danh sách ngành đào tạo" itemClassName="h-[340px] w-[82%] sm:h-[360px] sm:w-[46%] lg:w-[31%] xl:w-[27%]">
+          <EdgeSlider label="Danh sách ngành đào tạo" itemClassName="min-h-[340px] w-[82%] sm:min-h-[360px] sm:w-[46%] lg:w-[31%] xl:w-[27%]">
             {allPrograms.map((p, i) => (
               <ProgramCard key={p.slug} program={p} gradientClass={programGradient(i)} delay={Math.min(i, 3) * 80} />
             ))}

@@ -34,7 +34,7 @@ export default async function EventDetailPage({
 
   return (
     <>
-      <PageHero
+      <PageHero bannerKey="su-kien"
         crumbs={[{ label: "Sự kiện", href: "/su-kien" }, { label: event.title }]}
         eyebrow="Sự kiện"
         title={event.title}
