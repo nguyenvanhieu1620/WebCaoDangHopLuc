@@ -47,11 +47,12 @@ const IMAGES: { key: string; photo: string; portrait?: boolean; note: string }[]
   { key: "gv-4", photo: "photo-1668049221564-862149a48e10", portrait: true, note: "Chân dung nữ" },
 ];
 
-type TableKey = "posts" | "events" | "faculty" | "programs" | "admissionItems";
+type TableKey = "posts" | "events" | "faculty" | "programs" | "admissionItems" | "siteSettings";
 type Manifest = {
   loadedAt: string;
   mediaIds: string[];
-  created: Record<"posts" | "events" | "gallery" | "admissions" | "contacts" | "newsletter", string[]>;
+  /** `milestones` có từ đợt VinUni lượt 2 — manifest cũ không có, xem `loadExtras()`. */
+  created: Record<"posts" | "events" | "gallery" | "admissions" | "contacts" | "newsletter", string[]> & { milestones?: string[] };
   restored: { table: TableKey; id: string; field: string; value: string | null }[];
 };
 
@@ -61,6 +62,7 @@ const TABLES = {
   faculty: s.faculty,
   programs: s.programs,
   admissionItems: s.admissionItems,
+  siteSettings: s.siteSettings,
 } as const;
 
 const url = (key: string) => `${DEMO_URL_PREFIX}${key}.jpg`;
@@ -96,9 +98,48 @@ async function download() {
   return ids;
 }
 
+/** Sửa 1 field của bản ghi có sẵn, ghi lại giá trị cũ vào manifest để demo:clean trả lại. */
+async function patchRecord(manifest: Manifest, table: TableKey, id: string, field: string, value: string | null) {
+  // Ép kiểu về 1 bảng đại diện: các bảng đều có cột `id` text, field truyền vào luôn là cột có thật.
+  const t = TABLES[table] as unknown as typeof s.posts;
+  const current = (await db.select().from(t).where(eq(t.id, id)))[0] as Record<string, unknown> | undefined;
+  if (!current) return;
+  manifest.restored.push({ table, id, field, value: (current[field] as string | null) ?? null });
+  await db.update(t).set({ [field]: value } as Partial<typeof s.posts.$inferInsert>).where(eq(t.id, id));
+}
+
+/**
+ * Phần demo thêm ở đợt VinUni lượt 2: vài "Mốc mẫu" cho dòng thời gian /gioi-thieu
+ * + ảnh banner mặc định cho trang con. Chạy cả khi DB đã nạp demo từ trước
+ * (manifest cũ chưa có `milestones`) — không phải xoá rồi tải lại ảnh.
+ * Nội dung ghi rõ là MẪU, không phải lịch sử thật của trường.
+ */
+async function loadExtras(manifest: Manifest) {
+  if (manifest.created.milestones) return false;
+  const sample = "Nội dung minh hoạ cho dòng thời gian — thay bằng mốc thật trong admin › Trang tĩnh › Cột mốc.";
+  const items: (typeof s.milestones.$inferInsert)[] = [
+    { id: "demo-milestone-1", year: 2020, period: "Tháng 9", title: "Mốc mẫu: khai giảng khoá đầu tiên", description: sample, imageUrl: url("g-tan-sinh-vien"), sortOrder: 0 },
+    { id: "demo-milestone-2", year: 2022, period: "Tháng 3", title: "Mốc mẫu: đưa vào sử dụng phòng thực hành mô phỏng", description: sample, imageUrl: url("g-mo-phong"), sortOrder: 0 },
+    { id: "demo-milestone-3", year: 2022, period: "Tháng 10", title: "Mốc mẫu: ký kết hợp tác thực hành với bệnh viện", description: sample, sortOrder: 1 },
+    { id: "demo-milestone-4", year: 2024, period: "Tháng 6", title: "Mốc mẫu: lễ tốt nghiệp khoá đầu tiên", description: sample, imageUrl: url("post-tot-nghiep"), sortOrder: 0 },
+    { id: "demo-milestone-5", year: 2026, period: "Tháng 3", title: "Mốc mẫu: mở thêm ngành đào tạo mới", description: sample, sortOrder: 0 },
+    { id: "demo-milestone-6", year: 2026, period: "Tháng 9", title: "Mốc mẫu: ra mắt website mới", description: sample, imageUrl: url("g-kinh-hien-vi"), sortOrder: 1 },
+  ];
+  await db.insert(s.milestones).values(items);
+  manifest.created.milestones = items.map((m) => m.id!);
+  await patchRecord(manifest, "siteSettings", "main", "pageBannerUrl", url("g-mo-phong"));
+  return true;
+}
+
 async function load() {
   if (existsSync(MANIFEST)) {
-    console.log("Đã nạp dữ liệu demo từ trước — chạy `npm run demo:clean` rồi nạp lại nếu muốn làm mới.");
+    const existing: Manifest = JSON.parse(await readFile(MANIFEST, "utf8"));
+    if (await loadExtras(existing)) {
+      await writeFile(MANIFEST, JSON.stringify(existing, null, 2));
+      console.log("✓ Đã bổ sung dữ liệu demo mới (cột mốc mẫu + ảnh banner trang con) vào bộ demo đang có.");
+    } else {
+      console.log("Đã nạp dữ liệu demo từ trước — chạy `npm run demo:clean` rồi nạp lại nếu muốn làm mới.");
+    }
     return;
   }
   const manifest: Manifest = {
@@ -108,16 +149,7 @@ async function load() {
     restored: [],
   };
   const save = () => writeFile(MANIFEST, JSON.stringify(manifest, null, 2));
-
-  /** Sửa 1 field của bản ghi có sẵn, ghi lại giá trị cũ để demo:clean trả lại. */
-  async function patch(table: TableKey, id: string, field: string, value: string | null) {
-    // Ép kiểu về 1 bảng đại diện: các bảng đều có cột `id` text, field truyền vào luôn là cột có thật.
-    const t = TABLES[table] as unknown as typeof s.posts;
-    const current = (await db.select().from(t).where(eq(t.id, id)))[0] as Record<string, unknown> | undefined;
-    if (!current) return;
-    manifest.restored.push({ table, id, field, value: (current[field] as string | null) ?? null });
-    await db.update(t).set({ [field]: value } as Partial<typeof s.posts.$inferInsert>).where(eq(t.id, id));
-  }
+  const patch = (table: TableKey, id: string, field: string, value: string | null) => patchRecord(manifest, table, id, field, value);
 
   console.log("Tải ảnh demo (Unsplash)...");
   manifest.mediaIds = await download();
@@ -297,6 +329,7 @@ async function load() {
   }));
   await db.insert(s.newsletterSubscribers).values(subscribers).onConflictDoNothing();
   manifest.created.newsletter = subscribers.map((n) => n.id);
+  await loadExtras(manifest);
   await save();
 
   console.log(`\n✓ Đã nạp dữ liệu demo. Ghi chú các thay đổi: ${path.relative(process.cwd(), MANIFEST)}`);
@@ -313,6 +346,7 @@ async function clean() {
     if (c.admissions.length) await db.delete(s.admissionSubmissions).where(inArray(s.admissionSubmissions.id, c.admissions));
     if (c.contacts.length) await db.delete(s.contactMessages).where(inArray(s.contactMessages.id, c.contacts));
     if (c.newsletter.length) await db.delete(s.newsletterSubscribers).where(inArray(s.newsletterSubscribers.id, c.newsletter));
+    if (c.milestones?.length) await db.delete(s.milestones).where(inArray(s.milestones.id, c.milestones));
     // Trả giá trị gốc theo thứ tự ngược (field sửa nhiều lần vẫn về đúng giá trị ban đầu).
     for (const r of [...manifest.restored].reverse()) {
       const t = TABLES[r.table] as unknown as typeof s.posts;
@@ -325,6 +359,9 @@ async function clean() {
   // Bản ghi tạo tay qua admin bằng ảnh demo → cũng là dữ liệu demo.
   await db.delete(s.heroBanners).where(like(s.heroBanners.imageUrl, `${DEMO_URL_PREFIX}%`));
   await db.delete(s.galleryItems).where(like(s.galleryItems.imageUrl, `${DEMO_URL_PREFIX}%`));
+  await db.delete(s.milestones).where(like(s.milestones.imageUrl, `${DEMO_URL_PREFIX}%`));
+  // Banner trang con chọn tay trong admin/cai-dat bằng ảnh demo → gỡ (ảnh sắp bị xoá bên dưới).
+  await db.update(s.siteSettings).set({ pageBannerUrl: null }).where(like(s.siteSettings.pageBannerUrl, `${DEMO_URL_PREFIX}%`));
   await db
     .delete(s.posts)
     .where(keep.length ? and(like(s.posts.coverImageUrl, `${DEMO_URL_PREFIX}%`), notInArray(s.posts.id, keep)) : like(s.posts.coverImageUrl, `${DEMO_URL_PREFIX}%`));

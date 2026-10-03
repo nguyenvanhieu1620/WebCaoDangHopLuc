@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 import { getPagesBySlugPrefix } from "@/lib/data/pages";
 
 export const metadata: Metadata = { title: "Công khai" };
@@ -14,39 +14,39 @@ export default async function CongKhaiPage() {
   const pages = await getPagesBySlugPrefix("cong-khai-");
 
   return (
-    <DecorativeSection contentClassName="mx-auto max-w-3xl">
-        <Eyebrow tone="blue" className="mb-6">
-          Công khai
-        </Eyebrow>
-        <h1 className="font-display text-[34px] font-semibold leading-tight text-brand-900">
-          Thông tin công khai theo quy định
-        </h1>
-        <p className="mt-3.5 max-w-xl text-[15.5px] leading-relaxed text-ink-soft">
-          Nhà trường công khai các nội dung theo đúng quy định về đào tạo, cơ
-          sở vật chất, đội ngũ giảng viên và tài chính.
-        </p>
-
+    <>
+      <PageHero
+        crumbs={[{ label: "Công khai" }]}
+        eyebrow="Công khai"
+        title="Thông tin công khai theo quy định"
+        description="Nhà trường công khai các nội dung theo đúng quy định về đào tạo, cơ sở vật chất, đội ngũ giảng viên và tài chính."
+      />
+      <DecorativeSection contentClassName="mx-auto max-w-3xl">
         {pages.length === 0 ? (
-          <div className="mt-10 rounded-2xl border border-line bg-white p-8 text-sm text-ink-faint">
+          <div className="rounded-2xl border border-line bg-white p-8 text-sm text-ink-faint">
             Chưa có nội dung công khai nào được đăng.
           </div>
         ) : (
-          <ul className="mt-10 divide-y divide-line rounded-2xl border border-line bg-white">
-            {pages.map((page) => (
+          <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white shadow-sm2">
+            {pages.map((page, i) => (
               <li key={page.id}>
                 <Link
                   href={`/cong-khai/${page.slug}`}
-                  className="flex items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-paper-alt"
+                  className="group flex items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-paper-alt"
                 >
-                  <span className="font-display text-base font-semibold text-ink">
-                    {page.title}
+                  <span className="flex items-center gap-4">
+                    <span className="font-mono text-[11px] text-accent-600">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-display text-base font-semibold text-ink group-hover:text-brand-700">{page.title}</span>
                   </span>
-                  <span className="text-sm font-semibold text-brand-700">Xem →</span>
+                  <span className="shrink-0 text-sm font-semibold text-brand-700">
+                    <span className="link-underline">Xem</span> →
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-    </DecorativeSection>
+      </DecorativeSection>
+    </>
   );
 }

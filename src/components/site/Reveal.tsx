@@ -7,108 +7,95 @@ type RevealProps = {
   children: React.ReactNode;
   className?: string;
   /**
-   * Trễ (ms) trước khi khối này bắt đầu hiện, so với vị trí cuộn bình
-   * thường — dùng để so le nhiều khối/thẻ liền nhau (VD `delay={i * 90}`
-   * trong 1 lưới thẻ). Không phải hẹn giờ (timer) — chuyển thành khoảng
-   * cách cuộn cần đi thêm, nên độ so le vẫn khớp đúng tốc độ tay cuộn thay
-   * vì lệch pha với các khối không so le.
+   * Trễ (ms) trước khi bắt đầu chạy lên, tính từ lúc phần tử chạm khung nhìn —
+   * dùng để so le nhiều phần tử liền nhau (VD `delay={i * 90}` trong 1 lưới thẻ),
+   * giống `data-wow-delay` của VinUni.
    */
   delay?: number;
 };
 
 /**
- * Bọc 1 khối nội dung để nó mờ/trượt nhẹ lên theo % THỰC TẾ đã cuộn vào
- * khung nhìn — mượt liên tục theo đúng tốc độ tay cuộn, khác bản đầu tiên
- * (bật/tắt nhị phân theo có giao nhau với khung nhìn hay không, cảm giác
- * "giật hiện" thay vì chảy mượt). Thuần CSS/JS, không thêm thư viện ngoài.
+ * "Đi đến đâu chữ chạy lên đến đấy" — đúng cơ chế WOW.js `fadeInUp` của
+ * VinUni: phần tử ẨN sẵn; khi mép trên vừa chạm vào khung nhìn thì chạy lên +
+ * rõ dần trong ~1 giây (CSS `.reveal` → `.reveal-in` trong globals.css), mỗi
+ * phần tử chạy đúng 1 lần. Quãng trượt = chiều cao phần tử, tối đa 64px (dòng
+ * chữ trượt đúng 1 dòng như VinUni, thẻ lớn không bay quá xa).
  *
- * Cách làm: IntersectionObserver CHỈ dùng để bật/tắt 1 scroll listener khi
- * phần tử đang ở gần khung nhìn (tránh mỗi Reveal đều có scroll listener
- * chạy suốt vòng đời trang — trang có hàng chục Reveal cùng lúc sẽ tốn hiệu
- * năng nếu tất cả đều luôn lắng nghe). Trong lúc "đang gần", scroll
- * listener (throttle qua requestAnimationFrame) tính % dựa trên
- * `getBoundingClientRect()` thật mỗi khung hình — bám sát đúng vị trí cuộn,
- * không nhảy theo bậc rời rạc.
+ * Bản cũ có 2 lỗi khiến hiệu ứng gần như không thấy: (1) hẹn giờ dự phòng 2s
+ * cho hiện TẤT CẢ phần tử kể cả phần chưa cuộn tới — cuộn chậm hơn 2s là mọi thứ
+ * đã hiện sẵn; (2) độ hiện bám % vị trí cuộn nên dừng tay là chữ dừng lửng lơ.
  *
- * Tôn trọng `prefers-reduced-motion` — tắt hẳn hiệu ứng, hiện ngay nội dung.
- *
- * Vẫn giữ hẹn giờ dự phòng 2s: nếu vì lý do gì đó không bao giờ tính được
- * tiến trình (VD tab mở nền chưa từng hiện lên) thì tự hiện đủ 100% — tránh
- * nội dung bị kẹt vô hình vĩnh viễn (bài học từ bản đầu tiên, xem CLAUDE.md).
+ * Dự phòng giữ lại nhưng CHỈ cho phần tử đã nằm trong khung nhìn (VD tab mở nền,
+ * IntersectionObserver chưa bắn) — tránh nội dung đang trước mắt bị kẹt vô hình,
+ * còn phần chưa cuộn tới vẫn chờ cuộn tới mới chạy lên.
+ * Tôn trọng `prefers-reduced-motion` (hiện ngay, không chuyển động).
  */
+/** Tổ tiên gần (tối đa 4 cấp) đang cuộn ngang — `overflow-x: auto|scroll`. */
+function horizontalScroller(el: HTMLElement): HTMLElement | null {
+  let p = el.parentElement;
+  for (let i = 0; p && i < 4; i++, p = p.parentElement) {
+    const ox = getComputedStyle(p).overflowX;
+    if (ox === "auto" || ox === "scroll") return p;
+  }
+  return null;
+}
+
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [progress, setProgress] = useState(0);
-  const doneRef = useRef(false);
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let done = false;
+    const show = () => {
+      if (done) return;
+      done = true;
+      setShown(true);
+    };
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      doneRef.current = true;
-      // setState qua rAF thay vì gọi thẳng trong thân effect — tránh cảnh
-      // báo "setState đồng bộ trong effect" của react-hooks/set-state-in-effect.
-      const raf = requestAnimationFrame(() => setProgress(1));
+      // setState qua rAF (không gọi thẳng trong thân effect — rule react-hooks/set-state-in-effect).
+      const raf = requestAnimationFrame(show);
       return () => cancelAnimationFrame(raf);
     }
 
-    // delay (ms) -> khoảng cách cuộn thêm (px) để tính so le theo vị trí, không phải theo thời gian.
-    const delayPx = delay * 0.35;
-
-    let rafId: number | null = null;
-
-    const computeProgress = () => {
-      rafId = null;
-      if (doneRef.current) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const start = vh * 0.92 - delayPx;
-      const end = vh * 0.55 - delayPx;
-      const raw = (start - rect.top) / (start - end);
-      const clamped = Math.min(1, Math.max(0, raw));
-      setProgress(clamped);
-      if (clamped >= 1) doneRef.current = true;
-    };
-
-    const onScroll = () => {
-      if (rafId === null) rafId = requestAnimationFrame(computeProgress);
-    };
+    // Nằm trong dải cuộn NGANG (slider ngành, thẻ vuốt trên mobile): thẻ khuất bên
+    // phải bị dải cắt nên không bao giờ "giao" khung nhìn tới khi lướt tới — sẽ
+    // trống trơn lúc lướt. Như WOW.js (chỉ xét chiều dọc): theo dõi chính dải đó,
+    // dải chạm màn hình thì mọi thẻ cùng chạy lên (so le theo `delay`).
+    const target = horizontalScroller(el) ?? el;
 
     const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          computeProgress();
-          window.addEventListener("scroll", onScroll, { passive: true });
-        } else {
-          window.removeEventListener("scroll", onScroll);
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          show();
+          io.disconnect();
         }
       },
-      { rootMargin: "15% 0px 15% 0px" }
+      // Lùi mép dưới 6%: chạy khi phần tử đã lấp ló trong màn hình, người xem kịp thấy nó chạy lên.
+      { rootMargin: "0px 0px -6% 0px" }
     );
-    io.observe(el);
+    io.observe(target);
 
-    const fallback = setTimeout(() => {
-      doneRef.current = true;
-      setProgress(1);
-    }, 2000);
+    const fallback = window.setTimeout(() => {
+      const r = target.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      if (r.top < vh && r.left < vw && r.right > 0) show();
+    }, 1500);
 
     return () => {
       io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      if (rafId !== null) cancelAnimationFrame(rafId);
       clearTimeout(fallback);
     };
-  }, [delay]);
+  }, []);
 
   return (
     <div
       ref={ref}
-      style={{
-        opacity: progress,
-        transform: `translateY(${(1 - progress) * 28}px)`,
-      }}
-      className={cn("will-change-[opacity,transform]", className)}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+      className={cn("reveal", shown && "reveal-in", className)}
     >
       {children}
     </div>

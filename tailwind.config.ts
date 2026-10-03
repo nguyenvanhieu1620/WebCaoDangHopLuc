@@ -45,9 +45,11 @@ const config: Config = {
         line: "#DCE6ED",
       },
       fontFamily: {
-        display: ["var(--font-fraunces)", "serif"],
-        sans: ["var(--font-inter)", "sans-serif"],
-        mono: ["var(--font-plex-mono)", "monospace"],
+        // Cả 3 đều Montserrat (đổi 02/10/2026 theo VinUni). Giữ 3 tên token để không phải
+        // sửa class ở hàng trăm chỗ: display = tiêu đề, sans = nội dung, mono = nhãn in hoa/số liệu.
+        display: ["var(--font-montserrat)", "sans-serif"],
+        sans: ["var(--font-montserrat)", "sans-serif"],
+        mono: ["var(--font-montserrat)", "sans-serif"],
       },
       boxShadow: {
         sm2: "0 1px 2px rgba(15,30,41,0.06)",

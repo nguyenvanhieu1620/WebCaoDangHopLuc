@@ -29,6 +29,29 @@ export function hasPlaceholder(content: string | null | undefined): boolean {
   return !!content && PLACEHOLDER_PATTERN.test(content);
 }
 
+/**
+ * Tách ID video từ link YouTube admin dán vào (watch?v=, youtu.be/, /embed/,
+ * /shorts/, /live/) — dùng để phát ngay trong lightbox qua youtube-nocookie.com.
+ * Link không phải YouTube (Facebook, Vimeo…) trả `null` → lightbox mở tab mới.
+ */
+export function youtubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.replace(/^(www\.|m\.)/, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = parsed.pathname.split("/")[1] ?? null;
+  else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    const [, kind, value] = parsed.pathname.split("/");
+    id = kind === "watch" ? parsed.searchParams.get("v") : ["embed", "shorts", "live"].includes(kind) ? value ?? null : null;
+  }
+  return id && /^[\w-]{11}$/.test(id) ? id : null;
+}
+
 /** Chuẩn hoá chuỗi để tìm kiếm không phân biệt hoa/thường và dấu tiếng Việt ("Điều dưỡng" ~ "dieu duong"). */
 export function normalizeSearch(value: string): string {
   return value

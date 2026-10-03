@@ -3,7 +3,8 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { upsertPartnerAction, deletePartnerAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 
@@ -22,12 +23,16 @@ export default async function AdminPartnersPage({
   const editing = edit
     ? await db.query.partners.findFirst({ where: eq(schema.partners.id, edit) })
     : null;
+  const mediaImages = await db.query.mediaItems.findMany({
+    where: eq(schema.mediaItems.type, "image"),
+    orderBy: desc(schema.mediaItems.createdAt),
+  });
 
   return (
     <div>
       <AdminTopbar
         title="Đối tác"
-        description="Dải tên đối tác hiển thị ở Trang chủ — vị trí càng nhỏ hiện càng trước"
+        description="Dải logo/tên đối tác chạy ngang ở Trang chủ — vị trí càng nhỏ hiện càng trước"
       />
       <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_360px]">
         <div className="rounded-2xl border border-line bg-white">
@@ -44,9 +49,14 @@ export default async function AdminPartnersPage({
             <ul className="divide-y divide-line">
               {allPartners.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-4 px-6 py-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span className="font-mono text-[11px] text-ink-faint">#{p.sortOrder}</span>
-                    <span className="text-sm font-medium text-ink">{p.name}</span>
+                    {p.logoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element -- logo nhỏ trong admin, không cần tối ưu
+                      <img src={p.logoUrl} alt="" className="h-7 w-auto max-w-[80px] object-contain" />
+                    )}
+                    <span className="truncate text-sm font-medium text-ink">{p.name}</span>
+                    {p.websiteUrl && <span className="truncate font-mono text-[10.5px] text-ink-faint">{p.websiteUrl.replace(/^https?:\/\//, "")}</span>}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <a
@@ -112,6 +122,31 @@ export default async function AdminPartnersPage({
                 className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
               />
             </details>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Logo <span className="font-normal text-ink-faint">(tuỳ chọn — không có thì hiện tên chữ)</span>
+              </label>
+              <ImagePicker fileFieldName="logo" pickedFieldName="logoExisting" images={mediaImages} currentUrl={editing?.logoUrl} />
+              <p className="mt-1.5 text-[11px] text-ink-faint">Nên dùng PNG nền trong suốt, ngang, cao ≥ 120px.</p>
+              {editing?.logoUrl && (
+                <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
+                  <input type="checkbox" name="removeLogo" className="h-4 w-4 rounded border-line" /> Gỡ logo hiện tại
+                </label>
+              )}
+            </div>
+            <div>
+              <label htmlFor="partner-website" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                Website <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
+              </label>
+              <input
+                id="partner-website"
+                name="websiteUrl"
+                type="url"
+                defaultValue={editing?.websiteUrl ?? ""}
+                placeholder="https://..."
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              />
+            </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
               <input

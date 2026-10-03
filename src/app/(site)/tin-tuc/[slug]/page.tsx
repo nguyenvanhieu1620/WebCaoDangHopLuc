@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eyebrow } from "@/components/ui/Eyebrow";
-import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { MoreLink } from "@/components/ui/MoreLink";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 import { getPublishedPostBySlug } from "@/lib/data/posts";
 import { formatVNDate } from "@/lib/utils";
 
@@ -29,42 +27,38 @@ export default async function NewsDetailPage({
   if (!post) notFound();
 
   return (
-    <DecorativeSection contentClassName="mx-auto max-w-3xl">
-        <Link
-          href="/tin-tuc"
-          className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
-        >
-          ← Tin tức
-        </Link>
-
-        {post.categoryName && (
-          <Eyebrow tone="blue" className="mb-6">
-            {post.categoryName}
-          </Eyebrow>
-        )}
-        <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
-          {post.title}
-        </h1>
-        <div className="mt-3 font-mono text-[11.5px] uppercase tracking-wider text-ink-faint">
-          {formatVNDate(post.publishedAt)}
-        </div>
-
-        <div className="relative mt-8 h-[320px] overflow-hidden rounded-2xl">
-          {post.coverImageUrl ? (
-            <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover" />
-          ) : (
-            <ImagePlaceholder label="Ảnh bài viết" />
+    <>
+      {/* Ảnh bìa bài viết làm nền banner — tiêu đề, chuyên mục, ngày đăng đè lên (kiểu tạp chí). */}
+      <PageHero
+        crumbs={[{ label: "Tin tức", href: "/tin-tuc" }, { label: post.title }]}
+        title={post.title}
+        imageUrl={post.coverImageUrl}
+        variant="article"
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          {post.categoryName && (
+            <span className="rounded bg-accent-600 px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em]">
+              {post.categoryName}
+            </span>
           )}
+          <span className="font-mono text-[12px] uppercase tracking-wider text-white/75">{formatVNDate(post.publishedAt)}</span>
         </div>
+      </PageHero>
 
-        <MarkdownContent content={post.content} className="mt-8" />
+      <DecorativeSection contentClassName="mx-auto max-w-3xl">
+        {post.excerpt && (
+          <p className="mb-8 border-l-4 border-accent-600 pl-5 font-display text-[19px] leading-relaxed text-brand-900 sm:text-[21px]">
+            {post.excerpt}
+          </p>
+        )}
+        <MarkdownContent content={post.content} />
 
         {post.attachmentUrl && (
           <a
             href={post.attachmentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-8 flex items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm2 transition-colors hover:border-brand-500"
+            className="group mt-8 flex items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm2 transition-colors hover:border-brand-500"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/10 text-lg">
               📎
@@ -74,11 +68,16 @@ export default async function NewsDetailPage({
                 Tài liệu đính kèm
               </span>
               <span className="block truncate font-semibold text-brand-700">
-                {post.attachmentName || "Tải tệp đính kèm"}
+                <span className="link-underline">{post.attachmentName || "Tải tệp đính kèm"}</span>
               </span>
             </span>
           </a>
         )}
-    </DecorativeSection>
+
+        <div className="mt-12 border-t border-line pt-6">
+          <MoreLink href="/tin-tuc">Xem tin tức khác</MoreLink>
+        </div>
+      </DecorativeSection>
+    </>
   );
 }

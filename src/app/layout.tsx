@@ -1,29 +1,20 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { SITE, SITE_URL } from "@/lib/constants";
 import { getLocale } from "@/lib/locale";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
-const fraunces = Fraunces({
+/**
+ * Font duy nhất toàn site: Montserrat (giống VinUni) — dùng cho cả tiêu đề
+ * (`font-display`), nội dung (`font-sans`) và nhãn in hoa (`font-mono`, xem
+ * tailwind.config.ts). Bản variable: 1 file chứa mọi độ đậm 100–900, kèm bản
+ * nghiêng cho chữ nhấn mạnh màu đỏ trong tiêu đề; có bộ ký tự tiếng Việt.
+ */
+const montserrat = Montserrat({
   subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700"],
   style: ["normal", "italic"],
-  variable: "--font-fraunces",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-plex-mono",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
@@ -65,7 +56,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      className={`${fraunces.variable} ${inter.variable} ${plexMono.variable}`}
+      className={montserrat.variable}
     >
       <body className="font-sans">
         {children}

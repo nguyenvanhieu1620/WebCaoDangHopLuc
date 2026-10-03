@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { ContactForm } from "@/components/site/ContactForm";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 
 export const metadata: Metadata = { title: "Liên hệ" };
 
@@ -19,21 +18,18 @@ export default async function ContactPage() {
   ].filter((s) => s.href && s.href !== "#");
 
   return (
-    <DecorativeSection contentClassName="mx-auto grid max-w-4xl gap-10 lg:grid-cols-[1.3fr_1fr]">
+    <>
+    <PageHero
+      crumbs={[{ label: "Liên hệ" }]}
+      eyebrow="Liên hệ"
+      title={page?.title ?? "Liên hệ với Hợp Lực"}
+      imageUrl={page?.coverImageUrl}
+      description={`Hotline ${settings.hotline} · ${settings.email}`}
+    />
+    <DecorativeSection contentClassName="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>
-          <Eyebrow tone="blue" className="mb-6">
-            Liên hệ
-          </Eyebrow>
-          <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
-            {page?.title ?? "Liên hệ với Hợp Lực"}
-          </h1>
-          {page?.coverImageUrl && (
-            <div className="relative mt-8 h-[240px] overflow-hidden rounded-2xl sm:h-[300px]">
-              <Image src={page.coverImageUrl} alt={page.title} fill className="object-cover" />
-            </div>
-          )}
-          {page?.content ? <MarkdownContent content={page.content} className="mt-8" /> : (
-            <p className="mt-6 text-base leading-relaxed text-ink-soft">Gửi câu hỏi qua form bên dưới hoặc liên hệ trực tiếp để được nhà trường hỗ trợ.</p>
+          {page?.content ? <MarkdownContent content={page.content} /> : (
+            <p className="text-base leading-relaxed text-ink-soft">Gửi câu hỏi qua form bên dưới hoặc liên hệ trực tiếp để được nhà trường hỗ trợ.</p>
           )}
 
           <div className="mt-10 rounded-2xl border border-line bg-white p-7 shadow-sm2">
@@ -44,7 +40,7 @@ export default async function ContactPage() {
           </div>
         </div>
 
-        <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2">
+        <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2 lg:sticky lg:top-28">
           <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
             Thông tin liên hệ
           </div>
@@ -77,5 +73,6 @@ export default async function ContactPage() {
           )}
         </div>
     </DecorativeSection>
+    </>
   );
 }

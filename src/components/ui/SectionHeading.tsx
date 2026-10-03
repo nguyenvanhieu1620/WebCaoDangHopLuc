@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "./Eyebrow";
+import { Reveal } from "@/components/site/Reveal";
 import type { ReactNode } from "react";
 
 type SectionHeadingProps = {
@@ -13,8 +14,10 @@ type SectionHeadingProps = {
 };
 
 /**
- * Tiêu đề chuẩn cho mỗi section: eyebrow chip + heading (font Fraunces) + mô tả ngắn.
+ * Tiêu đề chuẩn cho mỗi section: eyebrow chip + heading (font-display — Montserrat) + mô tả ngắn.
  * Dùng lại xuyên suốt các trang để giữ nhịp điệu thị giác đồng nhất.
+ * Mỗi phần hiện LỆCH NHỊP theo cuộn (nhãn → tiêu đề → mô tả, kiểu WOW fadeInUp
+ * từng phần tử của VinUni) — mỗi phần bọc 1 `Reveal` riêng với `delay` tăng dần.
  */
 export function SectionHeading({
   eyebrow,
@@ -38,27 +41,31 @@ export function SectionHeading({
       )}
     >
       {eyebrow && (
-        <div className={cn("mb-4", align === "center" && "flex justify-center")}>
+        <Reveal className={cn("mb-4", align === "center" && "flex justify-center")}>
           <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>
-        </div>
+        </Reveal>
       )}
-      <h2
-        className={cn(
-          "text-balance font-display text-[32px] font-semibold leading-[1.1] tracking-tight sm:text-[42px]",
-          onDark ? "text-white" : "text-brand-900"
-        )}
-      >
-        {title}
-      </h2>
-      {description && (
-        <p
+      <Reveal delay={90}>
+        <h2
           className={cn(
-            "mt-3.5 text-[15.5px] leading-relaxed",
-            onDark ? "text-white/65" : "text-ink-soft"
+            "text-balance font-display text-[32px] font-semibold leading-[1.1] tracking-tight sm:text-[42px]",
+            onDark ? "text-white" : "text-brand-900"
           )}
         >
-          {description}
-        </p>
+          {title}
+        </h2>
+      </Reveal>
+      {description && (
+        <Reveal delay={180}>
+          <p
+            className={cn(
+              "mt-3.5 text-[15.5px] leading-relaxed",
+              onDark ? "text-white/65" : "text-ink-soft"
+            )}
+          >
+            {description}
+          </p>
+        </Reveal>
       )}
     </div>
   );

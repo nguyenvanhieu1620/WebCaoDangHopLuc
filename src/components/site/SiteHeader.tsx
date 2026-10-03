@@ -109,6 +109,23 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
   const mobileButtonRef = useRef<HTMLButtonElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Kiểu VinUni: thanh điều hướng TRONG SUỐT đè lên banner đầu trang, chữ
+  // trắng; cuộn xuống > 24px (hoặc mở menu/tìm kiếm) thì chuyển nền xanh đậm
+  // mờ. Áp dụng MỌI trang công khai — trang nào cũng mở đầu bằng khối nền tối
+  // (HeroBanner ở Trang chủ, PageHero ở trang con), cả 2 kéo lên -mt-[72px]
+  // để nằm dưới thanh này. Đổi chiều cao (h-[72px] bên dưới) thì đổi cả 2 chỗ đó.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    const frame = requestAnimationFrame(onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+  const transparentNav = !scrolled && !mobileOpen && !searchOpen;
+
   // Phím tắt mở ô tìm kiếm: "/" hoặc Ctrl/⌘+K (khi không đang gõ trong ô nhập).
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -216,23 +233,34 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
         </div>
       </div>
 
-      {/* Thanh điều hướng chính */}
-      <div className="border-b border-brand-700/10 bg-paper/90 shadow-[0_4px_28px_rgba(6,50,90,0.07)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-6 px-6 py-3 sm:px-8">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5">
+      {/* Thanh điều hướng chính — cao cố định 72px (HeroBanner dựa vào số này để kéo ảnh lên dưới header) */}
+      <div
+        className={cn(
+          "relative h-[72px] border-b transition-[background-color,box-shadow,border-color] duration-300",
+          transparentNav
+            ? "border-white/10 bg-transparent"
+            : "border-white/10 bg-brand-900/85 shadow-[0_12px_40px_-14px_rgba(6,50,90,0.55)] backdrop-blur-xl"
+        )}
+      >
+        {/* Thanh tiến trình đọc trang — CSS scroll-driven (globals.css .scroll-progress), trình duyệt chưa hỗ trợ thì ẩn */}
+        <span aria-hidden="true" className="scroll-progress" />
+        {/* Montserrat rộng hơn font cũ: màn hình 360px (nhiều máy Android) không đủ chỗ cho logo + 2 nút
+            → khối logo được co (min-w-0, dòng tagline cắt "…"), khoảng cách hẹp lại trên mobile. */}
+        <div className="mx-auto flex h-full max-w-[1320px] items-center justify-between gap-3 px-6 sm:gap-6 sm:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <Image
               src="/images/logo-icon.png"
               alt={SITE.fullName}
               width={44}
               height={44}
-              className="h-11 w-auto"
+              className="h-11 w-auto shrink-0 drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)]"
               priority
             />
-            <div className="flex flex-col leading-[1.05]">
-              <span className="font-display text-[19px] font-bold text-brand-700">
+            <div className="flex min-w-0 flex-col leading-[1.05]">
+              <span className="font-display text-[19px] font-bold text-white">
                 {SITE.name}
               </span>
-              <span className="font-mono text-[9.5px] uppercase tracking-wider text-accent-600">
+              <span className="truncate font-mono text-[8.5px] uppercase tracking-wide text-accent-400 sm:text-[9.5px] sm:tracking-wider">
                 {SITE.tagline}
               </span>
             </div>
@@ -254,10 +282,11 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-1 rounded-lg px-3 py-2 text-[13.5px] font-semibold transition-colors",
-                    isActive(item)
-                      ? "text-brand-700"
-                      : "text-ink hover:text-brand-700"
+                    // 1024–1279px: chữ/khoảng cách nhỏ hơn để menu Montserrat (rộng) không xuống 2 dòng.
+                    "relative flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors xl:px-3 xl:text-[13.5px]",
+                    // Gạch chân đỏ chạy ra khi hover / đang ở mục đó (kiểu VinUni).
+                    "after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-accent-500 after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100",
+                    isActive(item) ? "text-white after:scale-x-100" : "text-white/80 hover:text-white"
                   )}
                 >
                   {item.label}
@@ -384,8 +413,8 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
                     navTree.secondary.some(isActive) || secondaryOpen
-                      ? "bg-brand-50 text-brand-700"
-                      : "text-ink hover:bg-brand-50 hover:text-brand-700"
+                      ? "bg-white/15 text-white"
+                      : "text-white/85 hover:bg-white/10 hover:text-white"
                   )}
                 >
                   <div className="space-y-[3px]">
@@ -464,7 +493,9 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
               }}
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-lg border transition-colors",
-                searchOpen ? "border-brand-500 bg-brand-50 text-brand-700" : "border-line text-ink hover:border-brand-500 hover:text-brand-700"
+                searchOpen
+                  ? "border-white bg-white/15 text-white"
+                  : "border-white/25 text-white hover:border-white/60 hover:bg-white/10"
               )}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -472,7 +503,8 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                 <path d="M20 20l-4-4" strokeLinecap="round" />
               </svg>
             </button>
-            <Button href="/tuyen-sinh" className="hidden sm:inline-flex">
+            {/* Ẩn ở 1024–1279px (không đủ chỗ cạnh menu ngang); mobile đã có MobileActionBar, Hero có nút riêng. */}
+            <Button href="/tuyen-sinh" className="hidden sm:inline-flex lg:hidden xl:inline-flex">
               Đăng ký xét tuyển
             </Button>
             <button
@@ -485,12 +517,13 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                 setMobileOpen((v) => !v);
                 setSearchOpen(false);
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-line lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/25 text-white lg:hidden"
             >
-              <div className="space-y-1.5">
-                <span className="block h-0.5 w-5 bg-ink" />
-                <span className="block h-0.5 w-5 bg-ink" />
-                <span className="block h-0.5 w-5 bg-ink" />
+              {/* 3 vạch biến thành dấu × khi mở menu */}
+              <div className="relative h-3.5 w-5">
+                <span className={cn("absolute left-0 top-0 block h-0.5 w-5 rounded bg-current transition-transform duration-300", mobileOpen && "translate-y-1.5 rotate-45")} />
+                <span className={cn("absolute left-0 top-1.5 block h-0.5 w-5 rounded bg-current transition-opacity duration-200", mobileOpen && "opacity-0")} />
+                <span className={cn("absolute left-0 top-3 block h-0.5 w-5 rounded bg-current transition-transform duration-300", mobileOpen && "-translate-y-1.5 -rotate-45")} />
               </div>
             </button>
           </div>

@@ -57,9 +57,23 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Toàn bộ đã khai báo thành token trong `tailwind.config.ts` (`brand-*`, `accent-*`, `paper`, `ink-*`) — **luôn dùng token này, không hard-code mã màu mới.**
 
 ### Font
-- Tiêu đề: **Fraunces** (serif, có italic accent màu đỏ cho từ nhấn mạnh)
-- Nội dung: **Inter**
-- Nhãn/số liệu/mono: **IBM Plex Mono** (uppercase, letter-spacing rộng)
+- **Đổi 02/10/2026: toàn site dùng 1 font Montserrat** (giống VinUni, bản variable
+  + italic, có tiếng Việt — `src/app/layout.tsx`). 3 token Tailwind `font-display`
+  (tiêu đề), `font-sans` (nội dung), `font-mono` (nhãn in hoa/số liệu, có
+  `tabular-nums`) giờ đều trỏ Montserrat — giữ tên token để không sửa hàng trăm class.
+- Montserrat RỘNG hơn font cũ: header đã chỉnh để không tràn ở 360px (logo co,
+  tagline cắt "…") và menu không xuống 2 dòng ở 1024–1279px (chữ/khoảng cách nhỏ
+  hơn, nút "Đăng ký xét tuyển" trên header chỉ hiện từ `xl`). Thêm mục menu mới thì
+  kiểm tra lại khổ 1024px. Cũng đã chỉnh vì font rộng: nút chính `MobileActionBar`
+  (`whitespace-nowrap`, chữ nhỏ hơn dưới 400px), Công cụ nhanh dưới banner (mobile:
+  icon trên chữ dưới), nút CTA khối Tuyển sinh cuối Trang chủ, nút ở cột phải chi
+  tiết ngành (nhãn ngắn "Đăng ký xét tuyển →"), nhãn chuyên mục tin `whitespace-nowrap`.
+- **Kiểm thử 03/10/2026** trước commit: `npm run build` chạy được (lần đầu trong môi
+  trường này) + `next start` thử bản production: 25 trang công khai/404 đúng, 96 lượt
+  quét tràn ngang (4 khổ) sạch, không lỗi React/CSP, tương tác (banner, slider kéo
+  chuột, lightbox, tìm kiếm, cột mốc bàn phím, menu mobile, EN), 25 trang admin + 2
+  file CSV, lưu Cài đặt giữ ảnh banner, gửi thật form Liên hệ → admin thấy → đã xoá.
+- (Trước đây: Fraunces cho tiêu đề, Inter cho nội dung, IBM Plex Mono cho nhãn.)
 
 ### Phong cách — người dùng yêu cầu rõ: **"xịn xò, cầu kỳ", không phẳng/tối giản**
 - Glassmorphism cho card nổi (backdrop-blur, nền trắng bán trong suốt)
@@ -120,7 +134,12 @@ trường khác"). Thêm ở đợt đánh giá thiết kế lần 2: cột
 viết"). Thêm ở đợt "pro hơn + 3D" (migration `0015_bitter_longshot.sql`):
 bảng mới `admission_items` (mốc thời gian/phương thức/hồ sơ tuyển sinh), cột
 `programs.tuition`/`tuition_en` và `nav_items.description`/`description_en`
-(xem mục 5 "Đợt pro hơn + 3D").
+(xem mục 5 "Đợt pro hơn + 3D"). Thêm ở đợt tham khảo VinUni (migration
+`0016_massive_guardsmen.sql`): cột `partners.logo_url`/`partners.website_url`
+(đều nullable, xem mục 5 "Đợt tham khảo VinUni"). Thêm ở đợt VinUni lượt 2
+(migration `0017_rich_wolfpack.sql`): bảng mới **`milestones`** (Cột mốc —
+dòng thời gian /gioi-thieu, có `*_en`) và cột `site_settings.page_banner_url`
+(ảnh nền mặc định cho banner trang con) — tổng cộng giờ là **24 bảng**.
 
 **Cột `*_en` (đa ngôn ngữ, xem mục 5 "Đa ngôn ngữ tiếng Anh")**: hầu hết
 bảng có nội dung hiển thị công khai đều có thêm 1-3 cột `*_en` song song
@@ -890,6 +909,10 @@ kiện, Giới thiệu, Liên hệ, FAQ, Thư viện, Tuyển sinh, Tra cứu, C
   bố cục riêng nhiều khối, tự quản blur/Reveal theo từng khối).
 
 ### "Vẫn đơn điệu" — Reveal đổi sang mượt liên tục theo cuộn + so le từng thẻ
+> **ĐÃ THAY THẾ (02/10/2026)** — cơ chế "bám % vị trí cuộn" mô tả dưới đây không còn
+> dùng; `Reveal` giờ chạy theo thời gian kiểu WOW.js của VinUni, xem mục 5 "Chữ chạy
+> lên khi cuộn tới (kiểu VinUni)". Giữ lại để hiểu lịch sử.
+
 Sau khi mở rộng hiệu ứng ra trang con, người dùng vẫn thấy đơn điệu — đúng,
 vì `Reveal` bản đầu chỉ có **1 kiểu** (mờ/trượt) và bật/tắt **nhị phân**
 (chưa thấy = ẩn hẳn, vừa thấy = hiện hẳn), dùng giống hệt nhau ở mọi nơi —
@@ -1273,6 +1296,150 @@ mobile 375px, kể cả 2 banner tạm `audit-tmp-*` thêm vào DB dev rồi xo�
   kiểm chứng trên máy thật trong phiên này (máy dev nối Ethernet 10.1.10.x —
   điện thoại phải vào được cùng dải mạng).
 
+### Đợt tham khảo VinUni (02/10/2026)
+Người dùng nhờ xem vinuni.edu.vn để cải thiện, chọn qua `AskUserQuestion` 5
+hạng mục giao diện (KHÔNG làm nhóm nội dung: cơ sở vật chất, kiểm định, thông
+điệp lãnh đạo — tránh bịa nội dung/giá trị cốt lõi cho trường). Đã test trình
+duyệt desktop 1280px + mobile 375px:
+
+- **Header trong suốt trên banner** — `SiteHeader.tsx`: chưa cuộn (< 24px), chưa
+  mở menu/tìm kiếm → hàng điều hướng trong suốt, chữ trắng; cuộn xuống → nền
+  `brand-900/85` + blur. (Lượt này chỉ Trang chủ; **lượt 2 đã mở rộng ra mọi trang**
+  nhờ `PageHero` — xem "Đợt VinUni lượt 2".) Link menu có gạch chân đỏ chạy ra khi hover/active; ☰ mobile biến
+  thành ✕. **Hợp đồng chiều cao**: hàng điều hướng cao đúng **72px**, thanh
+  thông báo ~33px — `HeroBanner` kéo `<section>` lên `-mt-[72px]` để ảnh nằm
+  dưới header. Margin âm phải đặt trên CHÍNH `<section>` (có `overflow-hidden`)
+  — đặt ở div con thì phần kéo lên bị cắt, dưới header lộ nền sáng + chữ trắng
+  vô hình (đã gặp thật trên mobile). Đổi chiều cao header thì sửa cả 2 chỗ.
+- **Hero**: tiêu đề hiện **từng từ** (`.hero-word`; dấu cách phải nằm NGOÀI
+  span `inline-block`, để trong thì cuối dòng bị nuốt → các từ dính nhau);
+  `aria-label` giữ nguyên câu. Desktop dùng `min-h` (không cố định `h`) — tiêu
+  đề CMS dài xuống 3 dòng từng làm chữ/nút tràn đè chú thích banner ở màn hình
+  cao ~800px.
+- **"Câu chuyện thành công"** (`TestimonialSlider.tsx`, thay lưới đánh giá cũ)
+  — kiểu khối lãnh đạo VinUni: dải xanh tràn ngang, ảnh vòm nổi trên mép dải,
+  tên in hoa + trích dẫn lớn, nút ‹ ›, tự chuyển 8s (dừng khi rê chuột/focus/
+  giảm chuyển động). Chưa có ảnh → chữ cái đầu tên.
+- **Đối tác có logo + link** — admin `doi-tac` thêm `ImagePicker` logo (tick
+  "Gỡ logo hiện tại") + ô Website (chỉ nhận `http(s)://`, khác thì lưu `null`).
+  Dải chạy ngang: có logo → logo xám, rê chuột hiện màu; không → tên chữ; có
+  website → `<a target=_blank>`. Chỉ lượt đầu danh sách gốc được trình đọc màn
+  hình đọc/focus (`i >= partners.length` là bản lặp → `aria-hidden`, `tabIndex
+  -1`, ẩn khi giảm chuyển động).
+- **Tin tức kiểu tạp chí VinUni** — tin nổi bật thành ảnh phủ kín + chữ trắng
+  trên lớp tối; nhãn chuyên mục **đỏ in hoa** tách khỏi ngày (Trang chủ +
+  `/tin-tuc`).
+- **Nút lên đầu trang** (`BackToTop.tsx`, trong `(site)/layout.tsx`) — hiện sau
+  600px, vòng đỏ tô theo % đã đọc (cập nhật DOM qua ref, không setState mỗi
+  khung hình), đặt ngang hàng bên trái nút liên hệ nhanh (mobile + desktop).
+- **Hiệu ứng thuần CSS** (`globals.css` mục "Đợt tham khảo VinUni"):
+  `.scroll-progress` (thanh đỏ dưới header theo % trang, `animation-timeline:
+  scroll(root)`), `.img-reveal` (ảnh thẻ tin/sự kiện/giảng viên/thư viện "mở
+  màn" + thu nhỏ theo cuộn, `view()`), `.hero-caption`, `.testimonial-*`. Hai
+  hiệu ứng theo cuộn nằm trong `@supports (animation-timeline: …)` — Firefox/
+  Safari cũ: thanh ẩn, ảnh hiện bình thường. `.img-reveal` chỉ animate
+  `clip-path` + `scale` (không đụng `transform`/`opacity` của Reveal/TiltCard).
+  **Bài học**: `view()` bám vùng cuộn gần nhất — khung cha `overflow-hidden` LÀ
+  vùng cuộn (không cuộn được) → hiệu ứng không chạy. Khung cha cần bo góc thì
+  dùng **`overflow-clip`** (đã đổi ở các thẻ liên quan). Tất cả tắt khi
+  `prefers-reduced-motion`.
+- Đã thử trọn vòng đối tác tạm `audit-tmp-doitac` (logo từ thư viện + website)
+  → Trang chủ hiện logo + link tab mới → đã xoá, DB dev như cũ.
+- **Chưa làm**: chưa chạy `npm run build`; hiệu ứng theo cuộn chỉ xác nhận trên
+  Chromium dev (giá trị `clip-path`/`scale` đổi đúng theo vị trí cuộn), chưa
+  thử Safari/điện thoại thật.
+
+### Đợt VinUni lượt 2 (02/10/2026) — thứ tự Trang chủ, trang con, hiệu ứng
+Người dùng: "chưa khai thác hết hiệu ứng của VinUni, xem các trang khác và cân
+nhắc lại thứ tự khối Trang chủ". Đã duyệt 6 trang VinUni (Trang chủ, Về VinUni,
+Viện Khoa học Sức khỏe, Tin tức, Đời sống SV, Tuyển sinh) — VinUni dùng WOW.js
+(fadeInUp từng phần tử), Slick, Fancybox; Trang chủ chỉ 7 khối ~5.200px, Tin tức ở
+vị trí thứ 3. Người dùng chọn qua `AskUserQuestion` **tất cả** hạng mục:
+
+- **Trang chủ 10 khối** (`(site)/page.tsx`, desktop ~11.900 → ~7.850px): Banner +
+  Công cụ nhanh → Vì sao chọn (3D) → **Tin tức · Thông báo · Sự kiện** (gộp 3 khối
+  cũ, cột phải 380px: Thông báo + Sự kiện sắp diễn ra) → Ngành đào tạo (slider) →
+  Sứ mệnh/Tầm nhìn → Giảng viên → Câu chuyện thành công → **Trải nghiệm Hợp Lực**
+  (bento thư viện + lightbox + nút "Xem video" nếu có mục video) → Đối tác (logo,
+  dời xuống gần cuối như VinUni) → **Tuyển sinh** (gộp "4 bước" + CTA + link Công
+  khai). Khối "Sự kiện" và "4 bước" riêng đã bỏ. Mobile: 2 tin nhỏ thành hàng ngang
+  gọn (ảnh 112px trái) thay thẻ cao. **Lỗi đã gặp**: dòng giờ/địa điểm sự kiện
+  `truncate` (nowrap) đẩy cột 380px rộng thành 428px → cả trang tràn ngang ~30px —
+  cột dùng `min-w-0 grid-cols-[minmax(0,1fr)]`.
+- **`PageHero`** (`src/components/site/PageHero.tsx`, async server component) —
+  banner ảnh + breadcrumb "Trang chủ › …" + tiêu đề cho **toàn bộ 21 trang con**
+  (kể cả `(site)/not-found.tsx`, `PageStub`). Ảnh: ảnh bìa riêng của trang (trang
+  tĩnh/bài viết/sự kiện) → `site_settings.pageBannerUrl` (admin/cai-dat, ô mới) →
+  nền gradient xanh + lưới. Tiêu đề/mô tả cũ trong thân trang đã dời lên banner;
+  chi tiết ngành/sự kiện có thêm cột thông tin dính bên phải; chi tiết giảng viên
+  ảnh khung vòm. **Header giờ trong suốt ở MỌI trang** (`SiteHeader.tsx` bỏ hẳn
+  nhánh giao diện sáng) — xem quy ước #12.
+- **Tin tức dạng tổng hợp** (`/tin-tuc`): thanh tab chuyên mục (cuộn ngang trên
+  mobile) → trang 1: tin nổi bật ảnh lớn + cột "Mới nhất" (5 bài) → lưới phần còn
+  lại → phân trang (giữ `?category=`/`?page=`). Tiêu đề trang lấy theo tên chuyên mục.
+- **Giới thiệu nhiều khối** (`/gioi-thieu`): mục lục dính bên trái + nội dung trang
+  tĩnh → Sứ mệnh/Tầm nhìn + 4 con số (lấy lại từ Nội dung Trang chủ, không nhập 2
+  lần) → **Cột mốc** (`MilestoneTimeline.tsx`: thanh năm, mặc định năm mới nhất,
+  ← → / Home / End, mẫu tablist). Admin **`admin/cot-moc`** (khối "Trang tĩnh" trong
+  sidebar, cùng quyền `pages` — entity `pages` giờ có `children`). Data layer
+  `getMilestoneYears()` ẩn mốc có tiêu đề placeholder. **Seed không tạo mốc nào**
+  (không bịa lịch sử trường); `demo:load` tạo 6 "Mốc mẫu" ghi rõ là minh hoạ.
+- **FAQ cuối `/tuyen-sinh`** — 6 câu đầu từ `faqs`, dùng chung `FaqList.tsx` với `/faq`.
+- **Hiệu ứng mới**:
+  - `.img-shine` (globals.css) — rê chuột vào thẻ: vệt sáng quét chéo 1 lượt + phủ
+    xanh nhẹ (VinUni `.imgGroup`). **Không đặt `position` trong class này** (CSS
+    tự viết đứng SAU lớp utilities → sẽ đè `absolute` của Tailwind); phần tử phải tự
+    có `relative`/`absolute`.
+  - `MoreLink` (`src/components/ui/MoreLink.tsx`) thay nút viên thuốc `PillLink`:
+    chữ in hoa + tam giác đỏ + gạch chân đỏ chạy ra (`.link-underline`).
+  - `SectionHeading` giờ tự hiện so le nhãn → tiêu đề → mô tả (mỗi phần 1 `Reveal`);
+    các khối Trang chủ bỏ `Reveal` bọc cả khối, chuyển sang từng phần tử.
+  - `EdgeSlider.tsx` — slider "tràn mép" (thẻ đầu thẳng lề 1320px, thẻ cuối lộ ra
+    mép phải), cuộn gốc + scroll-snap, nút ‹ ›, kéo chuột (chặn click sau khi kéo),
+    thanh tiến trình. Dùng cho Ngành đào tạo (hiện TẤT CẢ ngành, không chỉ 6 ngành
+    nổi bật). `ProgramCard` thành flex-col để dòng cuối nằm sát đáy thẻ cao.
+  - `Lightbox.tsx` (`LightboxGroup` + `LightboxTrigger`, `<dialog>` + `showModal()`)
+    — ảnh phóng to, YouTube phát tại chỗ qua **youtube-nocookie.com** (CSP
+    `frame-src` đã mở riêng domain này), link video khác → nút mở tab mới; ← →,
+    vuốt, Esc. `youtubeId()` trong utils (+ test). `GalleryMedia` giờ chỉ hiển thị.
+    **2 lỗi thật đã sửa**: (1) dọn dẹp effect gọi `dialog.close()` → StrictMode dev
+    chạy dọn dẹp ngay sau mount → sự kiện `close` đóng hộp vừa mở; (2) đóng bằng Esc
+    gốc của trình duyệt dựa vào sự kiện `close` bất đồng bộ — có môi trường không bắn
+    kịp → hộp ẩn nhưng trang vẫn khoá cuộn. Giờ tự bắt Esc/`cancel` và đóng qua state.
+- `getSiteSettings()` bọc `cache()` của React (layout + trang + PageHero gọi chung).
+- `demo:load` khi đã nạp từ trước giờ **bổ sung phần mới** (`loadExtras()`: 6 mốc
+  mẫu + `pageBannerUrl` = ảnh demo phòng mô phỏng) thay vì từ chối; `demo:clean` gỡ
+  cả 2 (và gỡ `pageBannerUrl` nếu admin tự chọn ảnh demo).
+- Đã test trình duyệt (desktop 1280 + mobile 375): 21 trang con trả 200 + có banner,
+  404 đúng, không tràn ngang, không lỗi console; trọn vòng admin Cột mốc (thêm → hiện
+  ở /gioi-thieu → xoá). **Đổi `next.config.js` (CSP) cần khởi động lại `npm run dev`**
+  — chưa thử phát video YouTube thật vì dữ liệu demo không có mục video.
+
+### Chữ chạy lên khi cuộn tới (kiểu VinUni) — viết lại `Reveal` (02/10/2026)
+Người dùng: "thiếu hiệu ứng đi đến đâu chữ mới chạy lên đến đấy". Đối chiếu VinUni:
+WOW.js (`offset: 0`) + animate.css `fadeInUp` — phần tử ẩn sẵn, mép trên chạm khung
+nhìn thì chạy lên (translate 100% chiều cao) + rõ dần trong 1s, mỗi phần tử 1 lần.
+
+- **Lỗi của bản cũ** (`Reveal` bám % vị trí cuộn): hẹn giờ dự phòng 2s cho hiện
+  **TẤT CẢ** phần tử kể cả phần chưa cuộn tới → cuộn chậm hơn 2s là mọi thứ đã hiện
+  sẵn, gần như không thấy hiệu ứng; dừng tay giữa chừng thì chữ dừng lửng lơ.
+- **`Reveal.tsx` mới**: IntersectionObserver (`rootMargin` lùi mép dưới 6%) bật class
+  `reveal-in` 1 lần; CSS `.reveal`/`.reveal-in` (globals.css) chạy opacity 0.9s +
+  transform 1s, quãng trượt `min(100%, 64px)`. `delay` giờ là **ms thật**
+  (`transition-delay`, như `data-wow-delay`). Dự phòng 1,5s chỉ hiện phần tử **đã
+  nằm trong khung nhìn**. Phần tử nằm trong dải cuộn ngang (slider ngành, thẻ vuốt
+  mobile) theo dõi CHÍNH dải đó (`horizontalScroller()`), nếu không thẻ khuất bên
+  phải sẽ trống trơn khi lướt tới. Đã kiểm chứng: sau 3s cả 58 phần tử dưới màn
+  hình Trang chủ vẫn ẩn, cuộn tới mới chạy lên (chụp được lúc ô thư viện đang lên).
+- **`MarkdownContent`** bọc từng khối cấp 1 (đoạn, tiêu đề, danh sách, trích dẫn)
+  trong `Reveal` → bài viết/Giới thiệu/chi tiết ngành chạy lên từng đoạn. Khoảng
+  cách (`mb-*`, `first:mt-0`, `last:mb-0`) dời sang LỚP BỌC (bên trong lớp bọc phần
+  tử nào cũng là first/last child). Prop `reveal={false}` cho đoạn trích có
+  line-clamp (thẻ sự kiện) và bản xem trước trong `MarkdownEditor`.
+- CSS `.reveal` đứng sau lớp utilities → phần tử bọc `Reveal` không được mang class
+  `transform`/`transition`/`opacity` của Tailwind (bị đè). `@media print` hiện hết;
+  `prefers-reduced-motion` hiện ngay không chuyển động.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -1293,16 +1460,21 @@ mobile 375px, kể cả 2 banner tạm `audit-tmp-*` thêm vào DB dev rồi xo�
     đầu tiên trong thân **cả `page.tsx` lẫn mọi hàm trong `actions.ts`**
     tương ứng (2 lớp — chặn cả lúc render trang lẫn lúc gọi thẳng Server
     Action) — xem mục 5 "Phân quyền admin theo module".
-12. **Trang công khai mới trong `(site)` (trừ Trang chủ) luôn bọc nội dung
-    trong `<DecorativeSection>`** (`src/components/site/DecorativeSection.tsx`)
-    thay vì tự viết `<section className="px-6 py-20 sm:px-8">` trần — giữ
-    đồng bộ hiệu ứng cuộn + trang trí gradient blur với các trang con khác
-    (xem mục 5 "Mở rộng hiệu ứng + trang trí ra toàn bộ trang con").
+12. **Trang công khai mới trong `(site)` (trừ Trang chủ) BẮT BUỘC mở đầu bằng
+    `<PageHero crumbs=… title=…>`** (`src/components/site/PageHero.tsx`) rồi mới
+    tới nội dung bọc trong `<DecorativeSection>` — header chữ trắng trong suốt ở
+    mọi trang, thiếu khối nền tối đầu trang thì logo/menu vô hình trên nền sáng.
+    Không tự viết `<section className="px-6 py-20 sm:px-8">` trần (xem mục 5 "Đợt
+    VinUni lượt 2" và "Mở rộng hiệu ứng + trang trí ra toàn bộ trang con").
+    Link "Xem tất cả" đầu khối dùng `<MoreLink>`; ảnh trong thẻ thêm `img-shine`.
 13. **Thẻ nội dung mới ở web công khai muốn có chiều sâu 3D**: bọc trong
     `<TiltCard>` thay vì tự viết `hover:-translate-y-*` (2 transform sẽ đè
     nhau). Ghi chú nội bộ dạng `[Trường điền: …]` không được lộ ra web công
     khai — lọc ở data layer bằng `hasPlaceholder()` (`src/lib/utils.ts`).
-    Hiển thị `created_at` SQLite luôn qua `formatDbDateTime()`.
+    Hiển thị `created_at` SQLite luôn qua `formatDbDateTime()`. Ảnh trong thẻ
+    muốn "mở màn" theo cuộn: thêm class `img-reveal` cho khung ảnh, và mọi khung
+    cha bo góc dùng `overflow-clip` thay `overflow-hidden` (xem mục 5 "Đợt tham
+    khảo VinUni").
 14. **Trang admin mới có danh sách lớn cần đưa ra Excel**: route handler
     `xuat-csv/route.ts` cạnh `page.tsx`, gọi `requirePermission`, dùng
     `toCsv`/`digitsCell` (`src/lib/csv.ts`), lọc chung 1 hàm với trang.

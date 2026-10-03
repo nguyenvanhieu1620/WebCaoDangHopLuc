@@ -158,6 +158,8 @@ export const siteSettings = sqliteTable("site_settings", {
   youtubeUrl: text("youtube_url").notNull().default("#"),
   /** Link cổng LMS VNPT — hiện ở trang /lms. Để trống ("#") tới khi trường cung cấp link thật. */
   lmsUrl: text("lms_url").notNull().default("#"),
+  /** Ảnh nền mặc định cho banner đầu trang con (PageHero) khi trang đó không có ảnh bìa riêng — tuỳ chọn, trống thì dùng nền xanh gradient. */
+  pageBannerUrl: text("page_banner_url"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -268,6 +270,10 @@ export const partners = sqliteTable("partners", {
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   nameEn: text("name_en"),
+  /** Ảnh logo (tuỳ chọn) — có logo thì dải đối tác hiện logo, không có thì hiện tên chữ. */
+  logoUrl: text("logo_url"),
+  /** Website của đối tác (tuỳ chọn) — có thì bấm vào logo/tên mở tab mới. */
+  websiteUrl: text("website_url"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
@@ -487,6 +493,32 @@ export const admissionItems = sqliteTable("admission_items", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Cột mốc phát triển của trường — dòng thời gian ở /gioi-thieu (kiểu "Những
+ * cột mốc" của VinUni: chọn năm → hiện các mốc trong năm). Quản lý qua
+ * admin/cot-moc. Nội dung do trường tự nhập — seed KHÔNG tạo sẵn mốc nào để
+ * tránh bịa lịch sử trường (chỉ `npm run demo:load` tạo vài "Mốc mẫu").
+ */
+export const milestones = sqliteTable("milestones", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  year: integer("year").notNull(),
+  /** Thời điểm trong năm, tuỳ chọn — VD "Tháng 9". */
+  period: text("period"),
+  periodEn: text("period_en"),
+  title: text("title").notNull(),
+  titleEn: text("title_en"),
+  description: text("description"),
+  descriptionEn: text("description_en"),
+  imageUrl: text("image_url"),
+  /** Thứ tự trong cùng 1 năm (số nhỏ hiện trước). */
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Hồ sơ đăng ký xét tuyển gửi từ form công khai trên website. */
 export const admissionSubmissions = sqliteTable("admission_submissions", {
   id: text("id")
@@ -532,3 +564,4 @@ export type FacultyAttribute = typeof facultyAttributes.$inferSelect;
 export type QuickContact = typeof quickContacts.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type AdmissionItem = typeof admissionItems.$inferSelect;
+export type Milestone = typeof milestones.$inferSelect;

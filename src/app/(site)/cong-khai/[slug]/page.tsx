@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 import { getPageBySlug } from "@/lib/data/pages";
 
 export async function generateMetadata({
@@ -27,25 +25,17 @@ export default async function CongKhaiDetailPage({
   if (!page) notFound();
 
   return (
-    <DecorativeSection contentClassName="mx-auto max-w-3xl">
-        <Link
-          href="/cong-khai"
-          className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
-        >
-          ← Công khai
-        </Link>
-        <Eyebrow tone="blue" className="mb-6">
-          Công khai
-        </Eyebrow>
-        <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
-          {page.title}
-        </h1>
-        {page.coverImageUrl && (
-          <div className="relative mt-8 h-[240px] overflow-hidden rounded-2xl sm:h-[300px]">
-            <Image src={page.coverImageUrl} alt={page.title} fill className="object-cover" />
-          </div>
-        )}
-        <MarkdownContent content={page.content} className="mt-8" />
-    </DecorativeSection>
+    <>
+      <PageHero
+        crumbs={[{ label: "Công khai", href: "/cong-khai" }, { label: page.title }]}
+        eyebrow="Công khai"
+        title={page.title}
+        imageUrl={page.coverImageUrl}
+        variant="article"
+      />
+      <DecorativeSection contentClassName="mx-auto max-w-3xl">
+        <MarkdownContent content={page.content} />
+      </DecorativeSection>
+    </>
   );
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Form from "next/form";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
 import { searchSite, SEARCH_MIN_LENGTH, type SearchResultType, type TextPart } from "@/lib/data/search";
 import { getLocale } from "@/lib/locale";
@@ -99,11 +99,9 @@ export default async function SearchPage({
     `/tim-kiem?q=${encodeURIComponent(query)}${type ? `&loai=${type}` : ""}`;
 
   return (
-    <DecorativeSection contentClassName="mx-auto max-w-3xl">
-      <Eyebrow tone="blue" className="mb-5">{t.eyebrow}</Eyebrow>
-      <h1 className="font-display text-[34px] font-semibold leading-tight text-brand-900 sm:text-[40px]">{t.heading}</h1>
-
-      <Form action="/tim-kiem" role="search" className="group relative mt-7">
+    <>
+    <PageHero crumbs={[{ label: t.eyebrow }]} eyebrow={t.eyebrow} title={t.heading}>
+      <Form action="/tim-kiem" role="search" className="group relative max-w-3xl">
         <div className="pointer-events-none absolute -inset-1 rounded-[22px] bg-gradient-to-r from-brand-500/30 via-brand-700/20 to-accent-500/30 opacity-0 blur-md transition-opacity duration-300 group-focus-within:opacity-100" />
         <div className="relative flex items-center gap-2 rounded-2xl border border-line bg-white/90 p-2 shadow-md2 backdrop-blur">
           <svg className="ml-3 h-5 w-5 shrink-0 text-ink-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -127,13 +125,15 @@ export default async function SearchPage({
           </button>
         </div>
       </Form>
+    </PageHero>
+    <DecorativeSection contentClassName="mx-auto max-w-3xl">
 
       {query.length > 0 && query.length < SEARCH_MIN_LENGTH && (
-        <p className="mt-6 text-sm text-ink-soft">{t.tooShort}</p>
+        <p className="text-sm text-ink-soft">{t.tooShort}</p>
       )}
 
       {query.length >= SEARCH_MIN_LENGTH && (
-        <div className="mt-8">
+        <div>
           <p className="text-sm text-ink-soft" aria-live="polite">{t.results(results.length, query)}</p>
 
           {results.length > 0 && (
@@ -205,7 +205,7 @@ export default async function SearchPage({
       )}
 
       {!query && (
-        <div className="mt-8">
+        <div>
           <div className="mb-3 font-mono text-[11px] uppercase tracking-wider text-ink-faint">{t.popular}</div>
           <div className="flex flex-wrap gap-2">
             {POPULAR.map((p) => (
@@ -217,5 +217,6 @@ export default async function SearchPage({
         </div>
       )}
     </DecorativeSection>
+    </>
   );
 }

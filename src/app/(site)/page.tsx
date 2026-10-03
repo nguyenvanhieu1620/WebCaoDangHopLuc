@@ -10,8 +10,12 @@ import { ProgramCard } from "@/components/site/ProgramCard";
 import { CountUp } from "@/components/site/CountUp";
 import { DnaScene3D } from "@/components/site/DnaScene3D";
 import { TiltCard } from "@/components/site/TiltCard";
+import { TestimonialSlider } from "@/components/site/TestimonialSlider";
+import { EdgeSlider } from "@/components/site/EdgeSlider";
+import { LightboxGroup, LightboxTrigger, type LightboxItem } from "@/components/site/Lightbox";
+import { MoreLink } from "@/components/ui/MoreLink";
 import { programGradient } from "@/lib/constants";
-import { getFeaturedPrograms, getPrograms } from "@/lib/data/programs";
+import { getPrograms } from "@/lib/data/programs";
 import { getHomepageContent } from "@/lib/data/homepage";
 import { getPartners } from "@/lib/data/partners";
 import { getGalleryItems } from "@/lib/data/gallery";
@@ -59,26 +63,7 @@ function vnDayMonth(iso: string | null): { day: string; month: string } | null {
  */
 const MOBILE_SWIPE_ROW =
   "no-scrollbar -mx-6 flex snap-x snap-mandatory scroll-px-6 gap-4 overflow-x-auto px-6 pb-3 sm:mx-0 sm:grid sm:overflow-visible sm:px-0 sm:pb-0";
-const MOBILE_SWIPE_ITEM = "w-[84%] shrink-0 snap-start sm:w-auto";
 const MOBILE_SWIPE_ITEM_NARROW = "w-[68%] shrink-0 snap-start sm:w-auto";
-
-/** Nút dạng viên thuốc "Xem tất cả →" dùng chung cho đầu các khối. */
-function PillLink({ href, children, onDark }: { href: string; children: React.ReactNode; onDark?: boolean }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group inline-flex shrink-0 items-center gap-2 rounded-full border px-5 py-2.5 text-[13.5px] font-semibold transition-all duration-200",
-        onDark
-          ? "border-white/30 text-white hover:border-white hover:bg-white hover:text-brand-900"
-          : "border-brand-700/20 bg-white text-brand-700 shadow-sm2 hover:border-brand-700 hover:bg-brand-700 hover:text-white"
-      )}
-    >
-      {children}
-      <span className="transition-transform group-hover:translate-x-0.5">→</span>
-    </Link>
-  );
-}
 
 /**
  * Ảnh cho banner Trang chủ: ưu tiên banner CMS (admin/banner-trang-chu) →
@@ -136,7 +121,6 @@ const QUICK_TOOL_ICONS = {
 
 export default async function HomePage() {
   const [
-    featuredPrograms,
     allPrograms,
     content,
     partners,
@@ -149,7 +133,6 @@ export default async function HomePage() {
     heroBanners,
     allEvents,
   ] = await Promise.all([
-    getFeaturedPrograms(),
     getPrograms(),
     getHomepageContent(),
     getPartners(),
@@ -168,6 +151,11 @@ export default async function HomePage() {
   // màn hình rộng, rồi nhân đôi — CSS dịch -50% là khớp liền mạch.
   const marqueeBase = partners.length ? Array.from({ length: Math.ceil(8 / partners.length) }, () => partners).flat() : [];
   const marqueeItems = [...marqueeBase, ...marqueeBase];
+  // 5 ô bento "Trải nghiệm Hợp Lực" — bấm mở lightbox; có video thì thêm nút "Xem video" mở thẳng mục đó.
+  const galleryLightbox: LightboxItem[] = galleryItems
+    .slice(0, 5)
+    .map(({ id, imageUrl, caption, videoUrl }) => ({ id, imageUrl, caption, videoUrl }));
+  const firstVideoIndex = galleryLightbox.findIndex((g) => g.videoUrl);
 
   const quickTools = [
     {
@@ -203,7 +191,10 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* ============ BANNER (tràn toàn màn hình) ============ */}
+      {/* ============ 1. BANNER (tràn toàn màn hình) + CÔNG CỤ NHANH ============
+          Thứ tự 10 khối Trang chủ (gọn theo kiểu VinUni, xem CLAUDE.md mục 5 "Đợt VinUni lượt 2"):
+          Banner → Vì sao chọn → Tin tức·Thông báo·Sự kiện → Ngành → Sứ mệnh → Giảng viên →
+          Câu chuyện thành công → Trải nghiệm (thư viện) → Đối tác → Tuyển sinh (4 bước + CTA). */}
       <HeroBanner
         slides={heroSlides(heroBanners, content.heroImageUrl)}
         badge={content.heroBadge}
@@ -226,7 +217,8 @@ export default async function HomePage() {
               target={"external" in tool && tool.external ? "_blank" : undefined}
               rel={"external" in tool && tool.external ? "noopener noreferrer" : undefined}
               className={cn(
-                "group relative flex items-center gap-3.5 p-4 transition-colors hover:bg-brand-50 sm:p-6",
+                // Mobile: icon trên, chữ dưới (ô 2 cột hẹp — icon cạnh chữ làm nhãn Montserrat xuống 3 dòng).
+                "group relative flex flex-col items-start gap-2.5 p-4 transition-colors hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-3.5 sm:p-6",
                 i % 2 === 1 && "border-l border-line",
                 i >= 2 && "border-t border-line lg:border-t-0",
                 i === 2 && "lg:border-l"
@@ -245,39 +237,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ ĐỐI TÁC — dải chạy ngang vô tận ============ */}
-      {partners.length > 0 && (
-        <section className="pb-4 pt-16 sm:pt-20" aria-label="Đối tác đào tạo">
-          <p className="mb-6 px-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-faint">
-            Đối tác đào tạo &amp; thực hành lâm sàng
-          </p>
-          <div className="marquee overflow-hidden">
-            <div className="marquee-track flex w-max items-center">
-              {marqueeItems.map((p, i) => {
-                const duplicate = i >= marqueeItems.length / 2;
-                return (
-                  <span
-                    key={`${p.id}-${i}`}
-                    aria-hidden={duplicate || undefined}
-                    className={cn(
-                      "mr-4 flex items-center gap-3 whitespace-nowrap rounded-full border border-line bg-white px-6 py-3 font-display text-[16px] font-semibold text-brand-900 shadow-sm2",
-                      duplicate && "marquee-dup"
-                    )}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-gradient-to-br from-accent-600 to-accent-500" />
-                    {p.name}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ============ VÌ SAO CHỌN HỢP LỰC — khối 3D nền tối ============
+      {/* ============ 2. VÌ SAO CHỌN HỢP LỰC — khối 3D nền tối ============
           Cảnh DNA 3D đặt ở đây (không phải banner): theo các mẫu web đoạt giải,
           3D dùng để tạo không khí cho 1 khối kể chuyện giữa trang, còn banner
-          đầu trang dành cho ảnh thật của trường. */}
+          đầu trang dành cho ảnh thật của trường. Từng phần hiện lệch nhịp
+          (nhãn → tiêu đề → từng điểm mạnh) kiểu WOW fadeInUp của VinUni. */}
       <section className="relative isolate mt-16 overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 py-24 text-white sm:px-8 lg:py-28">
         <div className="bg-grid-dark pointer-events-none absolute inset-0" />
         <ParallaxBlur
@@ -289,27 +253,33 @@ export default async function HomePage() {
           className="pointer-events-none absolute -right-32 bottom-0 h-[420px] w-[420px] rounded-full bg-accent-500/20 blur-[90px]"
         />
         <div className="relative mx-auto grid max-w-[1320px] items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-4">
-          <Reveal>
-            <Eyebrow tone="onDark">Vì sao chọn Hợp Lực</Eyebrow>
-            <h2 className="mt-5 text-balance font-display text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[48px]">
-              Đào tạo thực chiến,{" "}
-              <em className="font-medium italic text-accent-400">đồng hành</em> đến khi có việc làm
-            </h2>
+          <div>
+            <Reveal>
+              <Eyebrow tone="onDark">Vì sao chọn Hợp Lực</Eyebrow>
+            </Reveal>
+            <Reveal delay={90}>
+              <h2 className="mt-5 text-balance font-display text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[48px]">
+                Đào tạo thực chiến,{" "}
+                <em className="font-medium italic text-accent-400">đồng hành</em> đến khi có việc làm
+              </h2>
+            </Reveal>
             <ol className="mt-10 space-y-7">
               {features.map((f, i) => (
-                <li key={f.title} className="group flex gap-5">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.08] text-accent-400 backdrop-blur transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-accent-500 group-hover:bg-accent-600 group-hover:text-white">
-                    {FEATURE_ICONS[i % FEATURE_ICONS.length]}
-                  </div>
-                  <div>
-                    <div className="font-mono text-[11px] tracking-wider text-brand-200/60">{String(i + 1).padStart(2, "0")}</div>
-                    <h3 className="font-display text-[20px] font-semibold">{f.title}</h3>
-                    <p className="mt-1.5 max-w-md text-[14.5px] leading-relaxed text-brand-100/75">{f.desc}</p>
-                  </div>
+                <li key={f.title}>
+                  <Reveal delay={180 + i * 90} className="group flex gap-5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.08] text-accent-400 backdrop-blur transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-accent-500 group-hover:bg-accent-600 group-hover:text-white">
+                      {FEATURE_ICONS[i % FEATURE_ICONS.length]}
+                    </div>
+                    <div>
+                      <div className="font-mono text-[11px] tracking-wider text-brand-200/60">{String(i + 1).padStart(2, "0")}</div>
+                      <h3 className="font-display text-[20px] font-semibold">{f.title}</h3>
+                      <p className="mt-1.5 max-w-md text-[14.5px] leading-relaxed text-brand-100/75">{f.desc}</p>
+                    </div>
+                  </Reveal>
                 </li>
               ))}
             </ol>
-          </Reveal>
+          </div>
 
           <div>
             <div className="relative h-[400px] sm:h-[560px]">
@@ -329,41 +299,224 @@ export default async function HomePage() {
             {/* Chỉ số dạng lưới trên mobile/tablet */}
             <div className="mt-2 grid grid-cols-2 gap-3 lg:hidden">
               {stats.map((s, i) => (
-                <DarkStat key={s.label} value={s.value} label={s.label} accent={i % 3 !== 0} />
+                <Reveal key={s.label} delay={i * 80}>
+                  <DarkStat value={s.value} label={s.label} accent={i % 3 !== 0} />
+                </Reveal>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============ SỨ MỆNH - TẦM NHÌN ============ */}
-      {(content.missionText || content.visionText) && (
-        <section className="px-6 pt-24 sm:px-8">
-          <Reveal className="mx-auto grid max-w-[1320px] gap-5 md:grid-cols-2">
-            {[
-              { text: content.missionText, label: "Sứ mệnh", tone: "blue" as const },
-              { text: content.visionText, label: "Tầm nhìn", tone: "red" as const },
-            ]
-              .filter((b) => b.text)
-              .map((b) => (
-                <TiltCard key={b.label} max={4} className="h-full rounded-[24px] border border-line bg-white p-9 shadow-sm2">
-                  <Eyebrow tone={b.tone} className="mb-5">
-                    {b.label}
-                  </Eyebrow>
-                  <p className="font-display text-[19px] leading-relaxed text-brand-900 sm:text-[21px]">
-                    <span className="mr-1 font-display text-[40px] leading-none text-accent-500/50">“</span>
-                    {b.text}
-                  </p>
-                </TiltCard>
-              ))}
-          </Reveal>
+      {/* ============ 3. TIN TỨC · THÔNG BÁO · SỰ KIỆN — đưa lên cao như VinUni ============
+          Trái: 1 tin nổi bật lớn + 2 tin nhỏ (kiểu tạp chí). Phải: bảng "Thông báo"
+          (bài được ghim) + "Sự kiện sắp diễn ra" — gộp 3 khối cũ thành 1 cho trang gọn. */}
+      {(latestPosts.length > 0 || pinnedPosts.length > 0 || nextEvents.length > 0) && (
+        <section className="bg-paper px-6 py-24 sm:px-8">
+          <div className="mx-auto max-w-[1320px]">
+            <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
+              <SectionHeading eyebrow="Tin tức & sự kiện" title="Hợp Lực hôm nay" align="left" className="mb-0" />
+              <Reveal delay={180}>
+                <MoreLink href="/tin-tuc">Xem tất cả tin</MoreLink>
+              </Reveal>
+            </div>
+            <div className={cn("grid gap-6", latestPosts.length > 0 && (pinnedPosts.length > 0 || nextEvents.length > 0) && "lg:grid-cols-[1fr_380px]")}>
+              {latestPosts.length > 0 && (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {latestPosts.map((n, i) => {
+                    const featured = i === 0;
+                    // Chỉ có 1 tin nhỏ (tổng 2 bài) thì cho trải hết hàng, tránh trống nửa bên phải.
+                    const fullRow = featured || latestPosts.length === 2;
+                    // Tin nổi bật kiểu VinUni: ảnh phủ kín, chữ trắng đè trên lớp tối phía dưới.
+                    if (featured) {
+                      return (
+                        <Reveal key={n.id} className="md:col-span-2">
+                          <TiltCard max={2.5} className="rounded-[22px]">
+                            <Link
+                              href={`/tin-tuc/${n.slug}`}
+                              className="group relative block h-[380px] overflow-clip rounded-[22px] shadow-md2 sm:h-[440px]"
+                            >
+                              <div className="img-reveal img-shine absolute inset-0">
+                                {n.coverImageUrl ? (
+                                  <Image
+                                    src={n.coverImageUrl}
+                                    alt={n.title}
+                                    fill
+                                    sizes="(max-width: 1024px) 100vw, 860px"
+                                    className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+                                  />
+                                ) : (
+                                  <ImagePlaceholder label="Ảnh bài viết" />
+                                )}
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/45 to-transparent" />
+                              <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-9">
+                                <div className="mb-3 flex flex-wrap items-center gap-3">
+                                  <span className="rounded bg-accent-600 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                                    {n.categoryName ?? "Tin nổi bật"}
+                                  </span>
+                                  <span className="font-mono text-[11px] text-white/75">{formatVNDate(n.publishedAt)}</span>
+                                </div>
+                                <h3 className="max-w-3xl font-display text-[24px] font-semibold leading-snug sm:text-[32px]">{n.title}</h3>
+                                {n.excerpt && <p className="mt-3 line-clamp-2 max-w-2xl text-[14.5px] leading-relaxed text-white/80">{n.excerpt}</p>}
+                                <span className="mt-5 inline-flex items-center gap-2 text-[13.5px] font-bold">
+                                  <span className="link-underline">Đọc tiếp</span>
+                                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                                </span>
+                              </div>
+                            </Link>
+                          </TiltCard>
+                        </Reveal>
+                      );
+                    }
+                    return (
+                      <Reveal key={n.id} delay={i * 90} className={cn(fullRow && "md:col-span-2")}>
+                        <TiltCard max={6} className="h-full rounded-[22px]">
+                          {/* Mobile: hàng ngang gọn (ảnh nhỏ trái, chữ phải) cho khối tin không dài lê thê; từ md: thẻ ảnh lớn. */}
+                          <Link
+                            href={`/tin-tuc/${n.slug}`}
+                            className="group flex h-full gap-4 overflow-clip rounded-[22px] border border-line bg-white p-3 shadow-sm2 transition-shadow hover:shadow-md2 md:block md:p-0"
+                          >
+                            <div className="img-reveal img-shine relative h-24 w-28 shrink-0 overflow-hidden rounded-2xl md:h-[190px] md:w-auto md:rounded-none">
+                              {n.coverImageUrl ? (
+                                <Image
+                                  src={n.coverImageUrl}
+                                  alt={n.title}
+                                  fill
+                                  sizes="(max-width: 768px) 112px, 380px"
+                                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                              ) : (
+                                <ImagePlaceholder label="Ảnh bài viết" />
+                              )}
+                            </div>
+                            <div className="min-w-0 py-1 md:p-5">
+                              {/* Nhãn chuyên mục đỏ in hoa kiểu VinUni */}
+                              <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                                {n.categoryName && (
+                                  <span className="whitespace-nowrap font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-accent-600">
+                                    {n.categoryName}
+                                  </span>
+                                )}
+                                <span className="font-mono text-[10.5px] text-ink-faint">{formatVNDate(n.publishedAt)}</span>
+                              </div>
+                              <h3 className="line-clamp-3 font-display text-[15px] font-semibold leading-snug text-ink transition-colors group-hover:text-brand-700 md:text-[17px]">
+                                {n.title}
+                              </h3>
+                            </div>
+                          </Link>
+                        </TiltCard>
+                      </Reveal>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(pinnedPosts.length > 0 || nextEvents.length > 0) && (
+                // min-w-0 + minmax(0,1fr): dòng giờ/địa điểm sự kiện `truncate` (không xuống dòng) không được
+                // đẩy cột rộng quá 380px — nếu không cả trang bị tràn ngang ~30px.
+                <div className={cn("grid h-fit min-w-0 grid-cols-[minmax(0,1fr)] gap-6", latestPosts.length === 0 && "md:grid-cols-2")}>
+                  {pinnedPosts.length > 0 && (
+                    <Reveal delay={120}>
+                      <aside className="overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label="Thông báo">
+                        <div className="flex items-center gap-3 bg-gradient-to-r from-accent-600 to-accent-500 px-6 py-4 text-white">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                            <path d="M12 2a5 5 0 00-5 5v3.6c0 .5-.2 1-.6 1.4L5 13.4c-.6.6-.2 1.6.6 1.6h13a1 1 0 00.7-1.6l-1.4-1.4a2 2 0 01-.6-1.4V7a5 5 0 00-5-5z" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9 18a3 3 0 006 0" strokeLinecap="round" />
+                          </svg>
+                          <span className="font-display text-[18px] font-semibold">Thông báo</span>
+                        </div>
+                        <ul className="divide-y divide-line">
+                          {pinnedPosts.map((p) => {
+                            const date = vnDayMonth(p.publishedAt);
+                            return (
+                              <li key={p.id}>
+                                <Link href={`/tin-tuc/${p.slug}`} className="group flex gap-4 px-6 py-4 transition-colors hover:bg-brand-50">
+                                  {date && (
+                                    <span className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-paper text-center">
+                                      <span className="font-display text-[20px] font-bold leading-none text-brand-900">{date.day}</span>
+                                      <span className="mt-1 font-mono text-[9.5px] uppercase text-ink-faint">{date.month}</span>
+                                    </span>
+                                  )}
+                                  <span className="min-w-0 text-[14px] font-semibold leading-snug text-ink group-hover:text-brand-700">
+                                    {p.title}
+                                    {p.attachmentUrl && (
+                                      <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 align-middle text-[10.5px] font-semibold text-brand-700">
+                                        📎 Tệp đính kèm
+                                      </span>
+                                    )}
+                                  </span>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </aside>
+                    </Reveal>
+                  )}
+
+                  {nextEvents.length > 0 && (
+                    <Reveal delay={200}>
+                      <aside className="overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label="Sự kiện sắp diễn ra">
+                        <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-brand-900 to-brand-700 px-6 py-4 text-white">
+                          <span className="flex items-center gap-3">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                              <rect x="3" y="5" width="18" height="16" rx="2" />
+                              <path d="M3 10h18M8 3v4M16 3v4" strokeLinecap="round" />
+                            </svg>
+                            <span className="font-display text-[18px] font-semibold">Sự kiện sắp diễn ra</span>
+                          </span>
+                          <Link href="/su-kien" className="text-[12px] font-semibold text-brand-100 hover:text-white">
+                            Lịch →
+                          </Link>
+                        </div>
+                        <ul className="divide-y divide-line">
+                          {nextEvents.map((e) => {
+                            const date = vnDayMonth(e.startAt);
+                            const body = (
+                              <>
+                                {date && (
+                                  <span className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-brand-800 to-brand-600 text-center text-white shadow-sm2">
+                                    <span className="font-display text-[20px] font-bold leading-none">{date.day}</span>
+                                    <span className="mt-1 font-mono text-[9.5px] uppercase text-brand-100">{date.month}</span>
+                                  </span>
+                                )}
+                                <span className="min-w-0">
+                                  <span className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink group-hover:text-brand-700">{e.title}</span>
+                                  <span className="mt-1 block truncate font-mono text-[10.5px] uppercase tracking-wider text-accent-600">
+                                    {formatVNDateTime(e.startAt)}
+                                    {e.location ? ` · ${e.location}` : ""}
+                                  </span>
+                                </span>
+                              </>
+                            );
+                            return (
+                              <li key={e.id}>
+                                {e.slug ? (
+                                  <Link href={`/su-kien/${e.slug}`} className="group flex gap-4 px-6 py-4 transition-colors hover:bg-brand-50">
+                                    {body}
+                                  </Link>
+                                ) : (
+                                  <div className="flex gap-4 px-6 py-4">{body}</div>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </aside>
+                    </Reveal>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       )}
 
-      {/* ============ PROGRAMS ============ */}
-      <section className="bg-paper-alt px-6 py-24 sm:px-8">
-        <div className="mx-auto max-w-[1320px]">
-          <Reveal className="mb-12 flex flex-wrap items-end justify-between gap-6">
+      {/* ============ 4. NGÀNH ĐÀO TẠO — slider thẻ màu "tràn mép" kiểu VinUni ============ */}
+      {allPrograms.length > 0 && (
+        <section className="overflow-hidden bg-paper-alt py-24">
+          <div className="mx-auto mb-10 flex max-w-[1320px] flex-wrap items-end justify-between gap-6 px-6 sm:px-8">
             <SectionHeading
               eyebrow="Ngành đào tạo"
               title={`${allPrograms.length} ngành trọng điểm khối sức khoẻ`}
@@ -371,97 +524,48 @@ export default async function HomePage() {
               align="left"
               className="mb-0"
             />
-            <PillLink href="/nganh-dao-tao">Xem tất cả ngành</PillLink>
-          </Reveal>
-          <div className={cn(MOBILE_SWIPE_ROW, "sm:grid-cols-2 sm:gap-5 lg:grid-cols-3")}>
-            {featuredPrograms.map((p, i) => (
-              <div key={p.slug} className={MOBILE_SWIPE_ITEM}><ProgramCard program={p} gradientClass={programGradient(i)} delay={i * 80} /></div>
+            <Reveal delay={180}>
+              <MoreLink href="/nganh-dao-tao">Xem tất cả ngành</MoreLink>
+            </Reveal>
+          </div>
+          <EdgeSlider label="Danh sách ngành đào tạo" itemClassName="h-[340px] w-[82%] sm:h-[360px] sm:w-[46%] lg:w-[31%] xl:w-[27%]">
+            {allPrograms.map((p, i) => (
+              <ProgramCard key={p.slug} program={p} gradientClass={programGradient(i)} delay={Math.min(i, 3) * 80} />
             ))}
-          </div>
-        </div>
-      </section>
+          </EdgeSlider>
+        </section>
+      )}
 
-      {/* ============ PROCESS ============ */}
-      <section className="bg-paper px-6 py-24 sm:px-8">
-        <Reveal className="mx-auto max-w-[1100px]">
-          <SectionHeading eyebrow="Quy trình tuyển sinh" title="4 bước xét tuyển đơn giản" />
-          <div className="relative grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div
-              className="pointer-events-none absolute left-[12%] right-[12%] top-[26px] hidden h-0.5 lg:block"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, var(--brand-700) 0 8px, transparent 8px 16px)",
-              }}
-            />
-            {steps.map((s, i) => (
-              <Reveal key={s.title} delay={i * 90} className="relative flex items-start gap-4 text-left sm:block sm:text-center">
-                <div className="relative z-10 flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-2 border-brand-700 bg-white font-mono text-[13px] font-semibold text-brand-700 shadow-sm2 sm:mx-auto sm:mb-5">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                {/* Mobile: số bên trái, chữ bên phải (gọn hơn xếp giữa); từ sm trở lên: xếp giữa như cũ. */}
-                <div className="pt-1.5 sm:pt-0">
-                  <h4 className="font-display text-base font-semibold text-ink">{s.title}</h4>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{s.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+      {/* ============ 5. SỨ MỆNH - TẦM NHÌN ============ */}
+      {(content.missionText || content.visionText) && (
+        <section className="px-6 pt-24 sm:px-8">
+          <div className="mx-auto grid max-w-[1320px] gap-5 md:grid-cols-2">
+            {[
+              { text: content.missionText, label: "Sứ mệnh", tone: "blue" as const },
+              { text: content.visionText, label: "Tầm nhìn", tone: "red" as const },
+            ]
+              .filter((b) => b.text)
+              .map((b, i) => (
+                <Reveal key={b.label} delay={i * 120} className="h-full">
+                  <TiltCard max={4} className="h-full rounded-[24px] border border-line bg-white p-9 shadow-sm2">
+                    <Eyebrow tone={b.tone} className="mb-5">
+                      {b.label}
+                    </Eyebrow>
+                    <p className="font-display text-[19px] leading-relaxed text-brand-900 sm:text-[21px]">
+                      <span className="mr-1 font-display text-[40px] leading-none text-accent-500/50">“</span>
+                      {b.text}
+                    </p>
+                  </TiltCard>
+                </Reveal>
+              ))}
           </div>
-        </Reveal>
-      </section>
+        </section>
+      )}
 
-      {/* ============ THƯ VIỆN (BENTO) ============ */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-900 to-brand-700 px-6 py-24 sm:px-8">
-        <ParallaxBlur
-          speed={0.18}
-          className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-accent-500/25 blur-[50px]"
-        />
-        <Reveal className="relative mx-auto max-w-[1320px]">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-            <SectionHeading
-              eyebrow="Đời sống sinh viên"
-              eyebrowTone="onDark"
-              title="Khoảnh khắc tại Hợp Lực"
-              align="left"
-              onDark
-              className="mb-0"
-            />
-            <PillLink href="/thu-vien" onDark>
-              Xem thư viện
-            </PillLink>
-          </div>
-          {/* Chiều cao đặt qua grid-rows (không trộn h-[160px] với h-full trên cùng phần tử —
-              `cn()` không gộp class, 2 class cùng thuộc tính sẽ không rõ class nào thắng,
-              từng làm ô lớn đầu tiên co thành vạch mỏng trên mobile). */}
-          <div className="grid auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[170px] sm:grid-cols-4 sm:gap-4">
-            {Array.from({ length: 5 }, (_, i) => galleryItems[i]).map((item, i) => (
-              <Reveal
-                key={item?.id ?? i}
-                delay={i * 90}
-                className={cn(
-                  "relative overflow-hidden rounded-[18px]",
-                  // Ô 0 lớn 2×2, 4 ô còn lại lấp kín 2 cột bên phải (desktop) / 2 hàng dưới (mobile).
-                  i === 0 && "col-span-2 row-span-2"
-                )}
-              >
-                {item ? (
-                  <GalleryMedia item={item} className="h-full w-full" />
-                ) : (
-                  <ImagePlaceholder
-                    label={
-                      ["Thực hành lâm sàng", "Phòng thí nghiệm", "Lễ tốt nghiệp", "Hoạt động ngoại khoá", "Khuôn viên trường"][i]
-                    }
-                  />
-                )}
-              </Reveal>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ============ GIẢNG VIÊN ============ */}
+      {/* ============ 6. GIẢNG VIÊN ============ */}
       {facultyList.length > 0 && (
         <section className="px-6 py-24 sm:px-8">
-          <Reveal className="mx-auto max-w-[1320px]">
+          <div className="mx-auto max-w-[1320px]">
             <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
               <SectionHeading
                 eyebrow="Đội ngũ giảng viên"
@@ -469,26 +573,29 @@ export default async function HomePage() {
                 align="left"
                 className="mb-0"
               />
-              <PillLink href="/doi-ngu-giang-vien">Xem tất cả đội ngũ</PillLink>
+              <Reveal delay={180}>
+                <MoreLink href="/doi-ngu-giang-vien">Xem tất cả đội ngũ</MoreLink>
+              </Reveal>
             </div>
             <div className={cn(MOBILE_SWIPE_ROW, "sm:grid-cols-2 sm:gap-5 lg:grid-cols-4")}>
               {facultyList.slice(0, 4).map((f, i) => {
                 const card = (
                   <>
-                    <div className="relative h-[200px]">
+                    <div className="img-reveal img-shine relative h-[220px]">
                       {f.photoUrl ? (
                         <Image
                           src={f.photoUrl}
                           alt={facultyDisplayName(f)}
                           fill
-                          className="object-cover"
+                          sizes="(max-width: 640px) 68vw, (max-width: 1024px) 50vw, 320px"
+                          className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
                         <ImagePlaceholder label="Ảnh chân dung" />
                       )}
                     </div>
                     <div className="p-4">
-                      <h4 className="font-display text-base font-semibold text-ink">
+                      <h4 className="font-display text-base font-semibold text-ink transition-colors group-hover:text-brand-700">
                         {facultyDisplayName(f)}
                       </h4>
                       <div className="mt-0.5 text-[12.5px] text-brand-700">{f.role}</div>
@@ -496,7 +603,7 @@ export default async function HomePage() {
                   </>
                 );
                 const className =
-                  "block overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
+                  "group block overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
                 return (
                   <Reveal key={f.id} delay={i * 90} className={MOBILE_SWIPE_ITEM_NARROW}>
                     <TiltCard className="rounded-2xl">
@@ -512,251 +619,230 @@ export default async function HomePage() {
                 );
               })}
             </div>
-          </Reveal>
+          </div>
         </section>
       )}
 
-      {/* ============ ĐÁNH GIÁ CỰU SV ============ */}
+      {/* ============ 7. CÂU CHUYỆN THÀNH CÔNG (cựu SV) ============ */}
       {testimonials.length > 0 && (
-        <section className="bg-paper-alt px-6 py-24 sm:px-8">
-          <Reveal className="mx-auto max-w-[1000px] text-center">
-            <SectionHeading eyebrow="Cựu sinh viên nói gì" title="Câu chuyện thành công" />
-            <div className="grid gap-6 text-left sm:grid-cols-2">
-              {testimonials.map((t, i) => (
+        <TestimonialSlider
+          items={testimonials.map(({ id, quote, name, role, avatarUrl }) => ({ id, quote, name, role, avatarUrl }))}
+        />
+      )}
+
+      {/* ============ 8. TRẢI NGHIỆM HỢP LỰC — thư viện ảnh/video, xem ngay trên trang ============
+          Kiểu "EXPERIENCE VINUNI": bấm ô ảnh mở lightbox, có video thì hiện nút phát nổi bật. */}
+      <section className="relative overflow-clip bg-gradient-to-br from-brand-900 to-brand-700 px-6 py-24 sm:px-8">
+        <ParallaxBlur
+          speed={0.18}
+          className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-accent-500/25 blur-[50px]"
+        />
+        <LightboxGroup items={galleryLightbox}>
+          <div className="relative mx-auto max-w-[1320px]">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+              <SectionHeading
+                eyebrow="Đời sống sinh viên"
+                eyebrowTone="onDark"
+                title="Trải nghiệm Hợp Lực"
+                align="left"
+                onDark
+                className="mb-0"
+              />
+              <Reveal delay={180} className="flex flex-wrap items-center gap-6">
+                {firstVideoIndex >= 0 && (
+                  <LightboxTrigger
+                    index={firstVideoIndex}
+                    label="Xem video giới thiệu"
+                    className="inline-flex cursor-pointer items-center gap-3 rounded-full bg-white py-2 pl-2 pr-5 text-[13.5px] font-bold text-brand-900 shadow-lg2 transition-transform hover:-translate-y-0.5"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-accent-500 text-white">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                    </span>
+                    Xem video
+                  </LightboxTrigger>
+                )}
+                <MoreLink href="/thu-vien" onDark>
+                  Xem thư viện
+                </MoreLink>
+              </Reveal>
+            </div>
+            {/* Chiều cao đặt qua grid-rows (không trộn h-[160px] với h-full trên cùng phần tử —
+                `cn()` không gộp class, 2 class cùng thuộc tính sẽ không rõ class nào thắng,
+                từng làm ô lớn đầu tiên co thành vạch mỏng trên mobile). */}
+            <div className="grid auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[170px] sm:grid-cols-4 sm:gap-4">
+              {Array.from({ length: 5 }, (_, i) => galleryLightbox[i]).map((item, i) => (
                 <Reveal
-                  key={t.id}
+                  key={item?.id ?? i}
                   delay={i * 90}
-                  className="rounded-[22px] border border-line bg-white p-8 shadow-md2"
+                  className={cn(
+                    "relative overflow-clip rounded-[18px]",
+                    // Ô 0 lớn 2×2, 4 ô còn lại lấp kín 2 cột bên phải (desktop) / 2 hàng dưới (mobile).
+                    i === 0 && "col-span-2 row-span-2"
+                  )}
                 >
-                  <p className="font-display text-[17px] italic leading-relaxed text-ink">
-                    &ldquo;{t.quote}&rdquo;
-                  </p>
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-brand-100">
-                      {t.avatarUrl && (
-                        <Image src={t.avatarUrl} alt={t.name} fill className="object-cover" />
+                  {item ? (
+                    <LightboxTrigger index={i} label={`${item.videoUrl ? "Xem video" : "Xem ảnh"}: ${item.caption}`} className="relative block h-full w-full cursor-zoom-in">
+                      <GalleryMedia
+                        item={item}
+                        className="img-reveal img-shine h-full w-full"
+                        sizes={i === 0 ? "(max-width: 640px) 100vw, 640px" : "(max-width: 640px) 50vw, 320px"}
+                      />
+                      {item.caption && (
+                        <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] bg-gradient-to-t from-brand-900/85 to-transparent px-4 pb-3 pt-10 text-[12.5px] font-semibold text-white sm:text-[13.5px]">
+                          <span className="line-clamp-1">{item.caption}</span>
+                        </span>
                       )}
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-ink">{t.name}</div>
-                      <div className="text-[12.5px] text-ink-soft">{t.role}</div>
-                    </div>
-                  </div>
+                    </LightboxTrigger>
+                  ) : (
+                    <ImagePlaceholder
+                      label={
+                        ["Thực hành lâm sàng", "Phòng thí nghiệm", "Lễ tốt nghiệp", "Hoạt động ngoại khoá", "Khuôn viên trường"][i]
+                      }
+                    />
+                  )}
                 </Reveal>
               ))}
             </div>
-          </Reveal>
-        </section>
-      )}
+          </div>
+        </LightboxGroup>
+      </section>
 
-      {/* ============ SỰ KIỆN SẮP DIỄN RA ============ */}
-      {nextEvents.length > 0 && (
-        <section className="px-6 py-24 sm:px-8">
-          <Reveal className="mx-auto max-w-[1320px]">
-            <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
-              <SectionHeading eyebrow="Lịch sự kiện" eyebrowTone="red" title="Sự kiện sắp diễn ra" align="left" className="mb-0" />
-              <PillLink href="/su-kien">Xem tất cả sự kiện</PillLink>
-            </div>
-            <div className={cn(MOBILE_SWIPE_ROW, "sm:grid-cols-3 sm:gap-6")}>
-              {nextEvents.map((e, i) => {
-                const card = (
+      {/* ============ 9. ĐỐI TÁC — dải logo chạy ngang (VinUni đặt đối tác gần cuối trang) ============ */}
+      {partners.length > 0 && (
+        <section className="py-20" aria-label="Đối tác đào tạo">
+          <div className="px-6 sm:px-8">
+            <SectionHeading eyebrow="Đối tác" title="Đối tác đào tạo & thực hành lâm sàng" className="mb-10" />
+          </div>
+          <div className="marquee overflow-hidden">
+            <div className="marquee-track flex w-max items-center">
+              {marqueeItems.map((p, i) => {
+                // Chỉ lượt đầu của danh sách gốc là "thật" — mọi bản lặp (đệm cho đủ dài + nửa sau để
+                // chạy vòng) ẩn với trình đọc màn hình, không nhận focus, và ẩn hẳn khi giảm chuyển động.
+                const duplicate = i >= partners.length;
+                const itemClass = cn(
+                  "group/partner mr-4 flex h-16 items-center gap-3 whitespace-nowrap rounded-2xl border border-line bg-white px-6 font-display text-[16px] font-semibold text-brand-900 shadow-sm2 transition-all hover:border-brand-200 hover:shadow-md2",
+                  duplicate && "marquee-dup"
+                );
+                // Có logo: hiện logo (xám, rê chuột hiện màu thật); chưa có: tên chữ như cũ.
+                const inner = p.logoUrl ? (
+                  <span className="relative block h-9 w-[132px]">
+                    <Image
+                      src={p.logoUrl}
+                      alt={p.name}
+                      fill
+                      sizes="132px"
+                      className="object-contain opacity-70 grayscale transition-all duration-300 group-hover/partner:opacity-100 group-hover/partner:grayscale-0"
+                    />
+                  </span>
+                ) : (
                   <>
-                    <div className="relative h-[150px]">
-                      {e.coverImageUrl ? (
-                        <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover" />
-                      ) : (
-                        <ImagePlaceholder label="Ảnh sự kiện" />
-                      )}
-                    </div>
-                    <div className="p-5">
-                      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-accent-600">
-                        {formatVNDateTime(e.startAt)}
-                        {e.location ? ` · ${e.location}` : ""}
-                      </div>
-                      <h4 className="font-display text-[17px] font-semibold leading-snug text-ink">
-                        {e.title}
-                      </h4>
-                    </div>
+                    <span className="h-2 w-2 rounded-full bg-gradient-to-br from-accent-600 to-accent-500" />
+                    {p.name}
                   </>
                 );
-                const className =
-                  "block h-full overflow-hidden rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
-                return (
-                  <Reveal key={e.id} delay={i * 90} className={cn(MOBILE_SWIPE_ITEM, "h-full")}>
-                    <TiltCard className="h-full rounded-2xl">
-                      {e.slug ? (
-                        <Link href={`/su-kien/${e.slug}`} className={className}>
-                          {card}
-                        </Link>
-                      ) : (
-                        <div className={className}>{card}</div>
-                      )}
-                    </TiltCard>
-                  </Reveal>
+                return p.websiteUrl ? (
+                  <a
+                    key={`${p.id}-${i}`}
+                    href={p.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={p.name}
+                    aria-hidden={duplicate || undefined}
+                    tabIndex={duplicate ? -1 : undefined}
+                    className={itemClass}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <span key={`${p.id}-${i}`} title={p.name} aria-hidden={duplicate || undefined} className={itemClass}>
+                    {inner}
+                  </span>
                 );
               })}
             </div>
-          </Reveal>
+          </div>
         </section>
       )}
 
-      {/* ============ TIN TỨC & THÔNG BÁO — dàn trang kiểu tạp chí ============
-          Trái: 1 tin nổi bật lớn + 2 tin nhỏ. Phải: bảng "Thông báo" (bài được ghim). */}
-      {(latestPosts.length > 0 || pinnedPosts.length > 0) && (
-        <section className="bg-paper-alt px-6 py-24 sm:px-8">
-          <Reveal className="mx-auto max-w-[1320px]">
-            <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
-              <SectionHeading eyebrow="Tin tức & thông báo" title="Hợp Lực hôm nay" align="left" className="mb-0" />
-              <PillLink href="/tin-tuc">Xem tất cả tin</PillLink>
-            </div>
-            <div className={cn("grid gap-6", pinnedPosts.length > 0 && latestPosts.length > 0 && "lg:grid-cols-[1fr_380px]")}>
-              {latestPosts.length > 0 && (
-                <div className="grid gap-6 md:grid-cols-2">
-                  {latestPosts.map((n, i) => {
-                    const featured = i === 0;
-                    // Chỉ có 1 tin nhỏ (tổng 2 bài) thì cho trải hết hàng, tránh trống nửa bên phải.
-                    const fullRow = featured || latestPosts.length === 2;
-                    return (
-                      <Reveal key={n.id} delay={i * 90} className={cn(fullRow && "md:col-span-2")}>
-                        <TiltCard max={featured ? 3 : 6} className="h-full rounded-[22px]">
-                          <Link
-                            href={`/tin-tuc/${n.slug}`}
-                            className={cn(
-                              "group block h-full overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2",
-                              featured && "md:grid md:grid-cols-[1.15fr_1fr]"
-                            )}
-                          >
-                            <div className={cn("relative overflow-hidden", featured ? "h-[240px] md:h-full md:min-h-[320px]" : "h-[180px]")}>
-                              {n.coverImageUrl ? (
-                                <Image
-                                  src={n.coverImageUrl}
-                                  alt={n.title}
-                                  fill
-                                  sizes={featured ? "(max-width: 768px) 100vw, 560px" : "(max-width: 768px) 100vw, 380px"}
-                                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
-                              ) : (
-                                <ImagePlaceholder label="Ảnh bài viết" />
-                              )}
-                              {featured && (
-                                <span className="absolute left-4 top-4 rounded-full bg-accent-600 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white shadow-red">
-                                  Nổi bật
-                                </span>
-                              )}
-                            </div>
-                            <div className={cn("flex flex-col", featured ? "p-7 md:justify-center md:p-9" : "p-5")}>
-                              <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wider text-ink-faint">
-                                {formatVNDate(n.publishedAt)}
-                                {n.categoryName ? ` · ${n.categoryName}` : ""}
-                              </div>
-                              <h3
-                                className={cn(
-                                  "font-display font-semibold leading-snug text-ink transition-colors group-hover:text-brand-700",
-                                  featured ? "text-[24px] sm:text-[28px]" : "text-[17px]"
-                                )}
-                              >
-                                {n.title}
-                              </h3>
-                              {featured && n.excerpt && (
-                                <p className="mt-3 line-clamp-3 text-[14.5px] leading-relaxed text-ink-soft">{n.excerpt}</p>
-                              )}
-                              {featured && <span className="mt-5 text-[13.5px] font-bold text-brand-700">Đọc tiếp →</span>}
-                            </div>
-                          </Link>
-                        </TiltCard>
+      {/* ============ 10. TUYỂN SINH — gộp "4 bước xét tuyển" + CTA + link Công khai ============ */}
+      <section className="px-6 pb-24 sm:px-8">
+        <div className="mx-auto max-w-[1320px]">
+          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-accent-600 to-accent-500 text-white shadow-red">
+            <div className="pointer-events-none absolute -right-20 -top-28 h-96 w-96 rounded-full bg-white/10" />
+            <div className="pointer-events-none absolute -bottom-32 left-[30%] h-80 w-80 rounded-full bg-white/[0.06]" />
+            <div className="relative grid gap-10 p-8 sm:p-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14 lg:p-16">
+              <div>
+                <Reveal>
+                  <Eyebrow tone="onDark">Tuyển sinh</Eyebrow>
+                </Reveal>
+                <Reveal delay={90}>
+                  <h2 className="mt-5 text-balance font-display text-[32px] font-semibold leading-[1.1] tracking-tight sm:text-[42px]">
+                    {content.ctaTitle}
+                  </h2>
+                </Reveal>
+                <Reveal delay={180}>
+                  <p className="mt-4 max-w-md text-[15.5px] leading-relaxed text-white/90">{content.ctaDescription}</p>
+                </Reveal>
+                <Reveal delay={260} className="mt-8 flex flex-wrap gap-3">
+                  <Link
+                    href="/tuyen-sinh#dang-ky"
+                    className="whitespace-nowrap rounded-xl bg-white px-5 py-4 text-[14px] font-bold text-accent-600 shadow-lg2 transition-transform hover:-translate-y-0.5 sm:px-7 sm:text-[15px]"
+                  >
+                    Đăng ký xét tuyển ngay
+                  </Link>
+                  <Link
+                    href="/tra-cuu-ket-qua"
+                    className="whitespace-nowrap rounded-xl border border-white/45 px-5 py-4 text-[14px] font-bold text-white transition-colors hover:bg-white/10 sm:px-7 sm:text-[15px]"
+                  >
+                    Tra cứu kết quả
+                  </Link>
+                </Reveal>
+              </div>
+              <div>
+                <Reveal className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-white/75">
+                  Quy trình · {steps.length} bước xét tuyển
+                </Reveal>
+                <ol className="space-y-3">
+                  {steps.map((s, i) => (
+                    <li key={s.title}>
+                      <Reveal delay={i * 90} className="flex gap-4 rounded-2xl bg-white/10 p-5 ring-1 ring-inset ring-white/15 backdrop-blur-sm">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white font-mono text-[13px] font-semibold text-accent-600 shadow-sm2">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <span>
+                          <span className="block font-display text-[17px] font-semibold">{s.title}</span>
+                          <span className="mt-1 block text-[13.5px] leading-relaxed text-white/85">{s.desc}</span>
+                        </span>
                       </Reveal>
-                    );
-                  })}
-                </div>
-              )}
-
-              {pinnedPosts.length > 0 && (
-                <aside className="h-fit overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label="Thông báo">
-                  <div className="flex items-center gap-3 bg-gradient-to-r from-accent-600 to-accent-500 px-6 py-4 text-white">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-                      <path d="M12 2a5 5 0 00-5 5v3.6c0 .5-.2 1-.6 1.4L5 13.4c-.6.6-.2 1.6.6 1.6h13a1 1 0 00.7-1.6l-1.4-1.4a2 2 0 01-.6-1.4V7a5 5 0 00-5-5z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M9 18a3 3 0 006 0" strokeLinecap="round" />
-                    </svg>
-                    <span className="font-display text-[18px] font-semibold">Thông báo</span>
-                  </div>
-                  <ul className="divide-y divide-line">
-                    {pinnedPosts.map((p) => {
-                      const date = vnDayMonth(p.publishedAt);
-                      return (
-                        <li key={p.id}>
-                          <Link href={`/tin-tuc/${p.slug}`} className="group flex gap-4 px-6 py-4 transition-colors hover:bg-brand-50">
-                            {date && (
-                              <span className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-paper text-center">
-                                <span className="font-display text-[20px] font-bold leading-none text-brand-900">{date.day}</span>
-                                <span className="mt-1 font-mono text-[9.5px] uppercase text-ink-faint">{date.month}</span>
-                              </span>
-                            )}
-                            <span className="min-w-0 text-[14px] font-semibold leading-snug text-ink group-hover:text-brand-700">
-                              {p.title}
-                              {p.attachmentUrl && (
-                                <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 align-middle text-[10.5px] font-semibold text-brand-700">
-                                  📎 Tệp đính kèm
-                                </span>
-                              )}
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </aside>
-              )}
-            </div>
-          </Reveal>
-        </section>
-      )}
-
-      {/* ============ BANNER CÔNG KHAI ============ */}
-      <section className="px-6 pb-2 sm:px-8">
-        <Reveal className="mx-auto max-w-[1320px]">
-        <Link
-          href="/cong-khai"
-          className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white px-7 py-5 shadow-sm2 transition-colors hover:border-brand-500"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/10 text-brand-700">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path
-                  d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[14px] font-bold text-ink">Công khai theo quy định</div>
-              <div className="text-[12.5px] text-ink-faint">
-                Tài chính, cơ sở vật chất, chương trình đào tạo, đội ngũ giảng viên
+                    </li>
+                  ))}
+                </ol>
               </div>
             </div>
           </div>
-          <span className="text-sm font-semibold text-brand-700">Xem chi tiết →</span>
-        </Link>
-        </Reveal>
-      </section>
 
-      {/* ============ CTA BAND ============ */}
-      <section className="px-6 pb-24 sm:px-8">
-        <Reveal className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px] bg-gradient-to-br from-accent-600 to-accent-500 px-8 py-16 text-center sm:px-14">
-          <div className="pointer-events-none absolute -top-24 -right-16 h-80 w-80 rounded-full bg-white/10" />
-          <h2 className="relative mx-auto max-w-xl font-display text-[32px] font-semibold leading-snug text-white">
-            {content.ctaTitle}
-          </h2>
-          <p className="relative mx-auto mt-3.5 max-w-md text-[15px] text-white/90">
-            {content.ctaDescription}
-          </p>
-          <Link
-            href="/tuyen-sinh"
-            className="relative mt-8 inline-block rounded-xl bg-white px-8 py-4 text-[15px] font-bold text-accent-600 shadow-lg2"
-          >
-            Đăng ký xét tuyển ngay
-          </Link>
-        </Reveal>
+          <Reveal className="mt-5">
+            <Link
+              href="/cong-khai"
+              className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white px-7 py-5 shadow-sm2 transition-colors hover:border-brand-500"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/10 text-brand-700">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-[14px] font-bold text-ink">Công khai theo quy định</div>
+                  <div className="text-[12.5px] text-ink-faint">Tài chính, cơ sở vật chất, chương trình đào tạo, đội ngũ giảng viên</div>
+                </div>
+              </div>
+              <span className="text-sm font-semibold text-brand-700">
+                <span className="link-underline">Xem chi tiết</span> →
+              </span>
+            </Link>
+          </Reveal>
+        </div>
       </section>
     </>
   );

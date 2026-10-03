@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eyebrow } from "@/components/ui/Eyebrow";
-import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { Button } from "@/components/ui/Button";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 import { getEventBySlug } from "@/lib/data/events";
 import { formatVNDateTime } from "@/lib/utils";
 
@@ -28,31 +26,52 @@ export default async function EventDetailPage({
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
+  const facts = [
+    { label: "Bắt đầu", value: formatVNDateTime(event.startAt) },
+    event.endAt ? { label: "Kết thúc", value: formatVNDateTime(event.endAt) } : null,
+    event.location ? { label: "Địa điểm", value: event.location } : null,
+  ].filter((f): f is { label: string; value: string } => !!f);
+
   return (
-    <DecorativeSection contentClassName="mx-auto max-w-3xl">
-        <Link
-          href="/su-kien"
-          className="mb-6 inline-block text-sm font-semibold text-brand-700 hover:text-accent-600"
-        >
-          ← Sự kiện
-        </Link>
-
-        <Eyebrow tone="red" className="mb-6">
-          {`${formatVNDateTime(event.startAt)}${event.location ? ` · ${event.location}` : ""}`}
-        </Eyebrow>
-        <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
-          {event.title}
-        </h1>
-
-        <div className="relative mt-8 h-[320px] overflow-hidden rounded-2xl">
-          {event.coverImageUrl ? (
-            <Image src={event.coverImageUrl} alt={event.title} fill className="object-cover" />
+    <>
+      <PageHero
+        crumbs={[{ label: "Sự kiện", href: "/su-kien" }, { label: event.title }]}
+        eyebrow="Sự kiện"
+        title={event.title}
+        imageUrl={event.coverImageUrl}
+        variant="article"
+      >
+        <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[12px] uppercase tracking-wider text-white/80">
+          {facts.map((f) => (
+            <span key={f.label}>
+              <span className="text-accent-400">{f.label}:</span> {f.value}
+            </span>
+          ))}
+        </div>
+      </PageHero>
+      <DecorativeSection contentClassName="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[1fr_300px] lg:gap-14">
+        <div className="min-w-0">
+          {event.description ? (
+            <MarkdownContent content={event.description} />
           ) : (
-            <ImagePlaceholder label="Ảnh sự kiện" />
+            <p className="text-[15px] text-ink-faint">Thông tin chi tiết về sự kiện đang được cập nhật.</p>
           )}
         </div>
-
-        {event.description && <MarkdownContent content={event.description} className="mt-8" />}
-    </DecorativeSection>
+        <aside className="h-fit rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-28">
+          <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Thông tin sự kiện</div>
+          <dl className="mt-4 divide-y divide-line border-y border-line text-[14px]">
+            {facts.map((f) => (
+              <div key={f.label} className="py-3">
+                <dt className="text-ink-faint">{f.label}</dt>
+                <dd className="mt-0.5 font-semibold text-ink">{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <Button href="/su-kien" variant="outline" className="mt-6 w-full justify-center">
+            ← Tất cả sự kiện
+          </Button>
+        </aside>
+      </DecorativeSection>
+    </>
   );
 }

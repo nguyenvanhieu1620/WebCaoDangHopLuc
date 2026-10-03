@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { QuickContactWidget } from "@/components/site/QuickContactWidget";
 import { MobileActionBar } from "@/components/site/MobileActionBar";
+import { BackToTop } from "@/components/site/BackToTop";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getNavTree } from "@/lib/data/nav";
 import { getLocale } from "@/lib/locale";
@@ -32,6 +33,7 @@ export default async function SiteGroupLayout({
       <main>{children}</main>
       <SiteFooter settings={settings} programs={programs} />
       <QuickContactWidget contacts={contacts} />
+      <BackToTop />
       <MobileActionBar settings={settings} locale={locale} />
     </div>
   );

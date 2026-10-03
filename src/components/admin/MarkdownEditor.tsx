@@ -129,7 +129,7 @@ export function MarkdownEditor({
       />
       {showPreview && (
         <div className="min-h-[160px] rounded-b-lg border border-line px-4 py-3">
-          <MarkdownContent content={previewContent || "*(chưa có nội dung)*"} />
+          <MarkdownContent content={previewContent || "*(chưa có nội dung)*"} reveal={false} />
         </div>
       )}
       <p className="mt-1.5 text-[11px] text-ink-faint">

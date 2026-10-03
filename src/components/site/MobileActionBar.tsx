@@ -54,9 +54,10 @@ export function MobileActionBar({
         )}
         <Link
           href="/tuyen-sinh#dang-ky"
-          className="flex flex-[1.8] items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent-600 to-accent-500 px-3 text-[13.5px] font-bold text-white shadow-red active:scale-[0.98]"
+          // Montserrat rộng: rộng hơn + không xuống dòng + chữ nhỏ hơn chút ở máy < 400px (360px vẫn vừa 1 dòng).
+          className="flex flex-[2.2] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-gradient-to-br from-accent-600 to-accent-500 px-2 text-[12.5px] font-bold text-white shadow-red active:scale-[0.98] min-[400px]:gap-2 min-[400px]:text-[13.5px]"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="shrink-0">
             <path d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           {t.apply}

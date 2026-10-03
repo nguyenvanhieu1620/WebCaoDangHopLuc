@@ -1,26 +1,22 @@
 import type { Metadata } from "next";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { LookupForm } from "@/components/site/LookupForm";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
 
 export const metadata: Metadata = { title: "Tra cứu kết quả xét tuyển" };
 
 export default function AdmissionsLookupPage() {
   return (
-    <DecorativeSection contentClassName="mx-auto max-w-2xl text-center">
-        <Eyebrow tone="blue" className="mb-6">
-          Tra cứu kết quả
-        </Eyebrow>
-        <h1 className="font-display text-[32px] font-semibold leading-tight text-brand-900">
-          Tra cứu kết quả xét tuyển
-        </h1>
-        <p className="mt-3.5 text-[15px] leading-relaxed text-ink-soft">
-          Nhập số CCCD đã dùng khi đăng ký để xem trạng thái hồ sơ.
-        </p>
-
-        <div className="mt-10 text-left">
-          <LookupForm />
-        </div>
-    </DecorativeSection>
+    <>
+      <PageHero
+        crumbs={[{ label: "Tuyển sinh", href: "/tuyen-sinh" }, { label: "Tra cứu kết quả" }]}
+        eyebrow="Tra cứu kết quả"
+        title="Tra cứu kết quả xét tuyển"
+        description="Nhập số CCCD đã dùng khi đăng ký để xem trạng thái hồ sơ."
+      />
+      <DecorativeSection contentClassName="mx-auto max-w-2xl">
+        <LookupForm />
+      </DecorativeSection>
+    </>
   );
 }

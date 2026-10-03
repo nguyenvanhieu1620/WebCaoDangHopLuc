@@ -61,7 +61,15 @@ export const ADMIN_NAV: AdminNavEntity[] = [
   },
   { key: "events", label: "Sự kiện", href: "/admin/su-kien", section: "Nội dung" },
   { key: "faq", label: "Câu hỏi thường gặp", href: "/admin/faq", section: "Nội dung" },
-  { key: "pages", label: "Trang tĩnh", href: "/admin/trang-tinh", section: "Nội dung" },
+  {
+    key: "pages",
+    label: "Trang tĩnh",
+    section: "Nội dung",
+    children: [
+      { key: "pages-list", label: "Trang tĩnh", href: "/admin/trang-tinh" },
+      { key: "milestones", label: "Cột mốc (Giới thiệu)", href: "/admin/cot-moc" },
+    ],
+  },
   { key: "media", label: "Thư viện media", href: "/admin/media", section: "Nội dung" },
   { key: "programs", label: "Ngành đào tạo", href: "/admin/nganh-dao-tao", section: "Đào tạo" },
   {

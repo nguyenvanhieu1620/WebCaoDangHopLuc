@@ -35,7 +35,10 @@ const CSP = [
   `img-src 'self' data: blob:${hasGA ? " https://www.google-analytics.com" : ""}`,
   "font-src 'self' data:",
   `connect-src 'self'${hasGA ? " https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com" : ""}${hasTurnstile ? " https://challenges.cloudflare.com" : ""}`,
-  `frame-src 'self'${hasTurnstile ? " https://challenges.cloudflare.com" : ""}`,
+  // youtube-nocookie.com: lightbox Thư viện phát video YouTube ngay trên trang
+  // (src/components/site/Lightbox.tsx) — bản "không cookie", không theo dõi
+  // khách tới khi bấm phát. Chỉ mở frame, không mở script/connect của YouTube.
+  `frame-src 'self' https://www.youtube-nocookie.com${hasTurnstile ? " https://challenges.cloudflare.com" : ""}`,
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",

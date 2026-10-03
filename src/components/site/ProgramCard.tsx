@@ -38,9 +38,11 @@ export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCar
           e.currentTarget.style.setProperty("--tilt-y", "0deg");
         }}
         className={cn(
-          "program-card-depth group relative block h-full overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700",
+          "program-card-depth group relative flex h-full flex-col overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700",
           gradientClass
         )}
+        // Kéo slider bằng chuột không được kéo theo "bóng ma" của link.
+        draggable={false}
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -58,9 +60,13 @@ export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCar
         <p className="relative mt-2.5 max-w-[220px] text-[13px] leading-relaxed text-white/90">
           {p.summary}
         </p>
-        <div className="relative mt-5 flex items-center justify-between">
+        {/* mt-auto: thẻ cao (slider Trang chủ) thì dòng cuối luôn nằm sát đáy, thẳng hàng giữa các thẻ */}
+        <div className="relative mt-auto flex items-center justify-between pt-5">
           <span className="text-[12px] font-semibold text-white/80">Chỉ tiêu {p.intake}</span>
-          <span className="text-[13px] font-bold">Chi tiết →</span>
+          <span className="text-[13px] font-bold">
+            {/* gạch chân trắng trên nền màu (inline style vì CSS .link-underline đứng sau lớp utilities, class arbitrary không đè được) */}
+            <span className="link-underline" style={{ backgroundImage: "linear-gradient(white, white)" }}>Chi tiết</span> →
+          </span>
         </div>
       </Link>
     </Reveal>

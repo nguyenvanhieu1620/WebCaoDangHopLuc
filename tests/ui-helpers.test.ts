@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { toCsv, digitsCell } from "../src/lib/csv";
-import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeSearch, vnDateKey } from "../src/lib/utils";
+import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeSearch, vnDateKey, youtubeId } from "../src/lib/utils";
 
 test("CSV có BOM, CRLF, nháy kép được nhân đôi", () => {
   const csv = toCsv(["Họ tên", "Ghi chú"], [["Nguyễn Văn An", 'nói "xin chào"\nxuống dòng']]);
@@ -42,4 +42,24 @@ test("timestamp SQLite (UTC, không múi giờ) hiển thị đúng giờ Việt
   assert.match(formatDbDateTime("2026-10-01 17:30:00"), /2\/10\/2026.*00:30/);
   assert.equal(vnDateKey("2026-10-01T17:30:00Z"), "2026-10-02");
   assert.equal(vnDateKey("2026-10-01T16:59:00Z"), "2026-10-01");
+});
+
+test("youtubeId nhận các dạng link YouTube phổ biến, link khác trả null", () => {
+  const id = "dQw4w9WgXcQ";
+  for (const url of [
+    `https://www.youtube.com/watch?v=${id}`,
+    `https://youtube.com/watch?v=${id}&t=42s`,
+    `https://m.youtube.com/watch?v=${id}`,
+    `https://youtu.be/${id}?si=abc`,
+    `https://www.youtube.com/embed/${id}`,
+    `https://www.youtube.com/shorts/${id}`,
+    `https://www.youtube-nocookie.com/embed/${id}`,
+  ]) {
+    assert.equal(youtubeId(url), id, url);
+  }
+  assert.equal(youtubeId("https://www.facebook.com/watch/?v=123"), null);
+  assert.equal(youtubeId("https://vimeo.com/123456"), null);
+  assert.equal(youtubeId("https://www.youtube.com/watch?v=short"), null, "ID sai độ dài");
+  assert.equal(youtubeId("không phải link"), null);
+  assert.equal(youtubeId(null), null);
 });

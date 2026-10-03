@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +23,8 @@ type HeroBannerProps = {
   description: string;
   stats: { value: string; label: string }[];
 };
+
+const splitWords = (text: string) => text.split(/\s+/).filter(Boolean);
 
 /** Thời gian mỗi banner hiện trước khi tự chuyển — khớp thời lượng thanh tiến trình (CSS `hero-progress`). */
 const INTERVAL_MS = 6500;
@@ -71,10 +73,14 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
     <section
       aria-roledescription="carousel"
       aria-label="Banner giới thiệu nhà trường"
-      className="relative isolate overflow-hidden bg-brand-900 text-white"
+      className="relative isolate -mt-[72px] overflow-hidden bg-brand-900 text-white"
     >
-      {/* Desktop: cao gần trọn màn hình (trừ header); mobile: cao theo nội dung để chữ không đè thanh điều khiển. */}
-      <div className="relative flex min-h-[640px] flex-col lg:h-[calc(100svh-104px)] lg:max-h-[880px]">
+      {/* Section kéo lên -72px để ảnh nằm DƯỚI thanh điều hướng trong suốt (SiteHeader cao 72px ở Trang chủ) —
+          margin âm phải đặt trên CHÍNH section: section có overflow-hidden, đặt ở div con thì phần kéo lên bị cắt mất.
+          Desktop: cao TỐI THIỂU gần trọn màn hình (trừ thanh thông báo ~33px, tối đa 940px) — dùng
+          min-height chứ không cố định height: tiêu đề CMS dài xuống 3-4 dòng thì banner tự giãn,
+          chữ/nút không bị tràn xuống đè chú thích + nút điều khiển ở đáy. Mobile: cao theo nội dung. */}
+      <div className="relative flex min-h-[700px] flex-col lg:min-h-[min(calc(100svh-33px),940px)]">
         {/* Ảnh nền */}
         {slides.map((slide, i) => (
           <div
@@ -102,18 +108,42 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
 
         {/* Lớp phủ: đậm bên trái (chữ) + đáy (thanh điều khiển), nhạt dần sang phải để lộ ảnh */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-900/95 via-brand-900/70 to-brand-900/10" />
+        {/* Dải tối phía trên để chữ trắng của thanh điều hướng trong suốt luôn đọc được kể cả khi ảnh sáng */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-brand-900/70 to-transparent" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-900/90 via-brand-900/20 to-transparent" />
         <div className="hero-grain pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay" />
         <div className="pointer-events-none absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-accent-500/20 blur-[100px]" />
 
         {/* Nội dung */}
-        <div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col justify-end px-6 pb-56 pt-20 sm:px-8 sm:pb-48 lg:justify-center lg:pb-48">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col justify-end px-6 pb-56 pt-[136px] sm:px-8 sm:pb-48 lg:justify-center lg:pb-40">
           <div className="hero-rise max-w-[720px]">
             <Eyebrow tone="onDark">{badge}</Eyebrow>
-            <h1 className="mt-6 text-balance font-display text-[42px] font-bold leading-[1.04] tracking-tight sm:text-[60px] lg:text-[74px]">
-              {titleLine1}{" "}
-              <em className="block bg-gradient-to-r from-accent-500 via-accent-400 to-accent-200 bg-clip-text pb-1 font-medium italic text-transparent">
-                {titleLine2}
+            {/* Tiêu đề hiện dần TỪNG TỪ (trượt lên + rõ dần) — `aria-label` giữ nguyên câu cho trình đọc màn hình. */}
+            <h1
+              aria-label={`${titleLine1} ${titleLine2}`}
+              className="mt-6 text-balance font-display text-[42px] font-bold leading-[1.04] tracking-tight sm:text-[60px] lg:text-[74px]"
+            >
+              {/* Dấu cách đặt NGOÀI span inline-block — để bên trong thì cuối dòng bị nuốt, các từ dính nhau khi xuống dòng. */}
+              <span aria-hidden="true">
+                {splitWords(titleLine1).map((w, i) => (
+                  <Fragment key={`a${i}`}>
+                    <span className="hero-word" style={{ animationDelay: `${150 + i * 70}ms` }}>
+                      {w}
+                    </span>{" "}
+                  </Fragment>
+                ))}
+              </span>
+              <em aria-hidden="true" className="block pb-1 font-medium italic">
+                {splitWords(titleLine2).map((w, i) => (
+                  <Fragment key={`b${i}`}>
+                    <span
+                      className="hero-word bg-gradient-to-r from-accent-500 to-accent-400 bg-clip-text pr-[0.06em] text-transparent"
+                      style={{ animationDelay: `${150 + (splitWords(titleLine1).length + i) * 70}ms` }}
+                    >
+                      {w}
+                    </span>{" "}
+                  </Fragment>
+                ))}
               </em>
             </h1>
             <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-white/80 sm:text-[17.5px]">{description}</p>
@@ -150,7 +180,8 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
                 </div>
               )}
               {current?.caption && (
-                <div className="mt-1.5 flex max-w-[460px] flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-white/85">
+                // key theo banner → mỗi lần đổi ảnh, chú thích trượt lên lại (CSS .hero-caption)
+                <div key={index} className="hero-caption mt-1.5 flex max-w-[460px] flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-white/85">
                   <span className="truncate">{current.caption}</span>
                   {current.linkUrl && (
                     <Link href={current.linkUrl} className="shrink-0 font-semibold text-white underline-offset-4 hover:underline">

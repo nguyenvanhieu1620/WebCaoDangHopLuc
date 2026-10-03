@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { MoreLink } from "@/components/ui/MoreLink";
 import { AdmissionForm } from "@/components/site/AdmissionForm";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
+import { PageHero } from "@/components/site/PageHero";
+import { FaqList } from "@/components/site/FaqList";
+import { getFaqs } from "@/lib/data/faqs";
 import { Reveal } from "@/components/site/Reveal";
 import { TiltCard } from "@/components/site/TiltCard";
 import { getPrograms } from "@/lib/data/programs";
@@ -37,6 +41,10 @@ const TEXT = {
     explore: "Tìm & so sánh ngành →",
     exploreTitle: "Chưa chọn được ngành?",
     exploreText: "Tìm theo sở thích và so sánh tối đa 3 ngành trước khi đăng ký.",
+    faqEyebrow: "Hỏi đáp",
+    faqTitle: "Câu hỏi thường gặp",
+    faqText: "Những thắc mắc phổ biến về tuyển sinh, học phí và đào tạo. Chưa thấy câu trả lời? Gọi hotline hoặc để lại thông tin trong form đăng ký.",
+    faqAll: "Xem tất cả câu hỏi",
   },
   en: {
     eyebrow: "Admissions",
@@ -62,8 +70,15 @@ const TEXT = {
     explore: "Find & compare programs →",
     exploreTitle: "Not sure which program?",
     exploreText: "Search by interest and compare up to 3 programs before applying.",
+    faqEyebrow: "FAQ",
+    faqTitle: "Frequently asked questions",
+    faqText: "Common questions about admissions, tuition and training. Can't find your answer? Call our hotline or leave your details in the form.",
+    faqAll: "See all questions",
   },
 };
+
+/** Số câu hỏi hiện sẵn ở cuối trang Tuyển sinh — còn lại xem ở /faq. */
+const FAQ_PREVIEW = 6;
 
 function SectionTitle({ children, index }: { children: React.ReactNode; index: string }) {
   return (
@@ -77,7 +92,7 @@ function SectionTitle({ children, index }: { children: React.ReactNode; index: s
 }
 
 export default async function AdmissionsPage({ searchParams }: { searchParams: Promise<{ nganh?: string }> }) {
-  const [programs, info, locale] = await Promise.all([getPrograms(), getAdmissionInfo(), getLocale()]);
+  const [programs, info, locale, faqs] = await Promise.all([getPrograms(), getAdmissionInfo(), getLocale(), getFaqs()]);
   const t = TEXT[locale];
   const { nganh } = await searchParams;
   const selectedProgram = programs.some((program) => program.slug === nganh) ? nganh : "";
@@ -92,31 +107,29 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
   const sectionNo = (key: string) => String(visibleSections.indexOf(key) + 1).padStart(2, "0");
 
   return (
+    <>
+    <PageHero crumbs={[{ label: t.eyebrow }]} eyebrow={t.eyebrow} title={t.title} description={t.intro}>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-md">
+          <span className="font-mono text-[20px] font-semibold text-white">{programs.length}</span>{" "}
+          <span className="text-[12.5px] text-white/75">{t.programs}</span>
+        </div>
+        {totalIntake > 0 && (
+          <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-md">
+            <span className="font-mono text-[20px] font-semibold text-accent-400">{totalIntake.toLocaleString("vi-VN")}</span>{" "}
+            <span className="text-[12.5px] text-white/75">{t.intake}</span>
+          </div>
+        )}
+        <a href="#dang-ky" className="rounded-2xl bg-gradient-to-br from-accent-600 to-accent-500 px-5 py-3 text-[13px] font-bold text-white shadow-red">
+          {t.jump}
+        </a>
+      </div>
+    </PageHero>
     <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[1fr_420px] lg:gap-12">
       <div className="min-w-0">
-        <Eyebrow tone="red" className="mb-6">{t.eyebrow}</Eyebrow>
-        <h1 className="text-balance font-display text-[32px] font-semibold leading-tight text-brand-900 sm:text-[40px]">{t.title}</h1>
-        <p className="mt-4 max-w-xl text-[15.5px] leading-relaxed text-ink-soft">{t.intro}</p>
-
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <div className="rounded-2xl border border-white/90 bg-white/75 px-4 py-2.5 shadow-sm2 backdrop-blur">
-            <span className="font-mono text-[20px] font-semibold text-brand-700">{programs.length}</span>{" "}
-            <span className="text-[12.5px] text-ink-soft">{t.programs}</span>
-          </div>
-          {totalIntake > 0 && (
-            <div className="rounded-2xl border border-white/90 bg-white/75 px-4 py-2.5 shadow-sm2 backdrop-blur">
-              <span className="font-mono text-[20px] font-semibold text-accent-600">{totalIntake.toLocaleString("vi-VN")}</span>{" "}
-              <span className="text-[12.5px] text-ink-soft">{t.intake}</span>
-            </div>
-          )}
-          <a href="#dang-ky" className="rounded-2xl bg-gradient-to-br from-accent-600 to-accent-500 px-4 py-3 text-[13px] font-bold text-white shadow-red lg:hidden">
-            {t.jump}
-          </a>
-        </div>
-
         {/* Mốc thời gian */}
         {info.timeline.length > 0 && (
-          <section className="mt-14" aria-labelledby="ts-timeline">
+          <section aria-labelledby="ts-timeline">
             <SectionTitle index={sectionNo("timeline")}><span id="ts-timeline">{t.timeline}</span></SectionTitle>
             <ol className="relative space-y-4 pl-8 before:absolute before:bottom-3 before:left-[11px] before:top-3 before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-brand-500 before:via-brand-700 before:to-accent-500">
               {info.timeline.map((item, i) => (
@@ -266,5 +279,21 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
         </Link>
       </aside>
     </DecorativeSection>
+
+    {/* Câu hỏi thường gặp — kiểu trang tuyển sinh VinUni, lấy từ admin/faq */}
+    {faqs.length > 0 && (
+      <section className="bg-paper-alt px-6 py-24 sm:px-8" aria-labelledby="ts-faq">
+        <div className="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[360px_1fr] lg:gap-14">
+          <div>
+            <SectionHeading eyebrow={t.faqEyebrow} eyebrowTone="red" title={<span id="ts-faq">{t.faqTitle}</span>} description={t.faqText} align="left" className="mb-6" />
+            <Reveal delay={240}>
+              <MoreLink href="/faq">{t.faqAll}</MoreLink>
+            </Reveal>
+          </div>
+          <FaqList faqs={faqs.slice(0, FAQ_PREVIEW)} />
+        </div>
+      </section>
+    )}
+    </>
   );
 }
