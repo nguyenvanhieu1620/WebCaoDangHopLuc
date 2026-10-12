@@ -15,11 +15,11 @@ export default function RootNotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center">
       <Image
-        src="/images/logo-icon.png"
+        src="/images/logo.png"
         alt={SITE.fullName}
-        width={44}
-        height={44}
-        className="mb-6 h-11 w-auto"
+        width={1137}
+        height={315}
+        className="mb-6 h-14 w-auto"
       />
       <div className="font-mono text-xs font-semibold uppercase tracking-wider text-accent-600">
         404

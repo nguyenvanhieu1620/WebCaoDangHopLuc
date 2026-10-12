@@ -16,7 +16,7 @@ export default async function AdminFaqPage({
 }) {
   await requirePermission("faq");
   const { edit } = await searchParams;
-  const allFaqs = await db.query.faqs.findMany({ orderBy: asc(schema.faqs.sortOrder) });
+  const allFaqs = await db.query.faqs.findMany({ orderBy: [asc(schema.faqs.sortOrder), asc(schema.faqs.seq)] });
   const editing = edit
     ? await db.query.faqs.findFirst({ where: eq(schema.faqs.id, edit) })
     : null;

@@ -5,17 +5,15 @@ import { getSiteSettings } from "@/lib/data/site-settings";
 import { ContactForm } from "@/components/site/ContactForm";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { PageHero } from "@/components/site/PageHero";
+import { SOCIAL_BG, SocialIcon, socialLinks } from "@/components/ui/SocialIcon";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Liên hệ" };
 
 export default async function ContactPage() {
   const [page, settings] = await Promise.all([getPageBySlug("lien-he"), getSiteSettings()]);
 
-  const socialLinks = [
-    { label: "Facebook", href: settings.facebookUrl },
-    { label: "Zalo", href: settings.zaloUrl },
-    { label: "YouTube", href: settings.youtubeUrl },
-  ].filter((s) => s.href && s.href !== "#");
+  const socials = socialLinks(settings);
 
   return (
     <>
@@ -58,17 +56,38 @@ export default async function ContactPage() {
               <dd className="mt-0.5 font-semibold text-ink"><a href={`mailto:${settings.email}`} className="break-all hover:text-brand-700">{settings.email}</a></dd>
             </div>
           </dl>
-          {socialLinks.length > 0 && (
-            <div className="mt-6 flex gap-2.5 border-t border-line pt-5">
-              {socialLinks.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  className="rounded-lg border border-line px-3 py-2 text-[12.5px] font-semibold text-brand-700 hover:border-brand-500"
-                >
-                  {s.label}
-                </a>
-              ))}
+          {socials.length > 0 && (
+            <div className="mt-6 border-t border-line pt-5">
+              <div className="mb-3 text-[14.5px] text-ink-faint">Theo dõi nhà trường</div>
+              <div className="flex flex-col gap-2.5">
+                {socials.map((s) => (
+                  <a
+                    key={s.network}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-3 rounded-xl border border-line p-2 pr-4 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md2"
+                  >
+                    <span
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]",
+                        SOCIAL_BG[s.network]
+                      )}
+                    >
+                      <SocialIcon network={s.network} size={s.network === "youtube" ? 21 : 19} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14px] font-semibold text-ink">{s.label}</span>
+                      <span className="block truncate text-[12px] text-ink-faint">
+                        {s.href.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/$/, "")}
+                      </span>
+                    </span>
+                    <span aria-hidden className="text-ink-faint transition group-hover:translate-x-0.5 group-hover:text-brand-700">
+                      ↗
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </div>

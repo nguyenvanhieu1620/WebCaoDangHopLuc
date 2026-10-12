@@ -28,7 +28,7 @@ function localize(p: Program, locale: "vi" | "en"): Program {
 /** Lấy toàn bộ danh sách ngành đào tạo, theo đúng thứ tự tạo. */
 export async function getPrograms(): Promise<Program[]> {
   const [rows, locale] = await Promise.all([
-    db.query.programs.findMany({ orderBy: asc(schema.programs.createdAt) }),
+    db.query.programs.findMany({ orderBy: [asc(schema.programs.createdAt), asc(schema.programs.seq)] }),
     getLocale(),
   ]);
   return rows.map((p) => localize(p, locale));

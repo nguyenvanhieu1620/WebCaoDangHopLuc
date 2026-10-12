@@ -22,7 +22,7 @@ export type MilestoneYear = { year: number; items: MilestoneEntry[] };
 export async function getMilestoneYears(): Promise<MilestoneYear[]> {
   const [rows, locale] = await Promise.all([
     db.query.milestones.findMany({
-      orderBy: [asc(schema.milestones.year), asc(schema.milestones.sortOrder), asc(schema.milestones.createdAt)],
+      orderBy: [asc(schema.milestones.year), asc(schema.milestones.sortOrder), asc(schema.milestones.createdAt), asc(schema.milestones.seq)],
     }),
     getLocale(),
   ]);

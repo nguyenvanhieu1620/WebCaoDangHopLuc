@@ -29,7 +29,7 @@ export function MobileActionBar({
   return (
     <nav
       aria-label={t.label}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/90 px-3 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-10px_30px_-12px_rgba(6,50,90,0.25)] backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/[0.97] px-3 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-10px_30px_-12px_rgba(6,50,90,0.25)] lg:hidden"
     >
       <div className="mx-auto flex max-w-md items-stretch gap-2">
         <a href={`tel:${settings.hotline.replace(/\s+/g, "")}`} className={itemClass}>

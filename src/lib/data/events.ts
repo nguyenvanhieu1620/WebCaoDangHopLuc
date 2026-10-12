@@ -15,7 +15,7 @@ function localize(e: Event, locale: "vi" | "en"): Event {
 /** Sự kiện, sắp xếp theo thời gian bắt đầu gần nhất trước — dùng cho /su-kien. Quản lý qua admin/su-kien. */
 export async function getEvents(): Promise<Event[]> {
   const [rows, locale] = await Promise.all([
-    db.query.events.findMany({ orderBy: asc(schema.events.startAt) }),
+    db.query.events.findMany({ orderBy: [asc(schema.events.startAt), asc(schema.events.seq)] }),
     getLocale(),
   ]);
   return rows.map((e) => localize(e, locale));

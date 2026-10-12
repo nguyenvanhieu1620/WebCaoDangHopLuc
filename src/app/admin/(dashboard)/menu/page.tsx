@@ -17,7 +17,7 @@ export default async function AdminMenuPage({
   await requirePermission("menu");
   const { edit } = await searchParams;
   const allItems = await db.query.navItems.findMany({
-    orderBy: asc(schema.navItems.sortOrder),
+    orderBy: [asc(schema.navItems.sortOrder), asc(schema.navItems.seq)],
   });
   const topLevel = allItems.filter((i) => !i.parentId);
   const childrenOf = (parentId: string) => allItems.filter((i) => i.parentId === parentId);

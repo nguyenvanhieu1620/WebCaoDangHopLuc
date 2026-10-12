@@ -1,5 +1,5 @@
-import Image from "next/image";
 import type { GalleryItem } from "@/lib/db/schema";
+import { FitImage } from "@/components/ui/FitImage";
 
 type GalleryMediaProps = {
   item: Pick<GalleryItem, "imageUrl" | "videoUrl" | "caption">;
@@ -16,7 +16,7 @@ type GalleryMediaProps = {
 export function GalleryMedia({ item, className, sizes = "(max-width: 640px) 50vw, 33vw" }: GalleryMediaProps) {
   return (
     <div className={`relative ${className ?? ""}`}>
-      <Image src={item.imageUrl} alt={item.caption} fill sizes={sizes} className="object-cover transition-transform duration-700 group-hover:scale-105" />
+      <FitImage src={item.imageUrl} alt={item.caption} sizes={sizes} className="transition-transform duration-700 group-hover:scale-105" />
       {item.videoUrl && (
         <div className="absolute inset-0 z-[4] flex items-center justify-center bg-black/25 transition-colors group-hover:bg-black/40">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform duration-300 group-hover:scale-110">

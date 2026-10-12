@@ -34,7 +34,7 @@ export default async function AdminQuickContactsPage({
 }) {
   await requirePermission("admissions-contact");
   const { edit } = await searchParams;
-  const all = await db.query.quickContacts.findMany({ orderBy: asc(schema.quickContacts.sortOrder) });
+  const all = await db.query.quickContacts.findMany({ orderBy: [asc(schema.quickContacts.sortOrder), asc(schema.quickContacts.seq)] });
   const editing = edit
     ? await db.query.quickContacts.findFirst({ where: eq(schema.quickContacts.id, edit) })
     : null;

@@ -19,14 +19,14 @@ export default async function AdminGalleryPage({
   await requirePermission("homepage");
   const { edit } = await searchParams;
   const allItems = await db.query.galleryItems.findMany({
-    orderBy: asc(schema.galleryItems.sortOrder),
+    orderBy: [asc(schema.galleryItems.sortOrder), asc(schema.galleryItems.seq)],
   });
   const editing = edit
     ? await db.query.galleryItems.findFirst({ where: eq(schema.galleryItems.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -138,6 +138,7 @@ export default async function AdminGalleryPage({
                 Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                spec="gallery"
                 fileFieldName="image"
                 pickedFieldName="imageExisting"
                 images={mediaImages}

@@ -3,7 +3,7 @@
 ## Bối cảnh và hướng dẫn hiện có
 
 - Đọc `CLAUDE.md`, `README.md` và `package.json` trước khi làm việc; giữ các quyết định kiến trúc và hướng dẫn hiện có. Nếu tài liệu khác mã nguồn, đối chiếu file thực tế và báo rõ điểm lệch.
-- Dự án dùng Next.js App Router, TypeScript, Tailwind CSS, Drizzle ORM và SQLite qua `@libsql/client`. Dùng các script thực tế trong `package.json`; migration hiện là `db:generate` và `db:migrate`.
+- Dự án dùng Next.js App Router, TypeScript, Tailwind CSS, Drizzle ORM và PostgreSQL qua driver `pg` (dev: `docker compose up -d`; test: PGlite trong bộ nhớ). Dùng các script thực tế trong `package.json`; migration hiện là `db:generate` và `db:migrate`. Danh sách luôn sắp xếp kèm khoá phụ `seq` (xem đầu `src/lib/db/schema.ts`).
 
 ## Vai trò
 

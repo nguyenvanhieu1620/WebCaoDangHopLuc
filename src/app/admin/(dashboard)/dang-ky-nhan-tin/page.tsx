@@ -14,7 +14,7 @@ export default async function AdminNewsletterPage() {
   await requirePermission("admissions-contact");
 
   const subscribers = await db.query.newsletterSubscribers.findMany({
-    orderBy: desc(schema.newsletterSubscribers.createdAt),
+    orderBy: [desc(schema.newsletterSubscribers.createdAt), desc(schema.newsletterSubscribers.seq)],
   });
 
   return (

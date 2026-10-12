@@ -19,14 +19,14 @@ export default async function AdminHeroBannerPage({
   await requirePermission("homepage");
   const { edit } = await searchParams;
   const allBanners = await db.query.heroBanners.findMany({
-    orderBy: asc(schema.heroBanners.sortOrder),
+    orderBy: [asc(schema.heroBanners.sortOrder), asc(schema.heroBanners.seq)],
   });
   const editing = edit
     ? await db.query.heroBanners.findFirst({ where: eq(schema.heroBanners.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -110,16 +110,12 @@ export default async function AdminHeroBannerPage({
                 Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                spec="hero"
                 fileFieldName="image"
                 pickedFieldName="imageExisting"
                 images={mediaImages}
                 currentUrl={editing?.imageUrl}
               />
-              <div className="mt-2 rounded-lg bg-brand-50 px-3 py-2.5 text-[11.5px] leading-relaxed text-brand-800">
-                <strong>Banner phủ kín toàn màn hình</strong> — nên dùng ảnh ngang, tối thiểu <strong>1920×1080</strong> (tỉ lệ 16:9), dung lượng
-                dưới ~1MB. Chữ tiêu đề nằm bên trái trên lớp phủ xanh đậm, nên chọn ảnh có <strong>chủ thể lệch sang phải</strong> (sinh viên,
-                giảng viên, phòng thực hành…) để không bị chữ che.
-              </div>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">

@@ -7,6 +7,8 @@ import { desc } from "drizzle-orm";
 import { uploadMediaAction, deleteMediaAction } from "./actions";
 import { cn } from "@/lib/utils";
 import { requirePermission } from "@/lib/admin-auth";
+import { CheckedFileInput } from "@/components/admin/CheckedFileInput";
+import { MAX_UPLOAD_BYTES, formatBytes } from "@/lib/upload-rules";
 
 export const metadata: Metadata = { title: "Thư viện media" };
 
@@ -31,7 +33,7 @@ export default async function AdminMediaPage({
   const activeType = type === "image" || type === "video" ? type : "all";
 
   const allItems = await db.query.mediaItems.findMany({
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
   const items = activeType === "all" ? allItems : allItems.filter((i) => i.type === activeType);
 
@@ -50,15 +52,17 @@ export default async function AdminMediaPage({
             Chọn tệp để tải lên
           </div>
           <div className="text-[13px] text-ink-faint">
-            Hỗ trợ JPG, PNG, WEBP, GIF, MP4, WEBM · Tối đa 10MB ảnh / 50MB video
+            Hỗ trợ JPG, PNG, WEBP, GIF, MP4, WEBM · Tối đa {formatBytes(MAX_UPLOAD_BYTES.image)} ảnh / {formatBytes(MAX_UPLOAD_BYTES.video)} video
+            <br />
+            Ảnh dùng cho banner nên rộng ≥ 1920px — kích thước khuyến nghị riêng từng chỗ hiện ngay dưới ô chọn ảnh ở mỗi form.
           </div>
-          <input
-            type="file"
+          <CheckedFileInput
+            kinds={["image", "video"]}
             name="files"
             multiple
             required
-            accept="image/*,video/mp4,video/webm"
-            className="mt-2 text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-brand-700 file:shadow-sm2"
+            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+            className="mt-2 max-w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-brand-700 file:shadow-sm2"
           />
           <button
             type="submit"

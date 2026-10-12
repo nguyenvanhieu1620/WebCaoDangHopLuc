@@ -63,6 +63,38 @@ export function staticPageHref(slug: string): string | null {
   return null;
 }
 
+/**
+ * Chuẩn hoá link ngoài admin dán vào (Facebook, Zalo, YouTube, LMS…): bỏ khoảng trắng và dấu
+ * "#" lỡ dính ở đầu ("#https://facebook.com/…" — từng xảy ra thật vì ô nhập điền sẵn "#"), tự
+ * thêm "https://" khi thiếu ("facebook.com/abc"). Chỉ nhận http(s) có tên miền — giá trị trống,
+ * "#", "javascript:…", chữ không phải link đều trả `null`.
+ */
+export function normalizeExternalUrl(raw: string | null | undefined): string | null {
+  let value = (raw ?? "").trim().replace(/^#+/, "").trim();
+  if (!value) return null;
+  if (value.startsWith("//")) value = `https:${value}`;
+  else if (!/^[a-z][a-z\d+.-]*:/i.test(value)) value = `https://${value}`;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+  // Tên miền phải có dấu chấm NHƯ ADMIN GÕ — không xét `url.hostname`, vì URL tự hiểu "123"
+  // thành địa chỉ IP 0.0.0.123.
+  const typedHost = value.replace(/^https?:\/\//i, "").split(/[/?#:]/)[0];
+  if (!typedHost.includes(".")) return null;
+  return url.href;
+}
+
+/** Như `normalizeExternalUrl`, thêm: admin gõ số điện thoại Zalo ("0912 345 678") → "https://zalo.me/0912345678". */
+export function normalizeZaloUrl(raw: string | null | undefined): string | null {
+  const value = (raw ?? "").trim().replace(/^#+/, "").trim();
+  if (/^\+?[\d\s.-]{9,15}$/.test(value)) return `https://zalo.me/${value.replace(/\D/g, "")}`;
+  return normalizeExternalUrl(value);
+}
+
 /** Chuẩn hoá chuỗi để tìm kiếm không phân biệt hoa/thường và dấu tiếng Việt ("Điều dưỡng" ~ "dieu duong"). */
 export function normalizeSearch(value: string): string {
   return value
@@ -92,7 +124,8 @@ export function formatVNDateTime(iso: string | null): string {
 }
 
 /**
- * `created_at` mặc định của SQLite (`CURRENT_TIMESTAMP`) là giờ UTC dạng
+ * `created_at` mặc định của DB (`nowText` trong schema.ts, giữ đúng định dạng
+ * `CURRENT_TIMESTAMP` của SQLite trước đây) là giờ UTC dạng
  * "YYYY-MM-DD HH:MM:SS" không kèm múi giờ — `new Date()` sẽ hiểu nhầm thành
  * giờ local máy chủ, nên chuẩn hoá về ISO UTC trước khi dùng. Chuỗi đã là
  * ISO (có "T"/"Z") thì giữ nguyên.
@@ -101,7 +134,7 @@ export function dbTimestampToISO(value: string): string {
   return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value) ? `${value.replace(" ", "T")}Z` : value;
 }
 
-/** Định dạng `created_at` của SQLite theo giờ Việt Nam (dd/mm/yyyy · HH:mm). */
+/** Định dạng `created_at` của DB theo giờ Việt Nam (dd/mm/yyyy · HH:mm). */
 export function formatDbDateTime(value: string | null | undefined): string {
   return value ? formatVNDateTime(dbTimestampToISO(value)) : "";
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/lib/locale";
 import { programGradient } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { FitImage } from "@/components/ui/FitImage";
 
 type ProgramOption = { slug: string; code: string; name: string; summary: string; duration: string; intake: number; imageUrl: string | null };
 
@@ -63,7 +63,7 @@ export function ProgramExplorer({ programs, locale = "vi" }: { programs: Program
                   Màu theo thứ tự gốc của ngành (không theo vị trí sau khi lọc) để màu không đổi khi gõ tìm. */}
               <Link href={`/nganh-dao-tao/${p.slug}`} tabIndex={-1} aria-hidden="true" className={cn("img-reveal img-shine relative block h-[170px] bg-gradient-to-br", programGradient(programs.indexOf(p)))}>
                 {p.imageUrl ? (
-                  <Image src={p.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <FitImage src={p.imageUrl} alt="" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="transition-transform duration-700 group-hover:scale-105" />
                 ) : (
                   <span className="absolute -bottom-8 -right-6 font-display text-[110px] font-bold leading-none text-white/15">{p.code}</span>
                 )}

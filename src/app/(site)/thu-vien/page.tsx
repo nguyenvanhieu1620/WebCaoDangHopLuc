@@ -35,7 +35,8 @@ export default async function GalleryPage() {
                     label={`${item.videoUrl ? "Xem video" : "Xem ảnh"}: ${item.caption}`}
                     className="block w-full cursor-zoom-in overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2"
                   >
-                    <GalleryMedia item={item} className="img-reveal img-shine h-[190px]" />
+                    {/* Điện thoại: ô 4:3 cho sát ảnh ngang (ảnh hiện trọn — FitImage — nên ô quá cao thì dải nền mờ dày). */}
+                    <GalleryMedia item={item} className="img-reveal img-shine aspect-[4/3] sm:aspect-auto sm:h-[190px]" />
                     <span className="block px-4 py-3 text-[13px] font-semibold text-ink transition-colors group-hover:text-brand-700">
                       {item.caption}
                     </span>

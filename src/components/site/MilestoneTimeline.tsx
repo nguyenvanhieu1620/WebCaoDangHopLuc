@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { MilestoneYear } from "@/lib/data/milestones";
+import { FitImage } from "@/components/ui/FitImage";
 
 /**
  * Dòng thời gian "Những cột mốc" kiểu VinUni: thanh năm nằm ngang (cuộn được
@@ -108,7 +108,7 @@ export function MilestoneTimeline({ years }: { years: MilestoneYear[] }) {
           >
             {m.imageUrl && (
               <div className="img-shine relative h-[180px]">
-                <Image src={m.imageUrl} alt={m.title} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                <FitImage src={m.imageUrl} alt={m.title} sizes="(max-width: 768px) 100vw, 400px" className="transition-transform duration-700 group-hover:scale-105" />
               </div>
             )}
             <div className="relative p-6">

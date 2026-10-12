@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
@@ -9,6 +8,7 @@ import { TiltCard } from "@/components/site/TiltCard";
 import { getPublishedPostsPage, type PublishedPostPreview } from "@/lib/data/posts";
 import { getCategories } from "@/lib/data/categories";
 import { cn, formatVNDate } from "@/lib/utils";
+import { FitImage } from "@/components/ui/FitImage";
 
 export async function generateMetadata({
   searchParams,
@@ -115,13 +115,13 @@ export default async function NewsPage({
                     <Link href={`/tin-tuc/${featured.slug}`} className="group relative block h-[380px] overflow-clip rounded-[22px] shadow-md2 sm:h-[460px] lg:h-full lg:min-h-[460px]">
                       <div className="img-reveal img-shine absolute inset-0">
                         {featured.coverImageUrl ? (
-                          <Image
+                          <FitImage
                             src={featured.coverImageUrl}
                             alt={featured.title}
-                            fill
                             priority
                             sizes="(max-width: 1024px) 100vw, 740px"
-                            className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+                            textBelow
+                            className="transition-transform duration-[1200ms] ease-out group-hover:scale-105"
                           />
                         ) : (
                           <ImagePlaceholder label="Ảnh bài viết" />
@@ -155,7 +155,7 @@ export default async function NewsPage({
                           <Link href={`/tin-tuc/${p.slug}`} className="group flex gap-4 py-4">
                             <div className="img-shine relative h-[72px] w-[96px] shrink-0 overflow-hidden rounded-xl">
                               {p.coverImageUrl ? (
-                                <Image src={p.coverImageUrl} alt="" fill sizes="96px" className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                                <FitImage src={p.coverImageUrl} alt="" sizes="96px" className="transition-transform duration-700 group-hover:scale-110" />
                               ) : (
                                 <ImagePlaceholder label="Tin" />
                               )}
@@ -240,12 +240,11 @@ function PostCard({ post, index }: { post: PublishedPostPreview; index: number }
         >
           <div className="img-reveal img-shine relative h-[180px]">
             {post.coverImageUrl ? (
-              <Image
+              <FitImage
                 src={post.coverImageUrl}
                 alt={post.title}
-                fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="transition-transform duration-700 group-hover:scale-105"
               />
             ) : (
               <ImagePlaceholder label="Ảnh bài viết" />

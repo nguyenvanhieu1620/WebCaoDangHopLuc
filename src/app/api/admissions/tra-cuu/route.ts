@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isValidCccd, normalizeCccd, readJsonObject, readStringFields } from "@/lib/validate";
 
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
 
   const rows = await db.query.admissionSubmissions.findMany({
     where: eq(schema.admissionSubmissions.idNumber, idNumber),
+    orderBy: asc(schema.admissionSubmissions.seq),
   });
 
   return NextResponse.json({

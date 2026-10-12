@@ -1,7 +1,7 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db } from "./client";
+import { closeDb, db } from "./client";
 import { slugify } from "../utils";
 import { autoFillTranslations } from "../translate";
 import {
@@ -1202,7 +1202,9 @@ Bạn có quyền yêu cầu xem, chỉnh sửa hoặc xoá thông tin cá nhân
   console.log("Seed hoàn tất.");
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  })
+  .finally(closeDb);

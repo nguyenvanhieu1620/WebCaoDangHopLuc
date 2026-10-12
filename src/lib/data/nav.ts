@@ -18,7 +18,7 @@ export type NavNode = {
  */
 export async function getNavTree(): Promise<{ primary: NavNode[]; secondary: NavNode[] }> {
   const [rows, locale] = await Promise.all([
-    db.query.navItems.findMany({ orderBy: asc(schema.navItems.sortOrder) }),
+    db.query.navItems.findMany({ orderBy: [asc(schema.navItems.sortOrder), asc(schema.navItems.seq)] }),
     getLocale(),
   ]);
 

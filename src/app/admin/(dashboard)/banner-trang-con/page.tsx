@@ -59,7 +59,7 @@ function BannerCard({ kind, target, title, path, note, own, fallback, saved, med
         <input type="hidden" name="kind" value={kind} />
         <input type="hidden" name="target" value={target} />
         {note && <p className="text-[11.5px] leading-relaxed text-ink-faint">{note}</p>}
-        <ImagePicker fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} />
+        <ImagePicker spec="pageBanner" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={own} hideCurrentPreview />
         <div className="flex flex-wrap items-center justify-between gap-3">
           {own ? (
             <label className="flex items-center gap-2 text-[12px] text-ink-soft">
@@ -98,7 +98,7 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
     db.query.siteSettings.findFirst({ where: eq(schema.siteSettings.id, "main") }),
     db.query.pageBanners.findMany(),
     db.query.pages.findMany({ orderBy: asc(schema.pages.slug) }),
-    db.query.mediaItems.findMany({ where: eq(schema.mediaItems.type, "image"), orderBy: desc(schema.mediaItems.createdAt) }),
+    db.query.mediaItems.findMany({ where: eq(schema.mediaItems.type, "image"), orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)] }),
   ]);
   const defaultUrl = settings?.pageBannerUrl ?? null;
   const ownBySlot = new Map(bannerRows.map((r) => [r.key, r.imageUrl]));
@@ -117,7 +117,7 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
       <div className="space-y-10 p-5 sm:p-8">
         <div className="rounded-2xl border border-brand-100 bg-brand-50 px-5 py-4 text-[13px] leading-relaxed text-brand-800">
           <b>Thứ tự ưu tiên:</b> ảnh riêng của bài viết / sự kiện / ngành (nếu có) → ảnh riêng của trang ở đây → ảnh mặc định → nền
-          xanh. Nên dùng ảnh ngang ≥ 1920×600, chủ thể lệch sang phải (bên trái phủ màu tối để đặt chữ tiêu đề).
+          xanh. Kích thước khuyến nghị và cảnh báo ảnh nhỏ hiện ngay dưới ô chọn ảnh của từng thẻ.
         </div>
 
         <section>

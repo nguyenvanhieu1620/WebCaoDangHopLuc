@@ -20,14 +20,14 @@ export default async function AdminPagesPage({
   await requirePermission("pages");
   const { edit } = await searchParams;
   const allPages = await db.query.pages.findMany({
-    orderBy: asc(schema.pages.title),
+    orderBy: [asc(schema.pages.title), asc(schema.pages.seq)],
   });
   const editing = edit
     ? await db.query.pages.findFirst({ where: eq(schema.pages.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -135,6 +135,7 @@ export default async function AdminPagesPage({
                 Ảnh banner (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
               </label>
               <ImagePicker
+                spec="pageBanner"
                 fileFieldName="coverImage"
                 pickedFieldName="coverImageExisting"
                 images={mediaImages}

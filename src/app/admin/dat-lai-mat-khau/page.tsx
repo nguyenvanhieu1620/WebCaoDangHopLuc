@@ -21,11 +21,11 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg2">
         <div className="mb-6 flex flex-col items-center text-center">
           <Image
-            src="/images/logo-icon.png"
+            src="/images/logo.png"
             alt={SITE.fullName}
-            width={48}
-            height={48}
-            className="mb-3 h-12 w-auto"
+            width={1137}
+            height={315}
+            className="mb-4 h-14 w-auto"
           />
           <h1 className="font-display text-lg font-bold text-brand-900">Đặt mật khẩu mới</h1>
         </div>

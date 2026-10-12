@@ -19,13 +19,13 @@ export default async function AdminEventsPage({
 }) {
   await requirePermission("events");
   const { edit } = await searchParams;
-  const allEvents = await db.query.events.findMany({ orderBy: desc(schema.events.startAt) });
+  const allEvents = await db.query.events.findMany({ orderBy: [desc(schema.events.startAt), desc(schema.events.seq)] });
   const editing = edit
     ? await db.query.events.findFirst({ where: eq(schema.events.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -153,6 +153,7 @@ export default async function AdminEventsPage({
                 Ảnh sự kiện (tuỳ chọn) {editing ? "— để trống = giữ ảnh cũ" : ""}
               </label>
               <ImagePicker
+                spec="cover"
                 fileFieldName="coverImage"
                 pickedFieldName="coverImageExisting"
                 images={mediaImages}

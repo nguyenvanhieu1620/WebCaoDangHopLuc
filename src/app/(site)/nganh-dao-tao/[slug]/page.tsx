@@ -8,6 +8,7 @@ import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
 import { getProgramBySlug } from "@/lib/data/programs";
+import { FitImage } from "@/components/ui/FitImage";
 
 export async function generateMetadata({
   params,
@@ -56,9 +57,10 @@ export default async function ProgramDetailPage({
 
       <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-14">
         <div className="min-w-0">
-          {/* Ảnh ngành hiện RÕ ở đầu nội dung (banner phía trên phủ lớp màu tối nên ảnh khó thấy). */}
+          {/* Ảnh ngành hiện RÕ ở đầu nội dung (banner máy tính phủ lớp màu tối nên ảnh khó thấy).
+              < lg không cần: banner điện thoại đã hiện trọn ảnh rõ nét (PageHero) → tránh lặp 2 ảnh liền nhau. */}
           {program.imageUrl && (
-            <Reveal className="mb-10">
+            <Reveal className="mb-10 hidden lg:block">
               <figure className="img-reveal img-shine relative aspect-[16/9] overflow-clip rounded-[24px] shadow-md2">
                 <Image
                   src={program.imageUrl}
@@ -89,7 +91,7 @@ export default async function ProgramDetailPage({
           {/* Ảnh nhỏ đầu khung — khung dính theo khi cuộn nên đọc tới đâu vẫn thấy ảnh ngành. */}
           {program.imageUrl && (
             <div className="relative -mx-6 -mt-6 mb-5 h-[150px]">
-              <Image src={program.imageUrl} alt="" fill sizes="320px" className="object-cover" />
+              <FitImage src={program.imageUrl} alt="" sizes="(max-width: 1024px) 100vw, 320px" />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-900/45 to-transparent" />
             </div>
           )}

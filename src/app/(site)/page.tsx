@@ -28,6 +28,7 @@ import { getHeroBanners } from "@/lib/data/hero-banners";
 import { getEvents } from "@/lib/data/events";
 import { cn, formatVNDate, formatVNDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/db/schema";
+import { FitImage } from "@/components/ui/FitImage";
 
 /** Lọc + cắt 3 sự kiện sắp diễn ra — hàm thường (không phải component) nên gọi Date.now() ở đây được. */
 function upcomingEvents(allEvents: Event[]): Event[] {
@@ -38,8 +39,10 @@ function upcomingEvents(allEvents: Event[]): Event[] {
 /** Thẻ kính tối hiển thị 1 chỉ số trong khối 3D "Vì sao chọn Hợp Lực" (VD "8.500+ Sinh viên đã tốt nghiệp"). */
 function DarkStat({ value, label, accent }: { value: string; label: string; accent?: boolean }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/[0.07] px-5 py-4 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md">
-      <div className={cn("font-mono text-[30px] font-semibold leading-none", accent ? "text-accent-400" : "text-white")}>
+    // Không dùng backdrop-blur: thẻ nằm trên nền xanh trơn (không còn đè lên mô hình 3D), mờ hay không
+    // trông như nhau, mà kính mờ lại tốn GPU khi cuộn. `h-full` để 4 thẻ cùng hàng cao bằng nhau.
+    <div className="h-full rounded-2xl border border-white/15 bg-white/[0.07] px-5 py-4 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] lg:px-4">
+      <div className={cn("font-mono text-[30px] font-semibold leading-none lg:text-[26px]", accent ? "text-accent-400" : "text-white")}>
         <CountUp value={value} />
       </div>
       <div className="mt-1.5 text-[12.5px] leading-snug text-brand-100/75">{label}</div>
@@ -282,22 +285,17 @@ export default async function HomePage() {
           </div>
 
           <div>
-            <div className="relative h-[400px] sm:h-[560px]">
-              <DnaScene3D theme="dark" className="absolute -inset-x-6 -inset-y-10 sm:-inset-x-12" />
-              {/* Chỉ số nổi quanh chuỗi xoắn (desktop) */}
-              <div className="absolute inset-0 hidden lg:block">
-                {stats[0] && <div className="float-y absolute left-0 top-8 w-[200px]"><DarkStat value={stats[0].value} label={stats[0].label} /></div>}
-                {stats[1] && <div className="float-y-slow absolute right-0 top-20 w-[200px]"><DarkStat value={stats[1].value} label={stats[1].label} accent /></div>}
-                {stats[2] && <div className="float-y-slow absolute bottom-24 left-6 w-[200px]"><DarkStat value={stats[2].value} label={stats[2].label} accent /></div>}
-                {stats[3] && <div className="float-y absolute bottom-6 right-8 w-[200px]"><DarkStat value={stats[3].value} label={stats[3].label} /></div>}
-              </div>
-              <div className="absolute bottom-0 left-1/2 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-brand-100/70 backdrop-blur-md lg:flex">
-                <span className="dot-pulse h-1.5 w-1.5 rounded-full bg-accent-500" />
-                Di chuột để xoay mô hình
-              </div>
+            {/* Mô hình 3D có vùng riêng, KHÔNG còn thẻ nào nổi đè lên (người dùng: "bị che hết hình đang
+                chuyển động"). Canvas không tràn xuống dưới (bottom-0) để không chạm hàng số liệu. */}
+            <div className="relative h-[400px] sm:h-[500px]">
+              <DnaScene3D theme="dark" className="absolute -inset-x-6 -top-10 bottom-0 sm:-inset-x-12" />
             </div>
-            {/* Chỉ số dạng lưới trên mobile/tablet */}
-            <div className="mt-2 grid grid-cols-2 gap-3 lg:hidden">
+            <div className="mb-4 hidden items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-wider text-brand-100/60 lg:flex">
+              <span className="dot-pulse h-1.5 w-1.5 rounded-full bg-accent-500" />
+              Di chuột để xoay mô hình
+            </div>
+            {/* 4 chỉ số thành 1 hàng ngay dưới mô hình (điện thoại/tablet: lưới 2×2) */}
+            <div className="mt-2 grid grid-cols-2 gap-3 lg:mt-0 lg:grid-cols-4">
               {stats.map((s, i) => (
                 <Reveal key={s.label} delay={i * 80}>
                   <DarkStat value={s.value} label={s.label} accent={i % 3 !== 0} />
@@ -338,12 +336,12 @@ export default async function HomePage() {
                             >
                               <div className="img-reveal img-shine absolute inset-0">
                                 {n.coverImageUrl ? (
-                                  <Image
+                                  <FitImage
                                     src={n.coverImageUrl}
                                     alt={n.title}
-                                    fill
                                     sizes="(max-width: 1024px) 100vw, 860px"
-                                    className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+                                    textBelow
+                                    className="transition-transform duration-[1200ms] ease-out group-hover:scale-105"
                                   />
                                 ) : (
                                   <ImagePlaceholder label="Ảnh bài viết" />
@@ -379,12 +377,11 @@ export default async function HomePage() {
                           >
                             <div className="img-reveal img-shine relative h-24 w-28 shrink-0 overflow-hidden rounded-2xl md:h-[190px] md:w-auto md:rounded-none">
                               {n.coverImageUrl ? (
-                                <Image
+                                <FitImage
                                   src={n.coverImageUrl}
                                   alt={n.title}
-                                  fill
                                   sizes="(max-width: 768px) 112px, 380px"
-                                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                  className="transition-transform duration-700 group-hover:scale-105"
                                 />
                               ) : (
                                 <ImagePlaceholder label="Ảnh bài viết" />
@@ -583,12 +580,12 @@ export default async function HomePage() {
                   <>
                     <div className="img-reveal img-shine relative h-[220px]">
                       {f.photoUrl ? (
-                        <Image
+                        <FitImage
                           src={f.photoUrl}
                           alt={facultyDisplayName(f)}
-                          fill
                           sizes="(max-width: 640px) 68vw, (max-width: 1024px) 50vw, 320px"
-                          className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                          anchorTop
+                          className="transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
                         <ImagePlaceholder label="Ảnh chân dung" />

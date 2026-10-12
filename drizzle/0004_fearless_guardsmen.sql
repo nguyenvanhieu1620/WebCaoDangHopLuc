@@ -1,1 +1,0 @@
-ALTER TABLE `pages` ADD `cover_image_url` text;

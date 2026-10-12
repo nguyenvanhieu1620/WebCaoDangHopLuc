@@ -40,7 +40,7 @@ export default async function AdminAdmissionsPage({
   const activeStatus = parseStatusFilter(status);
 
   const allSubmissions = await db.query.admissionSubmissions.findMany({
-    orderBy: desc(schema.admissionSubmissions.createdAt),
+    orderBy: [desc(schema.admissionSubmissions.createdAt), desc(schema.admissionSubmissions.seq)],
   });
 
   const submissions = filterAdmissions(allSubmissions, { q, status: activeStatus });

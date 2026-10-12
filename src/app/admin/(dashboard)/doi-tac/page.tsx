@@ -18,14 +18,14 @@ export default async function AdminPartnersPage({
   await requirePermission("partners");
   const { edit } = await searchParams;
   const allPartners = await db.query.partners.findMany({
-    orderBy: asc(schema.partners.sortOrder),
+    orderBy: [asc(schema.partners.sortOrder), asc(schema.partners.seq)],
   });
   const editing = edit
     ? await db.query.partners.findFirst({ where: eq(schema.partners.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -126,9 +126,7 @@ export default async function AdminPartnersPage({
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Logo <span className="font-normal text-ink-faint">(tuỳ chọn — không có thì hiện tên chữ)</span>
               </label>
-              <ImagePicker fileFieldName="logo" pickedFieldName="logoExisting" images={mediaImages} currentUrl={editing?.logoUrl} />
-              <p className="mt-1.5 text-[11px] text-ink-faint">Nên dùng PNG nền trong suốt, ngang, cao ≥ 120px.</p>
-              {editing?.logoUrl && (
+              <ImagePicker spec="logo" fileFieldName="logo" pickedFieldName="logoExisting" images={mediaImages} currentUrl={editing?.logoUrl} />              {editing?.logoUrl && (
                 <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
                   <input type="checkbox" name="removeLogo" className="h-4 w-4 rounded border-line" /> Gỡ logo hiện tại
                 </label>

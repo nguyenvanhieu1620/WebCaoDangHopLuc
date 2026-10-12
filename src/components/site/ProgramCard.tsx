@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 import type { Program } from "@/lib/db/schema";
+import { FitImage } from "@/components/ui/FitImage";
 
 type ProgramCardProps = {
   program: Pick<Program, "slug" | "code" | "name" | "summary" | "duration" | "intake"> & { imageUrl?: string | null };
@@ -58,12 +58,11 @@ export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCar
         {p.imageUrl ? (
           // Có ảnh: ảnh tràn sát mép trên thẻ (bù -mx/-mt đúng bằng p-7), mã ngành + thời gian thành nhãn kính đè lên ảnh.
           <div className="img-shine relative -mx-7 -mt-7 mb-5 h-[168px] shrink-0">
-            <Image
+            <FitImage
               src={p.imageUrl}
               alt={p.name}
-              fill
               sizes="(max-width: 640px) 82vw, (max-width: 1024px) 46vw, 400px"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              className="transition-transform duration-700 group-hover:scale-105"
               draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-900/55 via-transparent to-brand-900/20" />

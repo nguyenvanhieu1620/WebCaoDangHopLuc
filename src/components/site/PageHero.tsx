@@ -46,7 +46,10 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
     <section className="relative isolate -mt-[72px] overflow-hidden bg-brand-900 text-white">
       {bg ? (
         <>
-          <Image src={bg} alt="" fill priority sizes="100vw" className="hero-kenburns object-cover" />
+          {/* ≥ lg: ảnh phủ kín banner. < lg: cùng ảnh phóng to + làm mờ làm nền, ảnh rõ nét hiện TRỌN
+              phía trên tiêu đề (khối "Ảnh trọn vẹn" bên dưới) — cùng src + sizes nên chỉ tải 1 lần. */}
+          <Image src={bg} alt="" fill priority sizes="100vw" className="hero-kenburns hidden object-cover lg:block" />
+          <Image src={bg} alt="" aria-hidden fill priority sizes="100vw" className="scale-110 object-cover blur-2xl lg:hidden" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-900/95 via-brand-900/70 to-brand-900/20" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-900/80 via-transparent to-brand-900/60" />
         </>
@@ -61,10 +64,26 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
 
       <div
         className={cn(
-          "relative mx-auto flex max-w-[1320px] flex-col justify-end px-6 pb-12 pt-[140px] sm:px-8 lg:pb-16",
+          "relative mx-auto flex max-w-[1320px] flex-col justify-end px-6 pb-12 sm:px-8 lg:pb-16",
+          bg ? "pt-24 lg:pt-[140px]" : "pt-[140px]",
           variant === "article" ? "min-h-[380px] lg:min-h-[460px]" : "min-h-[360px] sm:min-h-[400px] lg:min-h-[440px]"
         )}
       >
+        {/* Ảnh trọn vẹn (< lg): dải banner trên điện thoại gần như vuông, phủ kín thì mất ~2/3 ảnh.
+            Ở đây ảnh hiện đúng tỉ lệ thật, không cắt (ảnh quá dọc thì giới hạn chiều cao, thu vừa khung). */}
+        {bg && (
+          <div className="hero-rise mb-7 lg:hidden">
+            <Image
+              src={bg}
+              alt=""
+              width={1920}
+              height={1080}
+              priority
+              sizes="100vw"
+              className="h-auto max-h-[52svh] w-full rounded-2xl object-contain shadow-lg2 ring-1 ring-white/15"
+            />
+          </div>
+        )}
         <nav aria-label="Breadcrumb" className="hero-rise">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-white/65">
             <li>

@@ -94,7 +94,7 @@ function AttributeSection({
 export default async function AdminFacultyAttributesPage() {
   await requirePermission("faculty");
   const all = await db.query.facultyAttributes.findMany({
-    orderBy: asc(schema.facultyAttributes.sortOrder),
+    orderBy: [asc(schema.facultyAttributes.sortOrder), asc(schema.facultyAttributes.seq)],
   });
   const byType = (type: string) => all.filter((a) => a.type === type);
 

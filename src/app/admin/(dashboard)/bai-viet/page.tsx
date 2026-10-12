@@ -3,6 +3,7 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { CheckedFileInput } from "@/components/admin/CheckedFileInput";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
@@ -27,11 +28,11 @@ export default async function AdminPostsPage({
   const activeStatus = status === "published" || status === "draft" ? status : "all";
 
   const [allPosts, categories, mediaImages] = await Promise.all([
-    db.query.posts.findMany({ orderBy: desc(schema.posts.createdAt) }),
-    db.query.categories.findMany({ orderBy: asc(schema.categories.name) }),
+    db.query.posts.findMany({ orderBy: [desc(schema.posts.createdAt), desc(schema.posts.seq)] }),
+    db.query.categories.findMany({ orderBy: [asc(schema.categories.name), asc(schema.categories.seq)] }),
     db.query.mediaItems.findMany({
       where: eq(schema.mediaItems.type, "image"),
-      orderBy: desc(schema.mediaItems.createdAt),
+      orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
     }),
   ]);
   const categoryNameById = new Map(categories.map((c) => [c.id, c.name]));
@@ -277,6 +278,7 @@ export default async function AdminPostsPage({
                   Ảnh đại diện (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
                 </label>
                 <ImagePicker
+                  spec="cover"
                   fileFieldName="coverImage"
                   pickedFieldName="coverImageExisting"
                   images={mediaImages}
@@ -303,9 +305,9 @@ export default async function AdminPostsPage({
                     </label>
                   </div>
                 )}
-                <input
+                <CheckedFileInput
+                  kinds={["document"]}
                   name="attachment"
-                  type="file"
                   accept=".pdf,.doc,.docx,.xls,.xlsx"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-[12.5px] file:font-semibold file:text-brand-700"
                 />

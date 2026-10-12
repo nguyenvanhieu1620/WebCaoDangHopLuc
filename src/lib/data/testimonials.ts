@@ -6,7 +6,7 @@ import { getLocale, pickLocale } from "@/lib/locale";
 /** Đánh giá của cựu sinh viên hiển thị ở Trang chủ — quản lý qua admin/danh-gia. */
 export async function getTestimonials(): Promise<Testimonial[]> {
   const [rows, locale] = await Promise.all([
-    db.query.testimonials.findMany({ orderBy: asc(schema.testimonials.sortOrder) }),
+    db.query.testimonials.findMany({ orderBy: [asc(schema.testimonials.sortOrder), asc(schema.testimonials.seq)] }),
     getLocale(),
   ]);
   return rows.map((r) => ({

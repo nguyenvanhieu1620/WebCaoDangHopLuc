@@ -1,21 +1,30 @@
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
-import { migrate } from "drizzle-orm/libsql/migrator";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+import { migrate } from "drizzle-orm/pglite/migrator";
+import type { Database } from "../src/lib/db/client";
+import * as schema from "../src/lib/db/schema";
 
 let admission: typeof import("../src/app/api/admissions/route");
 let lookup: typeof import("../src/app/api/admissions/tra-cuu/route");
 let contact: typeof import("../src/app/api/contact/route");
 let newsletter: typeof import("../src/app/api/newsletter/route");
 let database: typeof import("../src/lib/db");
+let pglite: PGlite;
 let requestId = 0;
 
 before(async () => {
-  process.env.DATABASE_URL = "file::memory:";
   process.env.TURNSTILE_SECRET_KEY = "";
   process.env.RESEND_API_KEY = "";
   process.env.TRUST_PROXY_HOPS = "1";
+  // Postgres thật chạy trong bộ nhớ (PGlite) với đúng migration của dự án — không cần
+  // Docker, không đụng DB dev. Gắn TRƯỚC khi import code app (xem __testDb trong client.ts).
+  pglite = new PGlite();
+  const testDb = drizzle(pglite, { schema });
+  await migrate(testDb, { migrationsFolder: "./drizzle" });
+  globalThis.__testDb = testDb as unknown as Database;
   database = await import("../src/lib/db");
-  await migrate(database.db, { migrationsFolder: "./drizzle" });
   await database.db.insert(database.schema.programs).values({
     slug: "dieu-duong", code: "DD", name: "Điều dưỡng", nameEn: "Nursing",
     duration: "3 năm", intake: 100, summary: "Nội dung thử nghiệm",
@@ -29,8 +38,8 @@ before(async () => {
   newsletter = await import("../src/app/api/newsletter/route");
 });
 
-after(() => {
-  globalThis.__libsqlClient?.close();
+after(async () => {
+  await pglite.close();
 });
 
 function request(body: unknown, raw = false) {
@@ -103,6 +112,18 @@ test("newsletter chuẩn hoá email và không tạo bản ghi trùng", async ()
   const responses = await Promise.all(Array.from({ length: 3 }, () => newsletter.POST(request({ email: "parallel@example.com" }))));
   assert.ok(responses.every((response) => response.status === 200));
   assert.equal((await database.db.query.newsletterSubscribers.findMany()).length, 2);
+});
+
+test("Postgres: created_at mặc định giữ định dạng SQLite cũ; sửa 1 dòng không làm đổi thứ tự khi trùng sortOrder", async () => {
+  const { db, schema: s } = database;
+  const { asc, eq } = await import("drizzle-orm");
+  const [first] = await db.query.contactMessages.findMany();
+  assert.match(first.createdAt, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+
+  await db.insert(s.faqs).values(["A", "B", "C"].map((question) => ({ question, answer: "x" })));
+  await db.update(s.faqs).set({ answer: "đã sửa" }).where(eq(s.faqs.question, "A"));
+  const order = await db.query.faqs.findMany({ orderBy: [asc(s.faqs.sortOrder), asc(s.faqs.seq)] });
+  assert.deepEqual(order.map((f) => f.question), ["A", "B", "C"]);
 });
 
 test("honeypot không ghi dữ liệu; giới hạn tần suất vẫn có hiệu lực", async () => {

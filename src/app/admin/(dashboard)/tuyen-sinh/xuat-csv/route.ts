@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   await requirePermission("admissions-contact");
   const url = new URL(request.url);
   const all = await db.query.admissionSubmissions.findMany({
-    orderBy: desc(schema.admissionSubmissions.createdAt),
+    orderBy: [desc(schema.admissionSubmissions.createdAt), desc(schema.admissionSubmissions.seq)],
   });
   const rows = filterAdmissions(all, {
     q: url.searchParams.get("q") ?? undefined,

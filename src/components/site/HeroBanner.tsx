@@ -79,7 +79,8 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
           margin âm phải đặt trên CHÍNH section: section có overflow-hidden, đặt ở div con thì phần kéo lên bị cắt mất.
           Desktop: cao TỐI THIỂU gần trọn màn hình (trừ thanh thông báo ~33px, tối đa 940px) — dùng
           min-height chứ không cố định height: tiêu đề CMS dài xuống 3-4 dòng thì banner tự giãn,
-          chữ/nút không bị tràn xuống đè chú thích + nút điều khiển ở đáy. Mobile: cao theo nội dung. */}
+          chữ/nút không bị tràn xuống đè chú thích + nút điều khiển ở đáy. Mobile: cao theo nội dung,
+          ảnh hiện trọn ở đầu khối (không phủ kín → không bị cắt). */}
       <div className="relative flex min-h-[700px] flex-col lg:min-h-[min(calc(100svh-33px),940px)]">
         {/* Ảnh nền */}
         {slides.map((slide, i) => (
@@ -94,15 +95,19 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
               i === index ? "opacity-100" : "opacity-0"
             )}
           >
+            {/* ≥ lg: ảnh phủ kín banner. < lg: cùng ảnh đó phóng to + làm mờ làm nền (ảnh rõ nét hiện
+                TRỌN trong khung 16:9 phía trên chữ — xem khối "Ảnh trọn vẹn" bên dưới). Cùng src + sizes
+                nên trình duyệt chỉ tải 1 lần. */}
             <Image
               src={slide.imageUrl}
               alt={slide.caption || `Ảnh banner ${i + 1}`}
               fill
               priority={i === 0}
               sizes="100vw"
-              className={cn("object-cover", !reducedMotion && "hero-kenburns")}
+              className={cn("hidden object-cover lg:block", !reducedMotion && "hero-kenburns")}
               style={{ animationDelay: `${-i * 4}s` }}
             />
+            <Image src={slide.imageUrl} alt="" aria-hidden fill priority={i === 0} sizes="100vw" className="scale-110 object-cover blur-2xl lg:hidden" />
           </div>
         ))}
 
@@ -115,7 +120,24 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
         <div className="pointer-events-none absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-accent-500/20 blur-[100px]" />
 
         {/* Nội dung */}
-        <div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col justify-end px-6 pb-56 pt-[136px] sm:px-8 sm:pb-48 lg:justify-center lg:pb-40">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col justify-start px-6 pb-56 pt-24 sm:px-8 sm:pb-48 lg:justify-center lg:pb-40 lg:pt-[136px]">
+          {/* Ảnh trọn vẹn (< lg): khung ngang của điện thoại/máy tính bảng dọc hẹp hơn ảnh rất nhiều —
+              phủ kín thì chỉ còn thấy ~15% bề ngang ảnh. Ở đây ảnh thu vừa khung 16:9, KHÔNG cắt; ảnh khác
+              tỉ lệ thì phần thừa để lộ nền mờ của chính ảnh đó. Admin chỉ cần tải 1 ảnh. */}
+          <div className="hero-rise relative mb-8 aspect-video overflow-hidden rounded-2xl shadow-lg2 ring-1 ring-white/15 lg:hidden">
+            {slides.map((slide, i) => (
+              <Image
+                key={slide.id}
+                src={slide.imageUrl}
+                alt={slide.caption || `Ảnh banner ${i + 1}`}
+                aria-hidden={i !== index}
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                className={cn("object-contain transition-opacity duration-[1400ms] ease-in-out", i === index ? "opacity-100" : "opacity-0")}
+              />
+            ))}
+          </div>
           <div className="hero-rise max-w-[720px]">
             <Eyebrow tone="onDark">{badge}</Eyebrow>
             {/* Tiêu đề hiện dần TỪNG TỪ (trượt lên + rõ dần) — `aria-label` giữ nguyên câu cho trình đọc màn hình. */}

@@ -83,9 +83,22 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 - Card ngành đào tạo: banner gradient màu xen kẽ xanh/navy/đỏ, có họa tiết chấm
 
 ### Logo
-- File gốc: `public/images/logo-icon.png`, `logo-full.png`
-- Lưu ý đã xử lý: file gốc có nền trắng đặc (không trong suốt) → đã dùng
-  PIL xoá nền trắng thành alpha trong suốt trước khi đưa vào project.
+- **Đổi 07/10/2026 sang logo chính thức người dùng gửi** (biểu tượng + "TRƯỜNG CAO ĐẲNG Y
+  DƯỢC HỢP LỰC", đỏ `#B5121B` / xanh `#0054A6`, PNG nền trong suốt 1137×315):
+  - `public/images/logo.png` — **bản gốc y nguyên** (khớp checksum file người dùng gửi), dùng
+    ở MỌI chỗ, **đúng màu gốc**. Trang nền sáng (đăng nhập/quên/đặt lại mật khẩu admin, 404 gốc,
+    trang lỗi) đặt thẳng; chỗ nền TỐI (header luôn trong suốt/xanh đậm, footer, sidebar admin)
+    đặt trong **ô nền trắng bo góc** — logo đỏ/xanh đặt thẳng lên `brand-900` gần như chìm
+    (chữ xanh "HỢP LỰC" tương phản ~1,5:1).
+  - **Lịch sử 07→08/10/2026**: lúc đầu người dùng chọn bản trắng (`logo-white.png`) cho nền tối,
+    sau khi xem thì yêu cầu "sửa lại logo đúng với cái tôi gửi" → bỏ bản trắng (đã xoá file),
+    chuyển sang logo màu gốc trên ô trắng. **Không đổi màu/tô trắng logo nữa.**
+  - Logo đã chứa tên trường nên header/footer/sidebar KHÔNG ghép thêm chữ `SITE.name`/
+    `SITE.tagline` cạnh logo nữa (tên vẫn ở `alt`). Header: ô trắng `px-3 py-1.5`, logo `h-8`
+    mobile → `lg:h-10` (ô 139×44 → 168×52px) — đã đo 360–1440px: không tràn, menu 1 dòng ở
+    1024px, header giữ 72px.
+  - Logo cũ `logo-icon.png`/`logo-full.png` (icon gradient + chữ "HOP LUC") đã xoá. Site
+    **chưa có favicon riêng** — có thể cắt phần biểu tượng từ `logo.png` khi cần.
 
 ### Trang chủ đã dựng đầy đủ theo phong cách trên
 → Xem `src/app/(site)/page.tsx` làm **chuẩn tham chiếu** khi dựng các trang còn lại.
@@ -97,7 +110,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 ### 4.1 Stack
 - **Next.js 16.3.1** (App Router, Turbopack) + **React 19.2** + TypeScript
 - **Tailwind CSS 3** — design tokens tập trung ở `tailwind.config.ts`
-- **Drizzle ORM** + **SQLite** (qua driver `@libsql/client`)
+- **Drizzle ORM** + **PostgreSQL** (driver `pg`; dev chạy Postgres 17 trong Docker, production Postgres trên VPS — chuyển từ SQLite/`@libsql/client` ngày 06/10/2026, xem mục 5 "Chuyển sang PostgreSQL")
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
 - **react-markdown** — render nội dung Markdown (bài viết/trang tĩnh) an toàn, không dùng `dangerouslySetInnerHTML` (xem mục 5 "Admin dễ dùng hơn")
 
@@ -171,7 +184,8 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 |---|---|
 | Next.js 16 (không phải 14) | Next 14 có 5 lỗ hổng bảo mật mức cao chưa được vá ở bản đó; 16 là bản stable mới nhất tại thời điểm làm (không phải canary) |
 | Drizzle ORM (không phải Prisma) | Prisma cần tải engine binary từ `binaries.prisma.sh` — domain này **bị chặn trong sandbox lúc code** (không phải máy thật), nhưng để tránh rủi ro tương tự trên các môi trường CI/hosting bị hạn chế mạng, đã chuyển hẳn sang Drizzle (không cần binary riêng) |
-| `@libsql/client` (không phải `better-sqlite3`) | `better-sqlite3` cần biên dịch native qua `node-gyp`, **bắt buộc phải có Python cài sẵn** — đã thực tế gặp lỗi cài đặt trên máy Windows của người dùng vì không có Python. `@libsql/client` dùng binary dựng sẵn theo từng hệ điều hành (napi-rs, kiểu giống `esbuild`/`sharp`), cài qua `npm install` bình thường, không cần biên dịch |
+| `@libsql/client` (không phải `better-sqlite3`) — **lịch sử, thời còn SQLite** | `better-sqlite3` cần biên dịch native qua `node-gyp`, **bắt buộc phải có Python cài sẵn** — đã thực tế gặp lỗi cài đặt trên máy Windows của người dùng vì không có Python. `@libsql/client` dùng binary dựng sẵn theo từng hệ điều hành (napi-rs, kiểu giống `esbuild`/`sharp`), cài qua `npm install` bình thường, không cần biên dịch. Nay chỉ còn là devDependency cho `db:import-sqlite` |
+| `pg` (node-postgres) + Docker cho dev, PGlite cho test | `pg` là driver chuẩn, thuần JS (không biên dịch native), chạy được với Postgres trên VPS/Neon/RDS. Dev dùng Docker (`docker-compose.yml`) cho giống VPS, không cần tài khoản cloud. `npm test` dùng **PGlite** (Postgres biên dịch WASM, chạy trong bộ nhớ) — không cần Docker; KHÔNG dùng PGlite cho dev/production vì nó chỉ cho 1 tiến trình mở DB (dev server + script seed/demo chạy song song sẽ hỏng) |
 | `db:migrate` (không phải `drizzle-kit push`) | `push` có **bug thật** với driver libsql: chạy lại lần 2 trên DB đã tồn tại báo lỗi `index already exists` (đã tái hiện được lỗi — kể cả khi chỉ thêm bảng mới, không đụng bảng cũ). Chuyển sang workflow migration có version (`db:generate` sinh SQL vào `./drizzle`, `db:migrate` chạy `src/lib/db/migrate.ts` áp dụng, tự lưu vào bảng `__drizzle_migrations`) — an toàn tuyệt đối khi chạy lại nhiều lần. **Lưu ý lịch sử:** quyết định này từng chỉ được ghi ở đây nhưng `package.json` còn thiếu script thật (`db:push` là script duy nhất tồn tại) — đã bổ sung đủ `db:generate`/`db:migrate` + xoá `db:push` để tài liệu khớp với code |
 | `src/proxy.ts` (không phải `middleware.ts`) | Next.js 16 đổi tên quy ước file — `middleware.ts` không còn dùng được, phải là `proxy.ts`. Đã dùng codemod chính thức `npx @next/codemod middleware-to-proxy` để chuyển. **Lưu ý:** Proxy trong Next 16 **luôn chạy Node.js runtime mặc định** — không được khai báo `export const config = { runtime: "nodejs" }` (sẽ lỗi build vì dư thừa) |
 | `params` là `Promise` trong route động | Next.js 15+ đổi `params`/`searchParams` trong page/layout thành `Promise` — phải `await params` trước khi dùng (khác hẳn Next 14 trở về trước) |
@@ -180,17 +194,16 @@ client). Ảnh vẫn xuất hiện trong `admin/media` vì cùng ghi vào
 ### 4.3 Nguyên tắc để Giai đoạn 2 (SRS) không phải viết lại
 
 1. **Lớp truy xuất dữ liệu** (`src/lib/data/*.ts`): page/component **không bao giờ** đọc thẳng từ `constants.ts` hay gọi `db` trực tiếp — luôn qua hàm `async` ở đây. Khi đổi nguồn dữ liệu (API khác, thêm bảng mới cho Giai đoạn 2), chỉ sửa đúng 1 file.
-2. **Schema DB portable sang PostgreSQL**: `src/lib/db/schema.ts` chỉ dùng kiểu dữ liệu chuẩn (text, integer...), không dùng tính năng riêng của SQLite. Khi chuyển Aurora/Neon/Supabase (PostgreSQL), theo đúng 3 bước ghi trong comment đầu file `client.ts` — không cần sửa các trang gọi `db.select()/.insert()`.
+2. **Schema DB portable**: `src/lib/db/schema.ts` chỉ dùng kiểu dữ liệu chuẩn (text, integer...) — nhờ vậy đợt chuyển SQLite → PostgreSQL (06/10/2026) gần như không phải sửa các trang gọi `db.select()/.insert()`. Đổi sang Postgres khác (Neon/RDS Aurora) sau này chỉ cần đổi `DATABASE_URL`.
 3. **Route group tách bạch**: `(site)` cho web công khai, `admin/(dashboard)` cho khu quản trị (có sidebar, bắt buộc đăng nhập), `admin/dang-nhap` đứng riêng (không sidebar). Giai đoạn 2 có thể thêm route group mới (VD: `(student-portal)`, `(teacher-portal)`) theo đúng khuôn này.
 4. **Design tokens tập trung**: mọi màu/font Giai đoạn 2 dùng lại token đã có trong `tailwind.config.ts`, không tạo bảng màu mới.
 
-### 4.4 Kế hoạch DB cho tương lai (đã thống nhất với người dùng)
+### 4.4 Kế hoạch DB — ĐÃ CHUYỂN SANG POSTGRESQL (06/10/2026)
 
-- **Bây giờ → xong hết các trang**: tiếp tục SQLite (`@libsql/client`), không cần cài gì thêm, không cần tài khoản cloud.
-- **Khi web hoàn thiện, chuẩn bị đưa lên mạng cho người dùng thật**: bắt buộc chuyển sang **PostgreSQL** (SQLite file-based không hợp production — ghi đồng thời hạn chế, không đồng bộ được giữa nhiều server khi scale). Lúc đó chọn 1 trong 2:
-  - **Neon/Supabase** (PostgreSQL miễn phí, nhanh gọn, không cần AWS trước) — khuyến nghị nếu muốn lên mạng sớm.
-  - **Amazon RDS Aurora PostgreSQL** — đúng kiến trúc dài hạn trong SRS gốc, cần tài khoản AWS.
-  - Cả 2 đều là PostgreSQL nên nếu chọn Neon trước, sau này chuyển tiếp lên Aurora vẫn dễ.
+- ~~Làm xong các trang bằng SQLite trước~~ → xong; ~~chuyển PostgreSQL trước khi lên mạng~~ → **xong**.
+- **Hosting người dùng chọn: thuê VPS** → Postgres cài trên chính VPS (hướng dẫn mục 9
+  "Postgres trên VPS"); ảnh upload vẫn ở `public/uploads/` trên ổ đĩa VPS (không cần S3).
+  Neon/Supabase/RDS Aurora vẫn dùng được nếu đổi ý — cùng là PostgreSQL, chỉ đổi `DATABASE_URL`.
 
 ---
 
@@ -1264,8 +1277,9 @@ mobile 375px, kể cả 2 banner tạm `audit-tmp-*` thêm vào DB dev rồi xo�
   ẩn bản sao `.marquee-dup`).
 - **3D chuyển xuống khối "Vì sao chọn Hợp Lực" nền tối** (gộp 2 khối cũ "4 chỉ
   số" + "3 điểm mạnh"): trái = tiêu đề + 3 điểm mạnh dạng danh sách đánh số;
-  phải = `DnaScene3D theme="dark"` với 4 chỉ số thẻ kính tối nổi quanh (mobile:
-  lưới 2×2 dưới mô hình). Lý do: các mẫu web đoạt giải dùng 3D tạo không khí
+  phải = `DnaScene3D theme="dark"`, 4 chỉ số thành 1 hàng ngay dưới mô hình (mobile: lưới
+  2×2). **Đổi 10/10/2026**: trước đây 4 thẻ kính nổi đè quanh chuỗi xoắn — người dùng thấy "bị che
+  hết hình đang chuyển động" → không đặt thẻ/nút nào đè lên vùng canvas 3D nữa. Lý do: các mẫu web đoạt giải dùng 3D tạo không khí
   cho 1 khối kể chuyện, banner đầu trang dành cho ảnh thật.
 - Sứ mệnh/Tầm nhìn dạng trích dẫn chữ lớn; **Tin tức + Thông báo gộp 1 khối
   kiểu tạp chí** (1 tin nổi bật ngang lớn + tin nhỏ; bảng Thông báo bên phải
@@ -1493,6 +1507,164 @@ Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con
 - **Thêm trang con mới**: thêm 1 dòng vào `PAGE_BANNER_SLOTS` + truyền `bannerKey` cho
   `<PageHero>` của trang đó (quy ước #12).
 
+### Cảnh 3D giật trên điện thoại — tối ưu `DnaScene3D` (08/10/2026)
+Người dùng: "cái 3d trên điện thoại trông lag lắm". Nguyên nhân tìm được (đo thật, cùng 1 cách đo
+cho bản cũ/mới — giả lập rAF 60Hz bằng setTimeout vì khung trình duyệt kiểm thử không chạy rAF):
+bản cũ vẽ **~305 lượt/khung × 58 khung/giây ≈ 17.700 lượt/giây** (186 nét + 46 hạt bụi tô riêng
++ 72 quả cầu + 1 gradient phủ kín canvas tạo lại mỗi khung), mỗi khung cấp phát ~300 closure +
+mảng tạm (GC chạy liên tục), canvas ×2 (750×960) trên điện thoại, và canvas `-inset-y-10` **lấn
+32px lên hàng thẻ số liệu có `backdrop-blur-md`** → GPU làm mờ lại mỗi khung.
+- **Chế độ tiết kiệm** (cảm ứng hoặc `innerWidth < 1024`): 30 khung/giây (bỏ khung trong `loop`),
+  `devicePixelRatio ≤ 1,5`, 20 cặp xoắn (`PAIRS_LOW`, xoắn mỗi cặp nhiều hơn để giữ số vòng), 24
+  hạt bụi. Máy tính có chuột ≥ 1024px giữ nguyên 60fps, 28 cặp, DPR ≤ 2.
+- **Mọi thiết bị**: không cấp phát trong vòng lặp (bể điểm `Pt` + bể mục vẽ `Item`, `rotateInto`
+  ghi vào đối tượng có sẵn, màu rgba tra bảng `alphaRamp`); bụi sáng + vòng quỹ đạo gom thành 2
+  nhóm trước/sau chuỗi xoắn (1 nét/nhóm); quầng sáng = `canvas.style.background` radial-gradient
+  tĩnh đặt lúc resize.
+- `(site)/page.tsx`: canvas `-top-10 bottom-0` trên điện thoại (không lấn xuống thẻ); `DarkStat`
+  chỉ `lg:backdrop-blur-md` (điện thoại thẻ nằm trên nền xanh trơn, mờ hay không như nhau).
+- Kết quả đo: điện thoại **29 khung/giây × 150 lượt ≈ 4.400 lượt/giây (−75%)**, canvas 563×660
+  (−44% điểm ảnh), 0 gradient/khung, không chồng thẻ kính mờ; máy tính 58fps, 124 nét + 72 quả
+  cầu + 2 lượt tô bụi. Ảnh chụp mobile giữ nguyên hình.
+- **Lượt 2 — người dùng thử Safari iPhone vẫn thấy giật.** iPhone vẽ canvas thừa sức, nên điểm nghẽn
+  là việc tính lại độ mờ khi có thứ chuyển động phía sau, cộng với chính mức ép 30fps:
+  - **Bỏ ép cứng 30fps** (vật xoay ở 30fps trông giật trên màn 60/120Hz). Giờ chạy theo màn hình,
+    chỉ tự hạ 30fps đều khi > 25% trong 90 khung trễ quá 26ms; khi đã hạ, bỏ khung đến sớm hơn
+    ¾ nhịp (không phải sát 33ms — máy yếu nhận khung ~30ms/lần, bỏ cả khung đó tụt còn ~16fps).
+    Giả lập: khung 16ms → 58fps không hạ; khung 30ms → 32–33fps rồi giữ 29fps đều (33–40ms).
+  - **`ParallaxBlur` đứng yên trên thiết bị cảm ứng** (2 vệt `blur-[90px]` 480px quanh khối 3D dịch
+    theo từng khung cuộn → Safari tính lại độ mờ liên tục). Áp dụng mọi trang con dùng `DecorativeSection`.
+  - **Bỏ `backdrop-blur` của thanh cố định trên điện thoại**: header khi đã cuộn (`bg-brand-900/95`,
+    `lg:bg-brand-900/85 lg:backdrop-blur-xl`), `MobileActionBar` (`bg-white/[0.97]`), `BackToTop`
+    (`bg-white/95`) — thanh cố định có kính mờ phải làm mờ lại canvas đang chạy phía sau mỗi khung.
+  - **Quy tắc rút ra**: trên điện thoại tránh `backdrop-blur`/`filter: blur()` trên phần tử cố định
+    hoặc phần tử di chuyển theo cuộn đè lên/nằm cạnh nội dung đang hoạt hình.
+  - Vẫn **chưa xác nhận trên iPhone thật** sau lượt 2. Lưu ý: iPhone bật Chế độ nguồn điện thấp
+    (Low Power Mode) thì Safari tự giới hạn hoạt ảnh ~30fps, code không thay đổi được.
+  - Vận hành: `next start` chạy nền bằng `npx` — dừng tác vụ chỉ tắt `npx`, tiến trình node con vẫn
+    giữ cổng (gặp thật: bản cũ tiếp tục chạy ở 3100) → tìm PID qua `netstat`/`Get-NetTCPConnection`
+    rồi tắt hẳn trước khi bật lại.
+
+### Điện thoại không bị mất ảnh — 1 ảnh dùng cho cả 2 (07/10/2026)
+Người dùng: "trên điện thoại cũng không được mất", chọn rõ **chỉ tải 1 ảnh** (không thêm ô "ảnh
+cho điện thoại"), áp dụng cho banner Trang chủ, banner trang con và thẻ ảnh nhỏ. Trước đó
+banner Trang chủ trên điện thoại (cao ~1.400px) chỉ còn thấy ~15% bề ngang ảnh, banner trang con
+mất ~2/3. Máy tính (≥ lg cho banner, ≥ md cho thẻ) **giữ nguyên** phủ kín như cũ.
+- **`HeroBanner`** (< lg): nền = chính ảnh phóng to + `blur-2xl`; ảnh rõ nét hiện TRỌN trong
+  khung `aspect-video` bo góc (`object-contain`, crossfade theo slide) ở đầu khối, chữ + nút bên
+  dưới. Ảnh desktop (`hidden lg:block`, Ken Burns) và 2 lớp mobile cùng `src` + `sizes="100vw"`
+  → trình duyệt chỉ tải 1 lần.
+- **`PageHero`** (< lg, khi có ảnh): nền mờ như trên + ảnh hiện đúng tỉ lệ thật phía trên
+  breadcrumb (`width/height` + `h-auto`, ảnh quá dọc giới hạn `max-h-[52svh]`). Trang chi tiết
+  ngành ẩn ảnh 16:9 đầu nội dung ở < lg (không lặp 2 ảnh liền nhau).
+- **`FitImage`** (`src/components/ui/FitImage.tsx`) thay `<Image fill object-cover>` ở 13 chỗ thẻ
+  (tin Trang chủ + /tin-tuc, giảng viên, sự kiện, ngành ×3, cột mốc, `GalleryMedia`): < md hiện
+  trọn (`object-contain`) trên lớp mờ của chính ảnh (thẻ vẫn cao đều), ≥ md `object-cover`.
+  `anchorTop` (chân dung: `md:object-top`), `textBelow` (thẻ có chữ đè nửa dưới — tin nổi bật: ảnh
+  sát mép trên ở điện thoại để chữ nằm trên nền mờ). **Không truyền `object-*` qua `className`.**
+  `/thu-vien` ô điện thoại `aspect-[4/3]` cho dải mờ mỏng. Không áp cho khung vòm chân dung
+  (giảng viên chi tiết, cựu SV — tỉ lệ khung ≈ ảnh 3:4, gần như không cắt) và logo đối tác (đã contain).
+- Kiểm chứng: 375px mọi ảnh thẻ `contain` + có lớp mờ, 1280px `cover` và lớp mờ/khung mobile
+  thực sự ẩn; 13 thẻ `<img>` chỉ 9 lượt tải (không tải trùng); 21 lượt đo tràn ngang (7 trang ×
+  360/768/1024) sạch; ảnh chụp mobile + tablet. Gợi ý trong `IMAGE_SPECS` đã ghi rõ khác biệt
+  máy tính / điện thoại. **Khi thêm thẻ ảnh mới ở web công khai: dùng `FitImage`.**
+
+### Kích thước ảnh khuyến nghị + kiểm tra file ngay khi chọn (07/10/2026)
+Người dùng hỏi ảnh admin cần kích thước bao nhiêu, to/nhỏ hơn thì sao → làm cả 3 việc đề xuất:
+- **`src/lib/image-specs.ts`** — `IMAGE_SPECS`: 9 loại ô ảnh (`hero`, `pageBanner`, `cover`,
+  `program`, `portrait`, `avatar`, `gallery`, `logo`, `milestone`), đo từ khung hiển thị thật
+  ở web công khai (x2 cho màn hình nét cao): hướng, tỉ lệ, **tối thiểu** (dưới mức này mờ thấy
+  rõ → cảnh báo), **đẹp nhất**, ảnh hiện ở đâu + mẹo cắt ảnh. `assessImage()` (thuần, có test)
+  trả cảnh báo: nhỏ hơn tối thiểu, sai hướng (dọc cho khung ngang / ngang cho chân dung),
+  logo JPG (mất nền trong suốt), logo vuông. **Đổi bố cục khung ảnh ở web công khai thì cập
+  nhật đúng mục ở đây.**
+- **`ImagePicker` bắt buộc prop `spec`** — hiện khối "Khuyến nghị" dưới ô; đo kích thước THẬT
+  của ảnh đang xem trước (file mới, ảnh chọn từ thư viện, cả ảnh đang dùng khi Sửa) → ✓ đạt /
+  ⚠️ cảnh báo (vẫn cho lưu). Xem trước file mới bằng `blob:` + khung theo hướng ảnh.
+  `hideCurrentPreview` cho form đã tự hiện ảnh (thẻ Banner trang con). Các gợi ý viết cứng cũ ở
+  banner-trang-chu / nganh-dao-tao / doi-tac / banner-trang-con đã bỏ (1 nguồn duy nhất).
+- **`src/lib/upload-rules.ts`** — giới hạn dung lượng/định dạng DÙNG CHUNG trình duyệt + máy
+  chủ (`media.ts` gọi `checkUpload` làm lớp chặn cuối). Chọn file sai định dạng / quá dung
+  lượng / ảnh HEIC (iPhone) → báo lỗi đỏ ngay tại ô và **bỏ file khỏi ô** (bấm Lưu vẫn an toàn,
+  giữ ảnh cũ). Ô file thường dùng **`CheckedFileInput`** (Thư viện media nhiều file, tệp đính
+  kèm bài viết).
+- **`src/app/admin/(dashboard)/error.tsx`** — lỗi lọt tới máy chủ (VD gửi file bỏ qua bước
+  kiểm tra) hiện trong khung admin (còn sidebar) + nguyên nhân thường gặp + "Thử lại"; nội dung
+  lỗi gốc chỉ hiện ở dev (production Next ẩn). Trước đây ra trang lỗi chung của web.
+- **Lỗi tiềm ẩn sửa kèm**: chọn file mới rồi đổi ý chọn ảnh trong thư viện → file vẫn nằm trong
+  ô, máy chủ ưu tiên file (`resolveImageUrl`) nên ảnh thư viện bị bỏ qua. Giờ chọn từ thư viện
+  xoá file trong ô.
+- Đã test trình duyệt (dev): ảnh 800×450 → cảnh báo, 11MB / HEIC → lỗi + bỏ file, 2560×1440 → đạt,
+  chọn thư viện xoá file cũ, form Sửa đo ảnh đang dùng ở 10 trang, Media nhiều file (video 60MB
+  + PDF bị chặn), đính kèm sai loại bị chặn, gửi file `.txt` bỏ qua kiểm tra → trang lỗi admin,
+  không ghi file/DB. `npm test` 47/47, `next build` sạch.
+
+### Link mạng xã hội + biểu tượng Facebook/Zalo/YouTube (08/10/2026)
+Người dùng điền link Facebook nhưng bấm không sang trang: ô nhập ở admin/cai-dat điền sẵn `"#"`,
+gõ nối sau thành `#https://www.facebook.com/…` → link chỉ là anchor trong trang.
+- **`normalizeExternalUrl()`** / **`normalizeZaloUrl()`** (`src/lib/utils.ts`, có test): bỏ `#` thừa
+  ở đầu, tự thêm `https://`, chỉ nhận http(s) có tên miền (tên miền phải có dấu chấm như admin
+  gõ); Zalo nhận cả số điện thoại → `https://zalo.me/<số>`. Áp ở 3 lớp: action `cai-dat` (ô trống
+  → `"#"`, gõ sai → KHÔNG lưu ô đó + báo `?invalid=`), `getSiteSettings()` (giá trị cũ lưu sai vẫn
+  bấm được, không hợp lệ → `"#"`), Zalo/Facebook ở `lien-he-nhanh` (action + data layer).
+- Admin cai-dat: ô link không còn điền sẵn `"#"`, có placeholder + nút "Mở thử ↗" + cảnh báo khi
+  link đang lưu không hợp lệ (`LinkField` trong page.tsx).
+- **`src/components/ui/SocialIcon.tsx`**: `SocialIcon` (chữ "f" Facebook — Font Awesome Free
+  CC BY 4.0; YouTube — Simple Icons CC0; Zalo = chữ "Zalo"), `socialLinks(settings)`, `SOCIAL_BG`.
+  Màu hãng là token **`social-facebook/zalo/youtube`** (+ `-dark` khi hover) trong
+  tailwind.config.ts. Footer: nút tròn màu hãng; Liên hệ: thẻ "Theo dõi nhà trường" (biểu tượng +
+  tên + địa chỉ rút gọn); `QuickContactWidget` dùng chung biểu tượng. Mọi link ngoài mở tab mới.
+- **Widget liên hệ nhanh mở thành thẻ "Liên hệ với Hợp Lực"** (người dùng chọn "mẫu B" từ mockup):
+  bấm "+" → thẻ trắng phía trên nút, mỗi kênh 1 dòng (biểu tượng màu hãng + tên + mô tả ngắn + ›),
+  các dòng hiện so le. Mô tả **tự suy ra từ `type` + `href`** (`contactSubtitle()` — hotline hiện số
+  nếu tên chưa có số, Facebook `m.me` → "Messenger", `custom` → tên miền), không thêm cột DB. Đóng
+  bằng ×/Esc/bấm ngoài/chọn kênh; khung ngoài `pointer-events-none` (thẻ ẩn không chặn bấm trang);
+  không `backdrop-blur`. Nhận prop `locale` (chữ VI/EN). Màu ChatbotAI = token `ai`.
+
+### Chuyển sang PostgreSQL (06/10/2026)
+Người dùng: "giờ chuyển db sang postgreSQL" — chọn qua `AskUserQuestion`: hosting sẽ là
+**VPS**, **chép toàn bộ dữ liệu SQLite cũ sang**, **chỉ đổi DB** (ảnh vẫn trên ổ đĩa).
+- **Driver/kết nối** (`src/lib/db/client.ts`): `pg` Pool (tối đa `DATABASE_POOL_MAX`, mặc
+  định 10), giữ qua hot-reload bằng `globalThis.__pgPool`, `allowExitOnIdle` cho script tự
+  thoát, **`pool.on("error")` bắt buộc** (kết nối rảnh bị đứt khi Postgres khởi động lại
+  mà không bắt thì sập cả tiến trình web). `closeDb()` gọi ở cuối mọi script CLI.
+  `globalThis.__testDb` là chỗ test gắn DB PGlite trước khi import code app.
+- **Schema giữ 1-1 kiểu cũ** — không đổi sang timestamptz/boolean trong đợt này (đổi thì
+  phải sửa mọi chỗ đọc/ghi): thời gian là `text`, mặc định `nowText` =
+  `to_char(timezone('UTC', now()), 'YYYY-MM-DD HH24:MI:SS')` đúng y định dạng
+  `CURRENT_TIMESTAMP` của SQLite → `formatDbDateTime()` dùng tiếp; cờ 0/1 vẫn `integer`.
+- **Cột `seq`** (`integer generated always as identity`) ở 22 bảng danh sách (trừ
+  `site_settings`, `homepage_content`, `page_banners`) — thay `rowid` ngầm của SQLite.
+  **Lỗi thật đã chứng minh**: 6 ngành seed cùng 1 giây `created_at`; trên Postgres, sửa
+  "Điều dưỡng" xong thì dòng đó dời chỗ vật lý (`ctid` (0,1) → (1,1)) và nếu chỉ
+  `ORDER BY created_at` thì ngành tụt xuống cuối slider/footer. **Mọi `orderBy` danh sách
+  phải thêm `seq` làm khoá phụ cuối** (cùng chiều: `desc(createdAt), desc(seq)`); truy vấn
+  danh sách hiển thị không có `orderBy` thì dùng `asc(seq)` (thứ tự chèn như SQLite cũ).
+- **Khác SQLite cần nhớ**: `count(*)` trả bigint → driver đưa về **chuỗi** — dùng `count()`
+  của Drizzle (đã sửa `getPublishedPostsPage`); `like()` phân biệt hoa/thường (cần thì
+  `ilike()`); `DESC` xếp NULL lên đầu (SQLite xếp cuối — các cột đang sắp DESC đều không
+  NULL ở dữ liệu thật, VD bài đã đăng luôn có `publishedAt`); sắp chữ theo collation
+  `en_US.utf8` thay vì so byte. WAL/`busy_timeout` của SQLite không còn — Postgres tự xử lý
+  ghi đồng thời.
+- **Migration**: xoá 20 file SQLite cũ (còn trong lịch sử git), sinh lại 1 file gốc
+  `drizzle/0000_init_postgres.sql`. Máy khác: `docker compose up -d` → `npm run db:migrate`
+  → `npm run db:import-sqlite` (có `drizzle/dev.db` cũ) hoặc `npm run db:seed` (máy mới).
+- **`npm run db:import-sqlite`** (`src/lib/db/import-sqlite.ts`, đọc `SQLITE_URL`): chép 25
+  bảng theo `rowid` (nên `seq` đúng thứ tự cũ), DB cũ thiếu cột/bảng → dùng mặc định,
+  1 transaction, Postgres đã có dữ liệu thì dừng trừ khi `-- --replace` (TRUNCATE + RESTART
+  IDENTITY). Đã chép DB dev: 169 dòng / 25 bảng, so khớp **1.509/1.509 ô** từng giá trị +
+  thứ tự `seq` = thứ tự `rowid` ở mọi bảng. `drizzle/dev.db` để lại làm bản sao lưu (xoá
+  được khi đã yên tâm).
+- **Đã test**: tsc, lint, `npm test` 45/45 (PGlite, thêm test định dạng `created_at` +
+  thứ tự không đổi sau khi sửa); trên DB nháp riêng: migrate → seed từ rỗng → seed lần 2
+  không tạo trùng → import từ chối khi có dữ liệu / `--replace` → `demo:clean` về đúng
+  trạng thái seed → `demo:load` nạp lại (đã sao lưu + khôi phục `public/uploads` và
+  manifest khớp checksum); `next build` + `next start`: 32 route công khai 200/404 đúng
+  (~10ms/trang), 26 trang admin + 2 CSV, form Liên hệ/Tuyển sinh/Nhận tin ghi được → tra
+  cứu CCCD → admin hiện đúng giờ VN → đánh dấu/xoá, upload ảnh 1,17MB → xoá, banner trang
+  con insert/`onConflictDoUpdate`/gỡ, EN, tìm kiếm không dấu, không tràn ngang 4 khổ, không
+  lỗi console. DB dev giữ nguyên số dòng như trước khi test.
+
 ---
 
 ## 6. Quy ước code đã thiết lập — PHẢI tuân theo khi thêm trang mới
@@ -1505,7 +1677,7 @@ Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con
 6. **File tạm/test (screenshot .png, db test data) không commit vào git** — dọn trước khi đóng gói/commit.
 7. **Sửa/xoá bảng đơn dòng** (`site_settings`, `homepage_content`): luôn query/update theo `id = "main"` cố định — không tạo dòng thứ 2, không xoá dòng này (form admin chỉ có Sửa, không có Thêm/Xoá cho 2 bảng này).
 8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ). **Cuối `upsertXxxAction` (sau mọi `revalidatePath`), luôn gọi `redirect(basePath)`** (import từ `next/navigation`) để về danh sách sạch + form "Thêm mới" trống sau khi Lưu — trừ trang cấu hình 1 dòng (`cai-dat`, `trang-chu`) thì không áp dụng (xem mục 5 "Rà soát thao tác admin").
-9. **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file.
+9. **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file. Ô ảnh mới: `<ImagePicker spec="…">` (chọn đúng loại trong `IMAGE_SPECS`, khung hiển thị mới thì thêm loại mới); ô file khác: `<CheckedFileInput kinds={[…]}>` — không dùng `<input type="file">` trần. Giới hạn dung lượng/định dạng chỉ sửa ở `src/lib/upload-rules.ts`.
 10. **Danh sách có thứ tự hiển thị** (`partners`, `gallery_items`, `faculty`, `testimonials`): dùng cột `sortOrder` nhập tay, sort bằng `asc(schema.<table>.sortOrder)` ở data layer — không thêm thư viện kéo-thả.
 11. **Trang admin mới cần phân quyền**: thêm entity vào `ADMIN_NAV`
     (`src/lib/constants.ts`, tự trở thành 1 module chọn được ở
@@ -1519,7 +1691,8 @@ Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con
     mọi trang, thiếu khối nền tối đầu trang thì logo/menu vô hình trên nền sáng.
     Không tự viết `<section className="px-6 py-20 sm:px-8">` trần (xem mục 5 "Đợt
     VinUni lượt 2" và "Mở rộng hiệu ứng + trang trí ra toàn bộ trang con").
-    Link "Xem tất cả" đầu khối dùng `<MoreLink>`; ảnh trong thẻ thêm `img-shine`.
+    Link "Xem tất cả" đầu khối dùng `<MoreLink>`; ảnh trong thẻ thêm `img-shine` và hiển thị qua
+    `<FitImage>` (điện thoại hiện trọn ảnh, không cắt — xem mục 5 "Điện thoại không bị mất ảnh").
     Trang mới cần banner đổi được trong admin: thêm vào `PAGE_BANNER_SLOTS` + truyền
     `bannerKey` cho `PageHero` (xem mục 5 "Banner riêng từng trang con").
 13. **Thẻ nội dung mới ở web công khai muốn có chiều sâu 3D**: bọc trong
@@ -1533,6 +1706,11 @@ Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con
 14. **Trang admin mới có danh sách lớn cần đưa ra Excel**: route handler
     `xuat-csv/route.ts` cạnh `page.tsx`, gọi `requirePermission`, dùng
     `toCsv`/`digitsCell` (`src/lib/csv.ts`), lọc chung 1 hàm với trang.
+15. **Truy vấn danh sách (PostgreSQL)**: `orderBy` luôn kết thúc bằng khoá phụ `seq` cùng
+    chiều — `orderBy: [asc(schema.x.sortOrder), asc(schema.x.seq)]`; không có khoá sắp xếp
+    nào thì `asc(schema.x.seq)`. Bảng danh sách mới thêm `seq: seq()` ngay sau `id`
+    (helper trong schema.ts). Đếm dùng `count()` của Drizzle. Cột thời gian mới: `text`
+    + `.default(nowText)` như các bảng khác (xem mục 5 "Chuyển sang PostgreSQL").
 
 ---
 
@@ -1545,16 +1723,19 @@ Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con
 5. ~~Rà soát lần 2 (admin + web công khai)~~ — **XONG** (xem mục 5 "Rà soát admin + web công khai lần 2") — vá 8 vấn đề.
 6. ~~Nhóm nâng cấp nhỏ đã hoãn~~ — **XONG** (xem mục 5 "Nội dung demo + nhóm nâng cấp nhỏ đã hoãn"): 404/error page tuỳ chỉnh, CSP thật (đã test kỹ), hạ tầng gửi email qua Resend + "Quên mật khẩu" cho admin, Google Analytics (code sẵn, chờ người dùng điền Measurement ID), nội dung demo cho 6 ngành đào tạo.
 7. **Còn lại, cần người dùng tự làm** (không phải việc kỹ thuật): ảnh thật cho các mục đang trống (`gallery_items`/`heroImageUrl`/`photoUrl`/`avatarUrl` — đã thử tự lấy demo từ Wikimedia Commons nhưng không dùng được, xem mục 5 lý do), số liệu "3 công khai" thật (4 trang `admin/trang-tinh` slug `cong-khai-*`, xác nhận với trường có bắt buộc theo Thông tư 36/2017 không), cấu hình `lmsUrl` (`admin/cai-dat`), tạo tài khoản Resend/Google Analytics rồi điền key/Measurement ID vào `.env` (xem mục 9).
-8. **Chuyển DB sang PostgreSQL** theo mục 4.4 (lưu ý: `public/uploads/` cũng cần chuyển sang S3 cùng lúc — xem mục 4.1c) — hạng mục kiến trúc lớn nhất còn lại, tạm dừng để làm 2 đợt rà soát + nhóm nâng cấp nhỏ ở trên, giờ có thể quay lại làm tiếp. **Đây là ưu tiên cao nhất còn lại** trước khi đưa web lên mạng cho người dùng thật.
+8. ~~Chuyển DB sang PostgreSQL~~ — **XONG 06/10/2026** (xem mục 5 "Chuyển sang PostgreSQL"). Ảnh KHÔNG chuyển S3 vì hosting chọn VPS (ổ đĩa bền). Việc tiếp theo trước khi lên mạng: thuê VPS, cài Postgres + Node theo mục 9 "Postgres trên VPS", cấu hình `.env` production, sao lưu định kỳ.
 9. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 
 ---
 
 ## 8. Vấn đề còn bỏ ngỏ — cần người dùng quyết định khi tới lúc
 
-- ~~Lưu trữ media~~ — **đã quyết định**: local filesystem (`public/uploads/`) cho giai đoạn dev/SQLite hiện tại, chuyển sang S3 khi lên production cùng lúc chuyển PostgreSQL (xem mục 4.1c, 4.4).
+- ~~Lưu trữ media~~ — **đã quyết định (06/10/2026)**: hosting là VPS nên giữ local filesystem (`public/uploads/`) cả ở production — nhớ sao lưu thư mục này cùng DB. Chỉ cần S3/R2 nếu sau này chuyển sang serverless.
 - **Liên kết LMS VNPT**: chỉ là link đơn giản hay cần SSO/API thật? (SRS ghi "tuỳ chọn SSO nếu VNPT hỗ trợ" — chưa xác nhận VNPT có hỗ trợ không)
-- **Domain/hosting thật**: chưa chọn nền tảng deploy (Vercel? VPS? AWS?) — ảnh hưởng cách cấu hình env, DB connection. Còn ảnh hưởng thêm 2 chỗ (xem mục 5 "Đánh giá rủi ro traffic lớn/spam"): rate limit đang lưu bộ nhớ tiến trình (`Map`) nên chỉ chính xác khi deploy **1 instance/1 process** — chọn VPS chạy 1 tiến trình thì không sao, chọn serverless nhiều instance hoặc PM2 cluster nhiều worker thì giới hạn thực tế lỏng hơn khai báo (muốn chính xác tuyệt đối phải chuyển sang lưu ở Redis dùng chung); và `public/uploads/` bắt buộc phải deploy nơi có filesystem persistent (VPS/server dài hạn) — serverless (Vercel) sẽ làm mất ảnh/video admin upload.
+- **Domain/hosting thật**: **đã chọn VPS** (06/10/2026, chưa thuê) — chạy 1 tiến trình Node
+  dài hạn nên rate limit trong bộ nhớ và `public/uploads/` đều dùng được; còn chọn domain,
+  nhà cung cấp VPS, cách chạy tiến trình (systemd/PM2 **1 instance**) + reverse proxy
+  (Nginx/Caddy, nhớ đặt `TRUST_PROXY_HOPS="1"`). Ghi chú cũ khi chưa chọn hosting: Còn ảnh hưởng thêm 2 chỗ (xem mục 5 "Đánh giá rủi ro traffic lớn/spam"): rate limit đang lưu bộ nhớ tiến trình (`Map`) nên chỉ chính xác khi deploy **1 instance/1 process** — chọn VPS chạy 1 tiến trình thì không sao, chọn serverless nhiều instance hoặc PM2 cluster nhiều worker thì giới hạn thực tế lỏng hơn khai báo (muốn chính xác tuyệt đối phải chuyển sang lưu ở Redis dùng chung); và `public/uploads/` bắt buộc phải deploy nơi có filesystem persistent (VPS/server dài hạn) — serverless (Vercel) sẽ làm mất ảnh/video admin upload.
 
 ---
 
@@ -1563,10 +1744,31 @@ Người dùng: "cần mỗi trang có thể tự đổi banner từng trang con
 ### Lệnh chạy dự án
 ```bash
 npm install
+docker compose up -d # bật PostgreSQL dev (mở Docker Desktop trước)
 npm run db:migrate   # tạo bảng (an toàn chạy lại nhiều lần)
 npm run db:seed      # tạo dữ liệu mẫu (an toàn chạy lại nhiều lần)
+#   hoặc: npm run db:import-sqlite   # máy có drizzle/dev.db cũ → chép toàn bộ dữ liệu cũ
 npm run dev
 ```
+Lỗi `ECONNREFUSED ...:5432` = Postgres chưa chạy (mở Docker Desktop, `docker compose up -d`).
+Đổi `.env` (VD `DATABASE_URL`) phải khởi động lại `npm run dev` — server đang chạy giữ biến
+môi trường cũ (đã gặp thật: nạp code mới qua hot-reload nhưng vẫn giữ URL SQLite → lỗi
+`SASL: client password must be a string`).
+
+### Postgres trên VPS (production)
+1. Cài: `sudo apt install postgresql` (Ubuntu/Debian), hoặc dùng `docker-compose.yml` của
+   dự án — khi đó ĐỔI `POSTGRES_PASSWORD` thành mật khẩu mạnh, giữ cổng chỉ mở `127.0.0.1`.
+2. Tạo user + DB riêng (không dùng `hopluc_dev`):
+   `sudo -u postgres psql -c "CREATE USER hopluc WITH PASSWORD '<mật-khẩu-mạnh>';"` rồi
+   `sudo -u postgres createdb -O hopluc hopluc`. Không mở cổng 5432 ra internet (Postgres
+   cùng máy với web, kết nối qua `localhost`).
+3. `.env` production: `DATABASE_URL="postgres://hopluc:<mật-khẩu>@localhost:5432/hopluc"`
+   → `npm run db:migrate`. Dữ liệu: chép từ máy dev bằng
+   `pg_dump -Fc` (trên máy dev: `docker compose exec -T postgres pg_dump -U hopluc -Fc hopluc > hopluc.dump`)
+   rồi `pg_restore --no-owner -d hopluc hopluc.dump` trên VPS — **chạy `npm run demo:clean`
+   trên máy dev TRƯỚC khi dump** (ảnh giảng viên demo là người mẫu Unsplash).
+4. **Sao lưu hằng ngày** (cron): `pg_dump -Fc hopluc > /backup/hopluc-$(date +%F).dump` +
+   nén `public/uploads/`, giữ vài bản gần nhất, chép ra ngoài VPS định kỳ.
 
 ### Tài khoản admin demo (đã seed sẵn — đổi trước khi lên production)
 ```
@@ -1649,6 +1851,8 @@ npm run build       # build production
 npm run lint         # eslint . (Next 16 đã bỏ "next lint")
 npm run db:studio    # xem/sửa DB trực quan qua trình duyệt
 npm run db:generate  # sinh migration mới sau khi sửa schema.ts
+docker compose exec postgres psql -U hopluc   # mở psql vào DB dev
+docker compose down -v                        # XOÁ HẲN dữ liệu Postgres dev (volume)
 ```
 
 ### Lưu ý môi trường phát triển đặc biệt
@@ -1686,6 +1890,6 @@ thêm.
 - Thẻ ngành có CSS perspective nghiêng nhẹ theo chuột; không thêm dependency 3D. Tắt trên thiết bị cảm ứng và khi chọn giảm chuyển động. Các form thêm nhãn, giới hạn nhập và thông báo lỗi/thành công cho trình đọc màn hình.
 - TRUST_PROXY_HOPS mặc định 0: không tin header IP, dùng bucket chung. Khi triển khai, xác định số proxy tin cậy từ phải của XFF, proxy phải ghi/append IP thật và chặn truy cập trực tiếp vào origin. Rate limit vẫn trong bộ nhớ, cần storage dùng chung nếu chạy nhiều instance.
 - Trang chi tiết ngành render theo request; bỏ generateStaticParams() để build không query DB. Build vẫn cần tải Google Fonts khi cache chưa có.
-- npm test chạy test helper, API với SQLite trong bộ nhớ, quyền, token và rate limit. Không đọc/ghi DB thật hoặc gửi email. TypeScript, lint và build là các kiểm tra riêng.
+- npm test chạy test helper, API với PostgreSQL trong bộ nhớ (PGlite — trước 06/10/2026 là SQLite), quyền, token và rate limit. Không đọc/ghi DB thật hoặc gửi email. TypeScript, lint và build là các kiểm tra riêng.
 - Ghi chú upload cũ ở mục 4.1c đã lỗi thời: ImagePicker và resolveImageUrl cho phép chọn ảnh từ thư viện, ưu tiên file mới, rồi ảnh được chọn, rồi ảnh cũ.
 - Còn cần cho production: PostgreSQL/storage bền vững theo quyết định dự án, cấu hình email/Turnstile/proxy, duyệt nội dung và ảnh thật. Chưa xác minh hiệu ứng 3D bằng trình duyệt thật trong phiên này.

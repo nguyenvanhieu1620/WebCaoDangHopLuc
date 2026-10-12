@@ -11,23 +11,27 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:seed": "tsx src/lib/db/seed.ts",
+    "db:import-sqlite": "tsx src/lib/db/import-sqlite.ts",
     "db:studio": "drizzle-kit studio",
     "demo:load": "tsx src/lib/db/demo-data.ts load",
     "demo:clean": "tsx src/lib/db/demo-data.ts clean"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.4",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.1",
+    "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@libsql/client": "^0.17.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.14.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "autoprefixer": "^10.4.20",

@@ -25,7 +25,7 @@ export type AdmissionInfo = {
  */
 export async function getAdmissionInfo(): Promise<AdmissionInfo> {
   const [rows, locale] = await Promise.all([
-    db.query.admissionItems.findMany({ orderBy: asc(schema.admissionItems.sortOrder) }),
+    db.query.admissionItems.findMany({ orderBy: [asc(schema.admissionItems.sortOrder), asc(schema.admissionItems.seq)] }),
     getLocale(),
   ]);
 

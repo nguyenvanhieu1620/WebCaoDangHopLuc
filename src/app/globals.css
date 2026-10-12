@@ -41,20 +41,6 @@ body {
   animation: pulseDot 2s infinite;
 }
 
-/* Hiệu ứng nổi nhẹ cho khối trang trí trong hero */
-@keyframes floatY {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px);
-  }
-}
-.float-y {
-  animation: floatY 6s ease-in-out infinite;
-}
-
 /* Chiều sâu 3D nhẹ: dùng GPU/CSS, không tải thư viện hay mô hình 3D. */
 .program-card-depth {
   transition: transform 220ms ease-out, box-shadow 220ms ease-out;
@@ -65,11 +51,6 @@ body {
     transform: perspective(1000px) translateY(-6px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
     box-shadow: 0 24px 48px -16px rgb(6 50 90 / 35%);
   }
-}
-
-/* Nổi chậm hơn + lệch pha — dùng cho thẻ thứ 2 cạnh .float-y để 2 thẻ không nhịp nhàng giống hệt nhau. */
-.float-y-slow {
-  animation: floatY 7.5s ease-in-out -2.5s infinite;
 }
 
 /* ===== Banner Trang chủ (HeroBanner.tsx) ===== */
@@ -413,7 +394,7 @@ a.link-underline:hover {
   .img-shine::before { display: none; }
   .link-underline { transition: none; }
   .lightbox[open], .lightbox[open]::backdrop, .lightbox-media, .milestone-panel > * { animation: none; }
-  .float-y, .float-y-slow, .dot-pulse, .hero-kenburns, .hero-rise { animation: none; }
+  .dot-pulse, .hero-kenburns, .hero-rise { animation: none; }
   .marquee-track { animation: none; flex-wrap: wrap; justify-content: center; }
   .marquee-dup { display: none; }
   .program-card-depth { transition: none; transform: none; }

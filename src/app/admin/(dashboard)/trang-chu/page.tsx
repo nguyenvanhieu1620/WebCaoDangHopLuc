@@ -46,7 +46,7 @@ export default async function AdminHomepagePage({
     db.query.homepageContent.findFirst({ where: eq(schema.homepageContent.id, "main") }),
     db.query.mediaItems.findMany({
       where: eq(schema.mediaItems.type, "image"),
-      orderBy: desc(schema.mediaItems.createdAt),
+      orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
     }),
   ]);
   if (!row) {
@@ -143,6 +143,7 @@ export default async function AdminHomepagePage({
             <div>
               <label className={labelClass}>Ảnh Hero (để trống = giữ ảnh cũ)</label>
               <ImagePicker
+                spec="hero"
                 fileFieldName="heroImage"
                 pickedFieldName="heroImageExisting"
                 images={mediaImages}

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   await requirePermission("admissions-contact");
   const status = new URL(request.url).searchParams.get("status");
   const all = await db.query.contactMessages.findMany({
-    orderBy: desc(schema.contactMessages.createdAt),
+    orderBy: [desc(schema.contactMessages.createdAt), desc(schema.contactMessages.seq)],
   });
   const rows = all.filter((m) => (status === "new" || status === "read" ? m.status === status : true));
 

@@ -101,19 +101,20 @@ export function AdminSidebar({ userName, permissions, badges = {} }: AdminSideba
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <Link href="/admin" className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
-          <Image
-            src="/images/logo-icon.png"
-            alt={SITE.fullName}
-            width={34}
-            height={34}
-            className="h-[34px] w-auto"
-          />
-          <div className="leading-[1.05]">
-            <div className="font-display text-[15px] font-bold">{SITE.name}</div>
-            <div className="font-mono text-[8.5px] uppercase tracking-wider text-accent-500">
-              CMS Admin
-            </div>
+        <Link href="/admin" className="flex flex-col items-start gap-1.5 border-b border-white/10 px-5 py-5">
+          {/* Logo đúng màu gốc trên ô trắng — sidebar nền xanh đậm. */}
+          <span className="rounded-lg bg-white px-2.5 py-1.5">
+            <Image
+              src="/images/logo.png"
+              alt={SITE.fullName}
+              width={1137}
+              height={315}
+              sizes="160px"
+              className="h-9 w-auto"
+            />
+          </span>
+          <div className="font-mono text-[8.5px] uppercase tracking-wider text-accent-500">
+            CMS Admin
           </div>
         </Link>
 

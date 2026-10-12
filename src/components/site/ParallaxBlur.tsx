@@ -23,6 +23,9 @@ export function ParallaxBlur({ className, speed = 0.15 }: ParallaxBlurProps) {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Thiết bị cảm ứng: khối blur đứng yên. Dịch chuyển 1 phần tử `filter: blur()` lớn theo từng
+    // khung cuộn buộc trình duyệt (đặc biệt Safari iOS) tính lại độ mờ liên tục → cuộn giật.
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 
     let rafId: number | null = null;
 

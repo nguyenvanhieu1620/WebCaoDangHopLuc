@@ -43,6 +43,14 @@ const config: Config = {
           faint: "#8496A2", // chữ mờ / meta
         },
         line: "#DCE6ED",
+        // Màu nhận diện chính thức của mạng xã hội — CHỈ dùng cho nút/biểu tượng của đúng mạng đó.
+        social: {
+          facebook: { DEFAULT: "#1877F2", dark: "#1461C7" },
+          zalo: { DEFAULT: "#0068FF", dark: "#0055D4" },
+          youtube: { DEFAULT: "#FF0000", dark: "#CC0000" },
+        },
+        // Tím riêng cho nút "ChatbotAI" ở widget liên hệ nhanh (trước đây hard-code #7C3AED).
+        ai: { DEFAULT: "#7C3AED", dark: "#6B2FD1" },
       },
       fontFamily: {
         // Cả 3 đều Montserrat (đổi 02/10/2026 theo VinUni). Giữ 3 tên token để không phải

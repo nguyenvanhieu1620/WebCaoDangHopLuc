@@ -239,31 +239,27 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
           "relative h-[72px] border-b transition-[background-color,box-shadow,border-color] duration-300",
           transparentNav
             ? "border-white/10 bg-transparent"
-            : "border-white/10 bg-brand-900/85 shadow-[0_12px_40px_-14px_rgba(6,50,90,0.55)] backdrop-blur-xl"
+            : // Kính mờ chỉ từ lg: trên điện thoại (nhất là Safari iOS) backdrop-blur của thanh cố định phải
+              // làm mờ lại mọi thứ đang chuyển động phía sau (cảnh 3D, banner) mỗi khung hình → giật.
+              "border-white/10 bg-brand-900/95 shadow-[0_12px_40px_-14px_rgba(6,50,90,0.55)] lg:bg-brand-900/85 lg:backdrop-blur-xl"
         )}
       >
         {/* Thanh tiến trình đọc trang — CSS scroll-driven (globals.css .scroll-progress), trình duyệt chưa hỗ trợ thì ẩn */}
         <span aria-hidden="true" className="scroll-progress" />
-        {/* Montserrat rộng hơn font cũ: màn hình 360px (nhiều máy Android) không đủ chỗ cho logo + 2 nút
-            → khối logo được co (min-w-0, dòng tagline cắt "…"), khoảng cách hẹp lại trên mobile. */}
+        {/* Logo chính thức của trường, ĐÚNG MÀU GỐC (public/images/logo.png — y nguyên file trường gửi)
+            đặt trên ô nền trắng bo góc: header luôn nền tối, logo đỏ/xanh đặt thẳng lên sẽ chìm.
+            Logo đã chứa tên trường nên không ghép thêm chữ; 360px vẫn đủ chỗ cho ô logo + 2 nút. */}
         <div className="mx-auto flex h-full max-w-[1320px] items-center justify-between gap-3 px-6 sm:gap-6 sm:px-8">
-          <Link href="/" className="flex min-w-0 items-center gap-2.5">
+          <Link href="/" className="flex min-w-0 shrink items-center rounded-xl bg-white px-3 py-1.5 shadow-md2">
             <Image
-              src="/images/logo-icon.png"
+              src="/images/logo.png"
               alt={SITE.fullName}
-              width={44}
-              height={44}
-              className="h-11 w-auto shrink-0 drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)]"
+              width={1137}
+              height={315}
+              sizes="160px"
+              className="h-8 w-auto lg:h-10"
               priority
             />
-            <div className="flex min-w-0 flex-col leading-[1.05]">
-              <span className="font-display text-[19px] font-bold text-white">
-                {SITE.name}
-              </span>
-              <span className="truncate font-mono text-[8.5px] uppercase tracking-wide text-accent-400 sm:text-[9.5px] sm:tracking-wider">
-                {SITE.tagline}
-              </span>
-            </div>
           </Link>
 
           <nav

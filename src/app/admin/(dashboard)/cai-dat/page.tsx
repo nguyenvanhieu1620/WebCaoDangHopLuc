@@ -5,16 +5,17 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { updateSiteSettingsAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
+import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Cài đặt chung" };
 
 export default async function AdminSiteSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; invalid?: string }>;
 }) {
   await requirePermission("site-settings");
-  const { saved } = await searchParams;
+  const { saved, invalid } = await searchParams;
   const settings = await db.query.siteSettings.findFirst({
     where: eq(schema.siteSettings.id, "main"),
   });
@@ -32,6 +33,12 @@ export default async function AdminSiteSettingsPage({
         {saved && (
           <div className="mb-5 max-w-2xl rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
             ✓ Đã lưu thay đổi thành công.
+          </div>
+        )}
+        {invalid && (
+          <div role="alert" className="mb-5 max-w-2xl rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700">
+            <b>⚠️ Link {invalid} không hợp lệ nên chưa được lưu</b> (vẫn giữ link cũ). Hãy dán
+            nguyên địa chỉ trang, VD <code>https://www.facebook.com/ten-trang</code>.
           </div>
         )}
         <form
@@ -96,45 +103,30 @@ export default async function AdminSiteSettingsPage({
             />
           </div>
           <div className="border-t border-line pt-4">
-            <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-              Mạng xã hội (để trống = &quot;#&quot;)
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              Mạng xã hội
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Facebook</label>
-                <input
-                  name="facebookUrl"
-                  defaultValue={settings.facebookUrl}
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Zalo</label>
-                <input
-                  name="zaloUrl"
-                  defaultValue={settings.zaloUrl}
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">YouTube</label>
-                <input
-                  name="youtubeUrl"
-                  defaultValue={settings.youtubeUrl}
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                />
-              </div>
+            <p className="mb-3 text-[12px] text-ink-faint">
+              Dán nguyên địa chỉ trang (copy trên thanh địa chỉ trình duyệt). Để trống = ẩn nút đó trên web.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <LinkField name="facebookUrl" label="Facebook" value={settings.facebookUrl} placeholder="https://www.facebook.com/ten-trang" />
+              <LinkField
+                name="zaloUrl"
+                label="Zalo"
+                value={settings.zaloUrl}
+                placeholder="https://zalo.me/… hoặc số điện thoại"
+                normalize={normalizeZaloUrl}
+              />
+              <LinkField name="youtubeUrl" label="YouTube" value={settings.youtubeUrl} placeholder="https://www.youtube.com/@ten-kenh" />
             </div>
           </div>
           <div className="border-t border-line pt-4">
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
-              Link cổng LMS VNPT (để trống = &quot;#&quot;, trang /lms sẽ hiện thông báo chưa cập nhật)
-            </label>
-            <input
+            <LinkField
               name="lmsUrl"
-              defaultValue={settings.lmsUrl}
+              label="Link cổng LMS VNPT (để trống thì trang /lms hiện thông báo chưa cập nhật)"
+              value={settings.lmsUrl}
               placeholder="https://lms.vnpt.vn/..."
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
             />
           </div>
           <div className="border-t border-line pt-4 text-[12.5px] text-ink-soft">
@@ -151,6 +143,52 @@ export default async function AdminSiteSettingsPage({
           </button>
         </form>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Ô nhập link ngoài: không điền sẵn "#" (gõ nối sau "#" từng làm link Facebook hỏng thật), có
+ * nút "Mở thử ↗" để admin bấm kiểm tra ngay, và báo khi link đang lưu đã được web tự sửa.
+ */
+function LinkField({
+  name,
+  label,
+  value,
+  placeholder,
+  normalize = normalizeExternalUrl,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  placeholder: string;
+  normalize?: (raw: string) => string | null;
+}) {
+  const stored = value === "#" ? "" : value;
+  const url = stored ? normalize(stored) : null;
+  return (
+    <div className="min-w-0">
+      <label htmlFor={name} className="mb-1.5 block text-xs font-semibold text-ink-soft">
+        {label}
+      </label>
+      <input
+        id={name}
+        name={name}
+        inputMode="url"
+        defaultValue={stored}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+      />
+      {url ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[11.5px]">
+          <a href={url} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-700 hover:underline">
+            Mở thử ↗
+          </a>
+          {url.replace(/\/$/, "") !== stored.replace(/\/$/, "") && <span className="text-ink-faint">· web đang dùng link đã tự sửa</span>}
+        </div>
+      ) : (
+        stored && <p className="mt-1.5 text-[11.5px] font-semibold text-accent-700">⚠️ Không phải link hợp lệ — web đang ẩn nút này</p>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { getLocale, pickLocale } from "@/lib/locale";
 
 export const POSTS_PER_PAGE = 12;
@@ -34,7 +34,7 @@ export async function getLatestPublishedPosts(limit: number): Promise<PublishedP
   const [rows, locale] = await Promise.all([
     db.query.posts.findMany({
       where: eq(schema.posts.status, "published"),
-      orderBy: desc(schema.posts.publishedAt),
+      orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.seq)],
       limit,
     }),
     getLocale(),
@@ -62,7 +62,7 @@ export async function getPinnedPosts(limit: number): Promise<PublishedPostPrevie
   const [rows, locale] = await Promise.all([
     db.query.posts.findMany({
       where: and(eq(schema.posts.status, "published"), eq(schema.posts.isPinned, 1)),
-      orderBy: desc(schema.posts.publishedAt),
+      orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.seq)],
       limit,
     }),
     getLocale(),
@@ -102,7 +102,7 @@ export async function getAllPublishedPosts(categorySlug?: string): Promise<Publi
   const [rows, locale] = await Promise.all([
     db.query.posts.findMany({
       where: and(eq(schema.posts.status, "published"), eq(schema.posts.categoryId, category.id)),
-      orderBy: desc(schema.posts.publishedAt),
+      orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.seq)],
     }),
     getLocale(),
   ]);
@@ -153,7 +153,8 @@ export async function getPublishedPostsPage(
     : eq(schema.posts.status, "published");
 
   const [[{ total }], locale] = await Promise.all([
-    db.select({ total: sql<number>`count(*)` }).from(schema.posts).where(whereClause),
+    // count() (không phải sql`count(*)`): Postgres trả bigint → driver pg đưa về CHUỖI, count() tự đổi sang số.
+    db.select({ total: count() }).from(schema.posts).where(whereClause),
     getLocale(),
   ]);
 
@@ -162,7 +163,7 @@ export async function getPublishedPostsPage(
 
   const rows = await db.query.posts.findMany({
     where: whereClause,
-    orderBy: desc(schema.posts.publishedAt),
+    orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.seq)],
     limit: POSTS_PER_PAGE,
     offset: (currentPage - 1) * POSTS_PER_PAGE,
   });

@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { SITE } from "@/lib/constants";
 import { NewsletterForm } from "./NewsletterForm";
+import { SOCIAL_BG, SocialIcon, socialLinks } from "@/components/ui/SocialIcon";
+import { cn } from "@/lib/utils";
 import type { Program, SiteSettings } from "@/lib/db/schema";
 
 const QUICK_LINKS = [
@@ -36,47 +38,44 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
   const programLinks = programs
     .slice(0, 6)
     .map((p) => ({ label: p.name, href: `/nganh-dao-tao/${p.slug}` }));
-  const socialLinks = (
-    [
-      { label: "FB", href: settings.facebookUrl },
-      { label: "ZL", href: settings.zaloUrl },
-      { label: "YT", href: settings.youtubeUrl },
-    ] as const
-  ).filter((s) => s.href && s.href !== "#");
+  const socials = socialLinks(settings);
 
   return (
     <footer className="bg-brand-900 text-white">
       <div className="mx-auto max-w-[1320px] px-6 py-16 sm:px-8">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-5">
           <div className="col-span-2">
-            <div className="mb-4 flex items-center gap-2">
+            {/* Logo đúng màu gốc trên ô trắng — footer nền xanh đậm (xem ghi chú ở SiteHeader). */}
+            <div className="mb-5 inline-flex rounded-xl bg-white px-4 py-2.5">
               <Image
-                src="/images/logo-icon.png"
+                src="/images/logo.png"
                 alt={SITE.fullName}
-                width={38}
-                height={38}
-                className="h-9 w-auto"
+                width={1137}
+                height={315}
+                sizes="200px"
+                className="h-12 w-auto"
               />
-              <div className="leading-tight">
-                <div className="font-display text-base font-bold">{SITE.name}</div>
-                <div className="font-mono text-[9px] uppercase tracking-wider text-white/60">
-                  {SITE.tagline}
-                </div>
-              </div>
             </div>
             <p className="max-w-xs text-[13px] leading-relaxed text-white/55">
               Đào tạo nguồn nhân lực y dược chất lượng cao, gắn lý thuyết với
               thực hành lâm sàng thực tế ngay từ năm nhất.
             </p>
-            {socialLinks.length > 0 && (
-              <div className="mt-5 flex gap-2.5">
-                {socialLinks.map((s) => (
+            {socials.length > 0 && (
+              <div className="mt-5 flex gap-3">
+                {socials.map((s) => (
                   <a
-                    key={s.label}
+                    key={s.network}
                     href={s.href}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-[11px] font-semibold"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${s.label} của ${SITE.fullName}`}
+                    title={s.label}
+                    className={cn(
+                      "flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_6px_16px_rgba(0,0,0,0.25)] ring-1 ring-white/15 transition duration-200 hover:-translate-y-0.5 hover:ring-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
+                      SOCIAL_BG[s.network]
+                    )}
                   >
-                    {s.label}
+                    <SocialIcon network={s.network} size={s.network === "youtube" ? 22 : 20} />
                   </a>
                 ))}
               </div>

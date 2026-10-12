@@ -1,25 +1,37 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 /**
  * Schema CSDL cho Website thông tin trường + CMS (Giai đoạn 1 theo SRS).
  *
- * Đang dùng SQLite (drizzle-orm/sqlite-core, qua driver @libsql/client — dùng
- * binary dựng sẵn theo hệ điều hành, không cần Python/node-gyp để cài) để
- * chạy ngay không cần server DB hay tài khoản AWS. Khi chuyển sang PostgreSQL (Amazon RDS Aurora — đúng
- * kiến trúc dài hạn trong SRS), chỉ cần:
- *   1) Đổi import "drizzle-orm/sqlite-core" -> "drizzle-orm/pg-core"
- *      (sqliteTable -> pgTable, tên các kiểu cột tương đương gần như 1-1)
- *   2) Đổi driver kết nối trong lib/db/client.ts
- * Toàn bộ code gọi Drizzle ở các trang/route khác — cú pháp query giống hệt
- * nhau giữa 2 dialect, hầu như không phải sửa.
+ * PostgreSQL (drizzle-orm/pg-core, driver `pg` — xem lib/db/client.ts). Chuyển từ
+ * SQLite sang ngày 06/10/2026, giữ nguyên 1-1 kiểu dữ liệu cũ để không phải sửa
+ * code đọc/ghi ở các trang:
+ *   - Mốc thời gian vẫn là `text` dạng "YYYY-MM-DD HH:MM:SS" (UTC) — đúng định dạng
+ *     `CURRENT_TIMESTAMP` của SQLite trước đây (xem `nowText` bên dưới) nên
+ *     `formatDbDateTime()`/`dbTimestampToISO()` trong utils.ts dùng tiếp được.
+ *     Cột do code tự set (`publishedAt`, `startAt`, `updatedAt` khi sửa...) là chuỗi ISO.
+ *   - Cờ 0/1 (`featured`, `isPinned`, `isPrimary`) vẫn là `integer`.
+ *   - `seq`: số tự tăng theo thứ tự chèn, thay cho `rowid` ngầm của SQLite. SQLite
+ *     trả các dòng trùng khoá sắp xếp (VD cùng `sortOrder`, cùng giây `createdAt`)
+ *     theo thứ tự chèn; Postgres KHÔNG đảm bảo điều đó — dòng vừa sửa có thể nhảy
+ *     xuống cuối. Mọi `orderBy` của danh sách luôn thêm `seq` làm khoá phụ cuối cùng.
+ * Muốn đổi sang kiểu gốc của Postgres (timestamptz, boolean) thì làm migration riêng
+ * kèm sửa chỗ đọc/ghi — không trộn vào đợt chuyển DB.
  */
 
+/** Giá trị mặc định cho cột thời gian — chuỗi "YYYY-MM-DD HH:MM:SS" theo giờ UTC (y hệt SQLite CURRENT_TIMESTAMP). */
+const nowText = sql`to_char(timezone('UTC', now()), 'YYYY-MM-DD HH24:MI:SS')`;
+
+/** Khoá phụ thứ tự chèn (xem ghi chú đầu file) — chỉ dùng trong `orderBy`, không hiển thị. */
+const seq = () => integer("seq").generatedAlwaysAsIdentity();
+
 /** Tài khoản quản trị viên (đăng nhập CMS). */
-export const adminUsers = sqliteTable("admin_users", {
+export const adminUsers = pgTable("admin_users", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
@@ -34,28 +46,30 @@ export const adminUsers = sqliteTable("admin_users", {
   permissions: text("permissions"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Danh mục bài viết (Tuyển sinh, Sự kiện...) — admin tự thêm/xoá không giới hạn. */
-export const categories = sqliteTable("categories", {
+export const categories = pgTable("categories", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   name: text("name").notNull(),
   /** Bản tiếng Anh của `name` — để trống thì site hiện bản tiếng Việt khi khách chọn EN. */
   nameEn: text("name_en"),
   slug: text("slug").notNull().unique(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Bài viết — tin tức, thông báo, sự kiện hiển thị ở /tin-tuc. */
-export const posts = sqliteTable("posts", {
+export const posts = pgTable("posts", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   title: text("title").notNull(),
   titleEn: text("title_en"),
   slug: text("slug").notNull().unique(),
@@ -76,17 +90,18 @@ export const posts = sqliteTable("posts", {
   publishedAt: text("published_at"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Trang tĩnh có thể chỉnh sửa nội dung qua CMS (Giới thiệu, Liên hệ...). */
-export const pages = sqliteTable("pages", {
+export const pages = pgTable("pages", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   titleEn: text("title_en"),
@@ -96,28 +111,30 @@ export const pages = sqliteTable("pages", {
   contentEn: text("content_en"),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Mục media trong thư viện ảnh/video (metadata; file thật lưu ở /public khi dev, S3 khi production). */
-export const mediaItems = sqliteTable("media_items", {
+export const mediaItems = pgTable("media_items", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   filename: text("filename").notNull(),
   url: text("url").notNull(),
   /** "image" | "video" */
   type: text("type").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Ngành đào tạo — hiển thị ở Trang chủ và /nganh-dao-tao. */
-export const programs = sqliteTable("programs", {
+export const programs = pgTable("programs", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   slug: text("slug").notNull().unique(),
   code: text("code").notNull(),
   name: text("name").notNull(),
@@ -144,14 +161,14 @@ export const programs = sqliteTable("programs", {
   featured: integer("featured").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Thông tin liên hệ/vận hành chung của site — luôn chỉ có đúng 1 dòng (id "main"). */
-export const siteSettings = sqliteTable("site_settings", {
+export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey().default("main"),
   hotline: text("hotline").notNull(),
   email: text("email").notNull(),
@@ -167,11 +184,11 @@ export const siteSettings = sqliteTable("site_settings", {
   pageBannerUrl: text("page_banner_url"),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Nội dung chữ ở Trang chủ (Hero, chỉ số, điểm mạnh, quy trình, CTA) — luôn chỉ có đúng 1 dòng (id "main"). */
-export const homepageContent = sqliteTable("homepage_content", {
+export const homepageContent = pgTable("homepage_content", {
   id: text("id").primaryKey().default("main"),
   heroImageUrl: text("hero_image_url"),
   heroBadge: text("hero_badge").notNull(),
@@ -209,14 +226,15 @@ export const homepageContent = sqliteTable("homepage_content", {
   visionTextEn: text("vision_text_en"),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Mục menu chính của site công khai — danh mục to (parentId null) và danh mục con (parentId trỏ tới 1 danh mục to). */
-export const navItems = sqliteTable("nav_items", {
+export const navItems = pgTable("nav_items", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   label: text("label").notNull(),
   labelEn: text("label_en"),
   href: text("href").notNull(),
@@ -230,7 +248,7 @@ export const navItems = sqliteTable("nav_items", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /**
@@ -241,10 +259,11 @@ export const navItems = sqliteTable("nav_items", {
  * `site_settings` — giờ tách hẳn ra đây để linh hoạt thêm kênh mới (Tin
  * nhắn, ChatbotAI...) mà không phải sửa code.
  */
-export const quickContacts = sqliteTable("quick_contacts", {
+export const quickContacts = pgTable("quick_contacts", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   /** "hotline" | "zalo" | "facebook" | "message" | "chatbot" | "custom" — quyết định icon hiển thị. */
   type: text("type").notNull(),
   label: text("label").notNull(),
@@ -254,25 +273,27 @@ export const quickContacts = sqliteTable("quick_contacts", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Email đăng ký nhận bản tin — form ở Footer, admin xem/xuất danh sách qua admin/dang-ky-nhan-tin. */
-export const newsletterSubscribers = sqliteTable("newsletter_subscribers", {
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   email: text("email").notNull().unique(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Đối tác hiển thị ở dải logo/tên Trang chủ — sortOrder do admin tự nhập để sắp vị trí. */
-export const partners = sqliteTable("partners", {
+export const partners = pgTable("partners", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   name: text("name").notNull(),
   nameEn: text("name_en"),
   /** Ảnh logo (tuỳ chọn) — có logo thì dải đối tác hiện logo, không có thì hiện tên chữ. */
@@ -282,14 +303,15 @@ export const partners = sqliteTable("partners", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Ảnh trong khối "Thư viện" dạng bento ở Trang chủ. */
-export const galleryItems = sqliteTable("gallery_items", {
+export const galleryItems = pgTable("gallery_items", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   imageUrl: text("image_url").notNull(),
   /** Link video (VD YouTube) — tuỳ chọn. Có giá trị thì `imageUrl` đóng vai trò ảnh bìa/thumbnail, click mở video ở tab mới. */
   videoUrl: text("video_url"),
@@ -298,7 +320,7 @@ export const galleryItems = sqliteTable("gallery_items", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /**
@@ -306,10 +328,11 @@ export const galleryItems = sqliteTable("gallery_items", {
  * `homepage_content.hero_image_url` trước đây). Nếu bảng này rỗng, Trang chủ
  * tự fallback về `heroImageUrl` cũ — không bắt buộc admin phải thêm ngay.
  */
-export const heroBanners = sqliteTable("hero_banners", {
+export const heroBanners = pgTable("hero_banners", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   imageUrl: text("image_url").notNull(),
   caption: text("caption"),
   captionEn: text("caption_en"),
@@ -318,7 +341,7 @@ export const heroBanners = sqliteTable("hero_banners", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /**
@@ -328,10 +351,11 @@ export const heroBanners = sqliteTable("hero_banners", {
  * "ThS" và "Th.S" cùng tồn tại). Chỉ dùng trong admin — không cần lớp data
  * layer riêng (theo đúng quy ước admin gọi `db` trực tiếp).
  */
-export const facultyAttributes = sqliteTable("faculty_attributes", {
+export const facultyAttributes = pgTable("faculty_attributes", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   /** "academic_rank" (Học hàm) | "degree" (Học vị) | "position" (Chức vụ). */
   type: text("type").notNull(),
   name: text("name").notNull(),
@@ -339,33 +363,34 @@ export const facultyAttributes = sqliteTable("faculty_attributes", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Khoa/Bộ môn — danh mục quản lý giảng viên theo đơn vị, giống `categories` cho bài viết. */
-export const departments = sqliteTable("departments", {
+export const departments = pgTable("departments", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   name: text("name").notNull(),
   nameEn: text("name_en"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Đội ngũ giảng viên hiển thị ở Trang chủ và trang chi tiết /doi-ngu-giang-vien/[slug]. */
-export const faculty = sqliteTable("faculty", {
+export const faculty = pgTable("faculty", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   /**
    * Dùng cho URL trang chi tiết — tự sinh từ tên, không bắt buộc nhập tay.
-   * Để nullable (thay vì notNull như slug các bảng khác) vì bảng này đã có
-   * sẵn dữ liệu — SQLite không cho ALTER TABLE thêm cột NOT NULL vào bảng
-   * đã có dòng mà không có DEFAULT. Action luôn tự sinh + set slug lúc tạo
-   * mới, nên trong thực tế cột này luôn có giá trị.
+   * Nullable (thay vì notNull như slug các bảng khác) vì hồi còn SQLite cột này
+   * được thêm khi bảng đã có dữ liệu (không ALTER TABLE thêm NOT NULL được).
+   * Action luôn tự sinh + set slug lúc tạo mới, nên thực tế luôn có giá trị.
    */
   slug: text("slug").unique(),
   /** Chỉ họ tên thuần — KHÔNG gõ dính học vị/học hàm vào đây (tách riêng ở `degree`/`academicRank`). */
@@ -384,8 +409,7 @@ export const faculty = sqliteTable("faculty", {
   /**
    * Không dùng nữa — trước đây gộp học vị + trường + ngành vào 1 ô free-text,
    * đã tách rõ thành `degree` (học vị viết tắt) + `bio` (tiểu sử đầy đủ nếu
-   * cần ghi thêm nơi đào tạo). Giữ lại cột này (rỗng) để tránh phải đổi tên
-   * cột — SQLite rename dễ bị drizzle-kit hiểu nhầm thành xoá+thêm cột mới.
+   * cần ghi thêm nơi đào tạo). Giữ lại cột này (rỗng) cho khớp dữ liệu cũ.
    */
   education: text("education"),
   educationEn: text("education_en"),
@@ -399,15 +423,16 @@ export const faculty = sqliteTable("faculty", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Sự kiện — lịch sự kiện riêng ở /su-kien, khác Tin tức (không có trạng thái nháp/đăng). */
-export const events = sqliteTable("events", {
+export const events = pgTable("events", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  /** Nullable dù logic luôn tự sinh khi tạo mới — bảng đã có dữ liệu lúc thêm cột này, SQLite không cho NOT NULL không kèm DEFAULT (xem CLAUDE.md mục 5 "Trang chi tiết giảng viên" — cùng lý do). */
+  seq: seq(),
+  /** Nullable dù logic luôn tự sinh khi tạo mới — lý do lịch sử giống `faculty.slug` (thêm cột hồi còn SQLite). */
   slug: text("slug").unique(),
   title: text("title").notNull(),
   titleEn: text("title_en"),
@@ -422,14 +447,15 @@ export const events = sqliteTable("events", {
   coverImageUrl: text("cover_image_url"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Tin nhắn gửi từ form Liên hệ công khai — admin xem/đổi trạng thái qua admin/lien-he. */
-export const contactMessages = sqliteTable("contact_messages", {
+export const contactMessages = pgTable("contact_messages", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   name: text("name").notNull(),
   phone: text("phone"),
   email: text("email"),
@@ -438,14 +464,15 @@ export const contactMessages = sqliteTable("contact_messages", {
   status: text("status").notNull().default("new"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Câu hỏi thường gặp — hiện ở /faq, admin sắp xếp qua sortOrder. */
-export const faqs = sqliteTable("faqs", {
+export const faqs = pgTable("faqs", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   question: text("question").notNull(),
   questionEn: text("question_en"),
   answer: text("answer").notNull(),
@@ -453,14 +480,15 @@ export const faqs = sqliteTable("faqs", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Đánh giá/cảm nhận của cựu sinh viên hiển thị ở Trang chủ. */
-export const testimonials = sqliteTable("testimonials", {
+export const testimonials = pgTable("testimonials", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   quote: text("quote").notNull(),
   quoteEn: text("quote_en"),
   name: text("name").notNull(),
@@ -470,7 +498,7 @@ export const testimonials = sqliteTable("testimonials", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /**
@@ -481,10 +509,11 @@ export const testimonials = sqliteTable("testimonials", {
  *   - "method":   phương thức xét tuyển
  *   - "document": hồ sơ cần chuẩn bị (thường chỉ cần `title`)
  */
-export const admissionItems = sqliteTable("admission_items", {
+export const admissionItems = pgTable("admission_items", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   type: text("type").notNull(),
   title: text("title").notNull(),
   titleEn: text("title_en"),
@@ -495,7 +524,7 @@ export const admissionItems = sqliteTable("admission_items", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /**
@@ -504,10 +533,11 @@ export const admissionItems = sqliteTable("admission_items", {
  * admin/cot-moc. Nội dung do trường tự nhập — seed KHÔNG tạo sẵn mốc nào để
  * tránh bịa lịch sử trường (chỉ `npm run demo:load` tạo vài "Mốc mẫu").
  */
-export const milestones = sqliteTable("milestones", {
+export const milestones = pgTable("milestones", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   year: integer("year").notNull(),
   /** Thời điểm trong năm, tuỳ chọn — VD "Tháng 9". */
   period: text("period"),
@@ -521,7 +551,7 @@ export const milestones = sqliteTable("milestones", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /**
@@ -530,19 +560,20 @@ export const milestones = sqliteTable("milestones", {
  * admin/banner-trang-con; dòng tạo khi admin lưu lần đầu. Trang tĩnh (Giới thiệu,
  * Liên hệ, Công khai…) KHÔNG lưu ở đây mà dùng `pages.cover_image_url` sẵn có.
  */
-export const pageBanners = sqliteTable("page_banners", {
+export const pageBanners = pgTable("page_banners", {
   key: text("key").primaryKey(),
   imageUrl: text("image_url"),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 /** Hồ sơ đăng ký xét tuyển gửi từ form công khai trên website. */
-export const admissionSubmissions = sqliteTable("admission_submissions", {
+export const admissionSubmissions = pgTable("admission_submissions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  seq: seq(),
   fullName: text("full_name").notNull(),
   phone: text("phone").notNull(),
   /** Số CCCD — khoá dùng để tra cứu kết quả xét tuyển công khai ở /tra-cuu-ket-qua. */
@@ -554,7 +585,7 @@ export const admissionSubmissions = sqliteTable("admission_submissions", {
   status: text("status").notNull().default("new"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(nowText),
 });
 
 export type AdminUser = typeof adminUsers.$inferSelect;

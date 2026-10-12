@@ -26,7 +26,7 @@ export default async function AdminContactMessagesPage({
   const activeStatus = status === "new" || status === "read" ? status : "all";
 
   const allMessages = await db.query.contactMessages.findMany({
-    orderBy: desc(schema.contactMessages.createdAt),
+    orderBy: [desc(schema.contactMessages.createdAt), desc(schema.contactMessages.seq)],
   });
   const messages = allMessages.filter((m) => activeStatus === "all" || m.status === activeStatus);
 

@@ -17,7 +17,7 @@ export default async function AdminDepartmentsPage({
   await requirePermission("faculty");
   const { edit } = await searchParams;
   const [allDepartments, allFaculty] = await Promise.all([
-    db.query.departments.findMany({ orderBy: asc(schema.departments.sortOrder) }),
+    db.query.departments.findMany({ orderBy: [asc(schema.departments.sortOrder), asc(schema.departments.seq)] }),
     db.query.faculty.findMany(),
   ]);
   const editing = edit

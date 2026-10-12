@@ -25,7 +25,7 @@ export function facultyDisplayName(f: Pick<Faculty, "name" | "degree" | "academi
 /** Đội ngũ giảng viên hiển thị ở Trang chủ và /doi-ngu-giang-vien — quản lý qua admin/giang-vien. */
 export async function getFacultyList(): Promise<Faculty[]> {
   const [rows, locale] = await Promise.all([
-    db.query.faculty.findMany({ orderBy: asc(schema.faculty.sortOrder) }),
+    db.query.faculty.findMany({ orderBy: [asc(schema.faculty.sortOrder), asc(schema.faculty.seq)] }),
     getLocale(),
   ]);
   return rows.map((f) => localize(f, locale));

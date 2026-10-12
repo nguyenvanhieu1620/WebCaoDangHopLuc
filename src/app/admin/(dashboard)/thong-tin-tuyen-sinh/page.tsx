@@ -25,7 +25,7 @@ export default async function AdminAdmissionInfoPage({
 }) {
   await requirePermission("admissions-contact");
   const { edit, type } = await searchParams;
-  const all = await db.query.admissionItems.findMany({ orderBy: asc(schema.admissionItems.sortOrder) });
+  const all = await db.query.admissionItems.findMany({ orderBy: [asc(schema.admissionItems.sortOrder), asc(schema.admissionItems.seq)] });
   const editing = edit ? await db.query.admissionItems.findFirst({ where: eq(schema.admissionItems.id, edit) }) : null;
   const formType: AdmissionItemType =
     (editing?.type as AdmissionItemType) ?? (SECTIONS.some((s) => s.type === type) ? (type as AdmissionItemType) : "timeline");

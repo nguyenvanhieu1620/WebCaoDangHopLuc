@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
@@ -9,6 +8,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { getEvents } from "@/lib/data/events";
 import { formatVNDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/db/schema";
+import { FitImage } from "@/components/ui/FitImage";
 
 export const metadata: Metadata = { title: "Sự kiện" };
 
@@ -96,12 +96,11 @@ function EventCard({
     <>
       <div className="img-reveal img-shine relative h-[190px] shrink-0 sm:h-auto sm:w-[260px]">
         {event.coverImageUrl ? (
-          <Image
+          <FitImage
             src={event.coverImageUrl}
             alt={event.title}
-            fill
             sizes="(max-width: 640px) 100vw, 260px"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            className="transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <ImagePlaceholder label="Ảnh sự kiện" />

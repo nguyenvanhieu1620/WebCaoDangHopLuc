@@ -18,14 +18,14 @@ export default async function AdminProgramsPage({
   await requirePermission("programs");
   const { edit } = await searchParams;
   const allPrograms = await db.query.programs.findMany({
-    orderBy: asc(schema.programs.createdAt),
+    orderBy: [asc(schema.programs.createdAt), asc(schema.programs.seq)],
   });
   const editing = edit
     ? await db.query.programs.findFirst({ where: eq(schema.programs.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -178,10 +178,9 @@ export default async function AdminProgramsPage({
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh ngành <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
               </label>
-              <ImagePicker fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
+              <ImagePicker spec="program" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
               <p className="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
-                Hiện ở đầu thẻ ngành (Trang chủ, trang Ngành đào tạo) và làm nền banner trang chi tiết ngành. Nên dùng ảnh ngang
-                ≥ 1200×800, chủ thể ở giữa (thẻ cắt bớt 2 mép trên/dưới). Để trống thì thẻ chỉ có khối màu như cũ.
+                Để trống thì thẻ ngành chỉ có khối màu như cũ.
               </p>
               {editing?.imageUrl && (
                 <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">

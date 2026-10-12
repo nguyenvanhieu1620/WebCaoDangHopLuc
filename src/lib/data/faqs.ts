@@ -6,7 +6,7 @@ import { getLocale, pickLocale } from "@/lib/locale";
 /** Câu hỏi thường gặp hiển thị ở /faq — quản lý qua admin/faq. */
 export async function getFaqs(): Promise<Faq[]> {
   const [rows, locale] = await Promise.all([
-    db.query.faqs.findMany({ orderBy: asc(schema.faqs.sortOrder) }),
+    db.query.faqs.findMany({ orderBy: [asc(schema.faqs.sortOrder), asc(schema.faqs.seq)] }),
     getLocale(),
   ]);
   return rows.map((f) => ({

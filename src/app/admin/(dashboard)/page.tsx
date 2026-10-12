@@ -77,10 +77,10 @@ export default async function AdminDashboardPage({
     canPosts ? db.select({ value: count() }).from(schema.posts).where(eq(schema.posts.status, "published")) : [],
     canPosts ? db.select({ value: count() }).from(schema.posts).where(eq(schema.posts.status, "draft")) : [],
     canPosts
-      ? db.query.posts.findMany({ columns: { id: true, title: true, status: true, updatedAt: true }, orderBy: desc(schema.posts.updatedAt), limit: 5 })
+      ? db.query.posts.findMany({ columns: { id: true, title: true, status: true, updatedAt: true }, orderBy: [desc(schema.posts.updatedAt), desc(schema.posts.seq)], limit: 5 })
       : [],
     canAdmissions
-      ? db.query.admissionSubmissions.findMany({ columns: { id: true, fullName: true, program: true, status: true, createdAt: true }, orderBy: desc(schema.admissionSubmissions.createdAt) })
+      ? db.query.admissionSubmissions.findMany({ columns: { id: true, fullName: true, program: true, status: true, createdAt: true }, orderBy: [desc(schema.admissionSubmissions.createdAt), desc(schema.admissionSubmissions.seq)] })
       : [],
     canAdmissions ? db.select({ value: count() }).from(schema.admissionSubmissions).where(eq(schema.admissionSubmissions.status, "new")) : [],
     canAdmissions ? db.select({ value: count() }).from(schema.contactMessages).where(eq(schema.contactMessages.status, "new")) : [],

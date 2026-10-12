@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { getLocale, pickLocale } from "@/lib/locale";
 import { hasPlaceholder, normalizeSearch, staticPageHref } from "@/lib/utils";
 
@@ -112,14 +112,15 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
   if (query.length < SEARCH_MIN_LENGTH) return [];
   const terms = [...new Set(query.split(" ").filter(Boolean))];
 
+  // Kết quả cùng điểm giữ thứ tự chèn (`seq`) — Postgres không tự đảm bảo thứ tự khi thiếu orderBy.
   const [locale, programs, posts, events, faculty, pages, faqs] = await Promise.all([
     getLocale(),
-    db.query.programs.findMany(),
-    db.query.posts.findMany({ where: eq(schema.posts.status, "published") }),
-    db.query.events.findMany(),
-    db.query.faculty.findMany(),
-    db.query.pages.findMany(),
-    db.query.faqs.findMany(),
+    db.query.programs.findMany({ orderBy: asc(schema.programs.seq) }),
+    db.query.posts.findMany({ where: eq(schema.posts.status, "published"), orderBy: asc(schema.posts.seq) }),
+    db.query.events.findMany({ orderBy: asc(schema.events.seq) }),
+    db.query.faculty.findMany({ orderBy: asc(schema.faculty.seq) }),
+    db.query.pages.findMany({ orderBy: asc(schema.pages.seq) }),
+    db.query.faqs.findMany({ orderBy: asc(schema.faqs.seq) }),
   ]);
   const L = (vi: string | null, en: string | null) => (vi ? pickLocale(vi, en, locale) : "");
 

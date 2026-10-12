@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
-import { db } from "./client";
+import { closeDb, db } from "./client";
 import * as s from "./schema";
 
 /**
@@ -76,8 +76,8 @@ const daysAgoIso = (days: number, hourUtc = 3) => {
   d.setUTCHours(hourUtc, Math.floor(Math.random() * 59), 0, 0);
   return d;
 };
-/** Định dạng `created_at` mặc định của SQLite (UTC, không múi giờ). */
-const sqliteTs = (d: Date) => d.toISOString().slice(0, 19).replace("T", " ");
+/** Định dạng `created_at` mặc định của DB: "YYYY-MM-DD HH:MM:SS" giờ UTC (xem `nowText` trong schema.ts). */
+const dbTs = (d: Date) => d.toISOString().slice(0, 19).replace("T", " ");
 /** Giờ Việt Nam (UTC+7) → ISO UTC, cho start_at sự kiện. */
 const vnIso = (y: number, m: number, d: number, h: number) => new Date(Date.UTC(y, m - 1, d, h - 7)).toISOString();
 
@@ -292,7 +292,7 @@ async function load() {
   await save();
 
   // ===== Ảnh chân dung cho 4 giảng viên có sẵn (theo vị trí hiển thị)
-  const faculty = await db.query.faculty.findMany({ orderBy: (f, { asc }) => asc(f.sortOrder) });
+  const faculty = await db.query.faculty.findMany({ orderBy: (f, { asc }) => [asc(f.sortOrder), asc(f.seq)] });
   for (const [i, f] of faculty.slice(0, 4).entries()) {
     await patch("faculty", f.id, "photoUrl", url(`gv-${i + 1}`));
   }
@@ -314,7 +314,7 @@ async function load() {
   const timelineMeta = [`01/03 – 31/12/${year}`, "Trong 1–2 ngày làm việc", `Trước 30/11/${year}`, `Từ 15/12/${year}`];
   const timeline = await db.query.admissionItems.findMany({
     where: eq(s.admissionItems.type, "timeline"),
-    orderBy: (a, { asc }) => asc(a.sortOrder),
+    orderBy: (a, { asc }) => [asc(a.sortOrder), asc(a.seq)],
   });
   for (const [i, item] of timeline.entries()) {
     if (timelineMeta[i]) await patch("admissionItems", item.id, "meta", timelineMeta[i]);
@@ -342,15 +342,15 @@ async function load() {
     program: programNames[weights[i] % programNames.length] ?? "Điều dưỡng",
     note: i % 4 === 0 ? "Em muốn hỏi thêm về học bổng và ký túc xá. (dữ liệu demo)" : null,
     status: statuses[i],
-    createdAt: sqliteTs(daysAgoIso(days[i], 1 + (i % 10))),
+    createdAt: dbTs(daysAgoIso(days[i], 1 + (i % 10))),
   }));
   await db.insert(s.admissionSubmissions).values(admissions);
   manifest.created.admissions = admissions.map((a) => a.id);
 
   const contacts = [
-    { id: "demo-contact-1", name: "Phụ huynh Nguyễn Văn Tài", phone: "0900000201", email: null, message: "Cho tôi hỏi trường có ký túc xá cho sinh viên năm nhất không? (demo)", status: "new", createdAt: sqliteTs(daysAgoIso(0, 2)) },
-    { id: "demo-contact-2", name: "Lê Thị Hồng", phone: null, email: "demo.hong@example.com", message: "Ngành Dược học mấy năm và có liên thông lên đại học không ạ? (demo)", status: "new", createdAt: sqliteTs(daysAgoIso(1, 8)) },
-    { id: "demo-contact-3", name: "Trần Quốc Việt", phone: "0900000203", email: null, message: "Em muốn đăng ký tham quan phòng thực hành. (demo)", status: "read", createdAt: sqliteTs(daysAgoIso(4, 4)) },
+    { id: "demo-contact-1", name: "Phụ huynh Nguyễn Văn Tài", phone: "0900000201", email: null, message: "Cho tôi hỏi trường có ký túc xá cho sinh viên năm nhất không? (demo)", status: "new", createdAt: dbTs(daysAgoIso(0, 2)) },
+    { id: "demo-contact-2", name: "Lê Thị Hồng", phone: null, email: "demo.hong@example.com", message: "Ngành Dược học mấy năm và có liên thông lên đại học không ạ? (demo)", status: "new", createdAt: dbTs(daysAgoIso(1, 8)) },
+    { id: "demo-contact-3", name: "Trần Quốc Việt", phone: "0900000203", email: null, message: "Em muốn đăng ký tham quan phòng thực hành. (demo)", status: "read", createdAt: dbTs(daysAgoIso(4, 4)) },
   ];
   await db.insert(s.contactMessages).values(contacts);
   manifest.created.contacts = contacts.map((c) => c.id);
@@ -358,7 +358,7 @@ async function load() {
   const subscribers = ["demo.ban.tin1@example.com", "demo.ban.tin2@example.com", "demo.ban.tin3@example.com"].map((email, i) => ({
     id: `demo-newsletter-${i + 1}`,
     email,
-    createdAt: sqliteTs(daysAgoIso(i * 3, 5)),
+    createdAt: dbTs(daysAgoIso(i * 3, 5)),
   }));
   await db.insert(s.newsletterSubscribers).values(subscribers).onConflictDoNothing();
   manifest.created.newsletter = subscribers.map((n) => n.id);
@@ -419,8 +419,8 @@ async function clean() {
 
 const command = process.argv[2];
 (command === "clean" ? clean() : command === "load" ? load() : Promise.reject(new Error("Dùng: demo-data.ts load | clean")))
-  .then(() => process.exit(0))
   .catch((err) => {
     console.error(err);
-    process.exit(1);
-  });
+    process.exitCode = 1;
+  })
+  .finally(closeDb);

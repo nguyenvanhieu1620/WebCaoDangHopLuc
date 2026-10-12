@@ -1,49 +1,60 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "./schema";
 
 /**
- * Kết nối CSDL dùng chung toàn app — singleton để tránh mở nhiều connection
- * khi Next.js hot-reload lúc dev.
+ * Kết nối CSDL dùng chung toàn app — PostgreSQL qua driver `pg` (node-postgres),
+ * 1 pool kết nối / tiến trình. Chuyển từ SQLite (@libsql/client) ngày 06/10/2026
+ * (xem CLAUDE.md mục 4.4): dev chạy Postgres trong Docker (`docker compose up -d`,
+ * xem docker-compose.yml), production là Postgres trên VPS — chỉ khác `DATABASE_URL`.
  *
- * Dùng @libsql/client (không phải better-sqlite3): cùng là SQLite nhưng dùng
- * binary dựng sẵn theo từng hệ điều hành (napi-rs, tải tự động qua npm khi
- * `npm install`) — KHÔNG cần cài Python/node-gyp để biên dịch như
- * better-sqlite3, tránh lỗi cài đặt trên máy không có sẵn Python (đặc biệt
- * hay gặp trên Windows).
- *
- * Khi chuyển sang PostgreSQL (Aurora), thay khối bên dưới bằng:
- *   import { drizzle } from "drizzle-orm/node-postgres";
- *   import { Pool } from "pg";
- *   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
- *   export const db = drizzle(pool, { schema });
- * — mọi nơi khác trong code gọi `db.select()/.insert()/...` giữ nguyên không đổi.
+ * Mọi nơi khác gọi `db.select()/.insert()/db.query...` như cũ — kiểu dữ liệu cột
+ * giữ nguyên 1-1 với bản SQLite (xem ghi chú đầu schema.ts).
  */
+
+export type Database = NodePgDatabase<typeof schema>;
 
 declare global {
-  var __libsqlClient: ReturnType<typeof createClient> | undefined;
+  var __pgPool: Pool | undefined;
+  /**
+   * CHỈ dùng trong test (tests/*.test.ts): gắn sẵn 1 DB Postgres trong bộ nhớ
+   * (PGlite) TRƯỚC khi import code app, để `npm test` không cần Docker/server DB.
+   */
+  var __testDb: Database | undefined;
 }
 
-const DB_URL = process.env.DATABASE_URL || "file:./drizzle/dev.db";
+/** Khớp docker-compose.yml — chỉ dùng khi dev quên tạo .env, production bắt buộc có DATABASE_URL. */
+const DEV_DATABASE_URL = "postgres://hopluc:hopluc_dev@localhost:5432/hopluc";
 
-const client = global.__libsqlClient ?? createClient({ url: DB_URL });
-if (process.env.NODE_ENV !== "production") {
-  global.__libsqlClient = client;
+function createPool(): Pool {
+  const pool = new Pool({
+    connectionString:
+      process.env.DATABASE_URL || (process.env.NODE_ENV === "production" ? undefined : DEV_DATABASE_URL),
+    // 10 kết nối là thừa cho 1 trường (mỗi trang chạy song song ~5-10 truy vấn ngắn).
+    max: Number(process.env.DATABASE_POOL_MAX) || 10,
+    // Script (migrate/seed/demo) tự thoát khi xong việc thay vì treo chờ kết nối rảnh.
+    allowExitOnIdle: true,
+  });
+  // Kết nối đang rảnh bị đứt (Postgres khởi động lại, mất mạng) phát sự kiện "error"
+  // trên pool — không bắt thì Node coi là lỗi chưa xử lý và SẬP cả tiến trình web.
+  // Pool tự bỏ kết nối hỏng, truy vấn sau mở kết nối mới.
+  pool.on("error", (err) => console.error("[db] Kết nối Postgres rảnh bị lỗi:", err.message));
+  return pool;
 }
 
-/**
- * Bật WAL (Write-Ahead Logging) — mặc định SQLite dùng rollback journal, khoá
- * CẢ đọc lẫn ghi trong lúc có 1 lượt ghi đang chạy (rủi ro thật khi nhiều
- * người cùng nộp hồ sơ/xem trang lúc cao điểm — xem CLAUDE.md mục 5 "Đánh
- * giá rủi ro traffic lớn"). WAL cho phép đọc song song trong lúc đang ghi.
- * `busy_timeout` giúp 1 lượt ghi hiếm khi trùng nhau tự đợi thay vì lỗi
- * `SQLITE_BUSY` ngay lập tức. Không ảnh hưởng gì khi sau này chuyển hẳn sang
- * PostgreSQL (Postgres vốn đã xử lý concurrency tốt hơn, không cần pragma
- * này). Bắn 1 lần lúc khởi động tiến trình, không chặn import (không await ở
- * top-level) — lỗi (VD DB_URL trỏ tới Turso remote không hỗ trợ pragma này)
- * bị nuốt im lặng, không làm sập app.
- */
-void client.execute("PRAGMA journal_mode = WAL").catch(() => {});
-void client.execute("PRAGMA busy_timeout = 5000").catch(() => {});
+function createDb(): Database {
+  if (globalThis.__testDb) return globalThis.__testDb;
+  // Giữ pool qua các lần hot-reload lúc dev — không thì mỗi lần sửa code lại mở pool mới.
+  const pool = globalThis.__pgPool ?? createPool();
+  globalThis.__pgPool = pool;
+  return drizzle(pool, { schema });
+}
 
-export const db = drizzle(client, { schema });
+export const db = createDb();
+
+/** Đóng pool — gọi ở cuối các script CLI (migrate, seed, demo, import). */
+export async function closeDb() {
+  const pool = globalThis.__pgPool;
+  globalThis.__pgPool = undefined;
+  await pool?.end();
+}

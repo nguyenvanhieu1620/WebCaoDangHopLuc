@@ -19,14 +19,14 @@ export default async function AdminTestimonialsPage({
   await requirePermission("testimonials");
   const { edit } = await searchParams;
   const allTestimonials = await db.query.testimonials.findMany({
-    orderBy: asc(schema.testimonials.sortOrder),
+    orderBy: [asc(schema.testimonials.sortOrder), asc(schema.testimonials.seq)],
   });
   const editing = edit
     ? await db.query.testimonials.findFirst({ where: eq(schema.testimonials.id, edit) })
     : null;
   const mediaImages = await db.query.mediaItems.findMany({
     where: eq(schema.mediaItems.type, "image"),
-    orderBy: desc(schema.mediaItems.createdAt),
+    orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
 
   return (
@@ -164,6 +164,7 @@ export default async function AdminTestimonialsPage({
                 Ảnh đại diện {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                spec="avatar"
                 fileFieldName="avatar"
                 pickedFieldName="avatarExisting"
                 images={mediaImages}

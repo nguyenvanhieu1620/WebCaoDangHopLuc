@@ -6,6 +6,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
 
 export async function updateSiteSettingsAction(formData: FormData) {
   await requirePermission("site-settings");
@@ -14,10 +15,20 @@ export async function updateSiteSettingsAction(formData: FormData) {
   const address = String(formData.get("address") || "").trim();
   const announcement = String(formData.get("announcement") || "").trim();
   const announcementEn = String(formData.get("announcementEn") || "").trim();
-  const facebookUrl = String(formData.get("facebookUrl") || "").trim() || "#";
-  const zaloUrl = String(formData.get("zaloUrl") || "").trim() || "#";
-  const youtubeUrl = String(formData.get("youtubeUrl") || "").trim() || "#";
-  const lmsUrl = String(formData.get("lmsUrl") || "").trim() || "#";
+  // Link ngoài: để trống → "#" (web tự ẩn nút); có gõ → chuẩn hoá (bỏ "#" thừa ở đầu, thêm
+  // https://…). Gõ chữ không phải link → KHÔNG lưu ô đó (giữ link cũ), báo lại cho admin.
+  const invalidLinks: string[] = [];
+  const link = (field: string, label: string, normalize = normalizeExternalUrl) => {
+    const raw = String(formData.get(field) || "").trim();
+    if (!raw || raw === "#") return "#";
+    const url = normalize(raw);
+    if (!url) invalidLinks.push(label);
+    return url ?? undefined; // undefined = Drizzle bỏ qua cột này khi update
+  };
+  const facebookUrl = link("facebookUrl", "Facebook");
+  const zaloUrl = link("zaloUrl", "Zalo", normalizeZaloUrl);
+  const youtubeUrl = link("youtubeUrl", "YouTube");
+  const lmsUrl = link("lmsUrl", "LMS");
 
   if (!hotline || !email || !address || !announcement) return;
 
@@ -46,5 +57,9 @@ export async function updateSiteSettingsAction(formData: FormData) {
   revalidatePath("/lms");
   revalidatePath("/admin/cai-dat");
 
-  redirect("/admin/cai-dat?saved=1");
+  redirect(
+    invalidLinks.length
+      ? `/admin/cai-dat?saved=1&invalid=${encodeURIComponent(invalidLinks.join(", "))}`
+      : "/admin/cai-dat?saved=1"
+  );
 }

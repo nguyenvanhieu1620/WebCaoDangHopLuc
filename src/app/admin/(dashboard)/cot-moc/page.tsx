@@ -32,12 +32,12 @@ export default async function AdminMilestonesPage({
   const { edit } = await searchParams;
   const [all, editing, mediaImages] = await Promise.all([
     db.query.milestones.findMany({
-      orderBy: [desc(schema.milestones.year), asc(schema.milestones.sortOrder), asc(schema.milestones.createdAt)],
+      orderBy: [desc(schema.milestones.year), asc(schema.milestones.sortOrder), asc(schema.milestones.createdAt), asc(schema.milestones.seq)],
     }),
     edit ? db.query.milestones.findFirst({ where: eq(schema.milestones.id, edit) }) : Promise.resolve(undefined),
     db.query.mediaItems.findMany({
       where: eq(schema.mediaItems.type, "image"),
-      orderBy: desc(schema.mediaItems.createdAt),
+      orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
     }),
   ]);
 
@@ -157,7 +157,7 @@ export default async function AdminMilestonesPage({
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
               </label>
-              <ImagePicker fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
+              <ImagePicker spec="milestone" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
               {editing?.imageUrl && (
                 <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
                   <input type="checkbox" name="removeImage" className="h-4 w-4 rounded border-line" /> Gỡ ảnh hiện tại

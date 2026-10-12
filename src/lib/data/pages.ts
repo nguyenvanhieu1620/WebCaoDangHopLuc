@@ -25,7 +25,7 @@ export async function getPagesBySlugPrefix(prefix: string): Promise<Page[]> {
   const [rows, locale] = await Promise.all([
     db.query.pages.findMany({
       where: like(schema.pages.slug, `${prefix}%`),
-      orderBy: asc(schema.pages.title),
+      orderBy: [asc(schema.pages.title), asc(schema.pages.seq)],
     }),
     getLocale(),
   ]);

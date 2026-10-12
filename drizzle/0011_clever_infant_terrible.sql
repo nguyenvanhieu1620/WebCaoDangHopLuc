@@ -1,1 +1,0 @@
-ALTER TABLE `admin_users` ADD `permissions` text;

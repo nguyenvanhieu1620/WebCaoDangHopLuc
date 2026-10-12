@@ -32,7 +32,7 @@ export default async function SiteGroupLayout({
       <SiteHeader settings={settings} navTree={navTree} locale={locale} />
       <main>{children}</main>
       <SiteFooter settings={settings} programs={programs} />
-      <QuickContactWidget contacts={contacts} />
+      <QuickContactWidget contacts={contacts} locale={locale} />
       <BackToTop />
       <MobileActionBar settings={settings} locale={locale} />
     </div>

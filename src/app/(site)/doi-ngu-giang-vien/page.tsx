@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
@@ -9,6 +8,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { getFacultyList, facultyDisplayName } from "@/lib/data/faculty";
 import { getDepartments } from "@/lib/data/departments";
 import type { Faculty } from "@/lib/db/schema";
+import { FitImage } from "@/components/ui/FitImage";
 
 export const metadata: Metadata = { title: "Đội ngũ giảng viên" };
 
@@ -18,12 +18,12 @@ function FacultyCard({ faculty, index }: { faculty: Faculty; index: number }) {
     <>
       <div className="img-reveal img-shine relative h-[240px]">
         {faculty.photoUrl ? (
-          <Image
+          <FitImage
             src={faculty.photoUrl}
             alt={displayName}
-            fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
-            className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
+            anchorTop
+            className="transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <ImagePlaceholder label="Ảnh chân dung" />

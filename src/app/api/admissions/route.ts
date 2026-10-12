@@ -16,7 +16,7 @@ import {
 
 /**
  * API route cho form "Đăng ký xét tuyển" ở trang /tuyen-sinh.
- * Lưu thật vào bảng admission_submissions (SQLite hiện tại — Aurora Postgres sau này).
+ * Lưu thật vào bảng admission_submissions (PostgreSQL).
  *
  * Payload (JSON object, mọi field là chuỗi):
  * - fullName, phone, idNumber, program: bắt buộc

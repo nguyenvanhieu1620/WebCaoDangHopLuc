@@ -6,7 +6,7 @@ import { getLocale, pickLocale } from "@/lib/locale";
 /** Danh mục bài viết — quản lý qua admin/bai-viet. */
 export async function getCategories(): Promise<Category[]> {
   const [rows, locale] = await Promise.all([
-    db.query.categories.findMany({ orderBy: asc(schema.categories.name) }),
+    db.query.categories.findMany({ orderBy: [asc(schema.categories.name), asc(schema.categories.seq)] }),
     getLocale(),
   ]);
   return rows.map((r) => ({ ...r, name: pickLocale(r.name, r.nameEn, locale) }));

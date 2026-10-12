@@ -18,7 +18,7 @@ export default async function AdminUsersPage({
   const currentUser = await requirePermission("users");
   const { edit } = await searchParams;
 
-  const all = await db.query.adminUsers.findMany({ orderBy: asc(schema.adminUsers.createdAt) });
+  const all = await db.query.adminUsers.findMany({ orderBy: [asc(schema.adminUsers.createdAt), asc(schema.adminUsers.seq)] });
   const editing = edit ? await db.query.adminUsers.findFirst({ where: eq(schema.adminUsers.id, edit) }) : null;
 
   const editingPermissions = editing ? getUserPermissions(editing) : null;

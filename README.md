@@ -1,10 +1,12 @@
 # Website Trường Cao đẳng Y Dược Hợp Lực
 
 Base hệ thống Next.js 16 (App Router) + TypeScript + Tailwind CSS + Drizzle ORM
-(SQLite), xây theo đúng thiết kế đã chốt (màu thương hiệu, font Fraunces/
-Inter/IBM Plex Mono) từ bản mockup Claude Design.
+(PostgreSQL), xây theo đúng thiết kế đã chốt (màu thương hiệu, font Montserrat)
+từ bản mockup Claude Design.
 
 ## 1. Cài đặt & chạy lần đầu
+
+Cần cài **Docker Desktop** (chạy PostgreSQL cho môi trường dev) và mở nó lên trước.
 
 ```bash
 npm install
@@ -14,11 +16,16 @@ npm install
 # Đặt SESSION_SECRET thành chuỗi ngẫu nhiên riêng, không dùng giá trị mẫu.
 # Sinh chuỗi: node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 
-# Tạo bảng CSDL (SQLite, file drizzle/dev.db)
+# Bật PostgreSQL dev (Docker, dữ liệu giữ trong volume "pgdata")
+docker compose up -d
+
+# Tạo bảng CSDL
 npm run db:migrate
 
 # Tạo tài khoản admin + dữ liệu mẫu
 npm run db:seed
+# (Máy đã có dữ liệu SQLite cũ drizzle/dev.db từ trước 06/10/2026: chạy
+#  `npm run db:import-sqlite` THAY cho db:seed để chép toàn bộ dữ liệu cũ sang.)
 
 # Chạy dev server
 npm run dev
@@ -26,8 +33,8 @@ npm run dev
 
 Mở http://localhost:3000 — website công khai.
 
-Trước khi chạy server, cần có `.env` với `SESSION_SECRET`, database đã migration
-và tài khoản đã seed. Thiếu các bước này, trang đăng nhập vẫn có thể mở nhưng
+Trước khi chạy server, cần có `.env` với `SESSION_SECRET`, Postgres đang chạy
+(`docker compose up -d`), database đã migration và tài khoản đã seed. Thiếu các bước này, trang đăng nhập vẫn có thể mở nhưng
 xác thực sẽ lỗi. Sau khi thay đổi cấu hình, khởi động lại server nếu cần.
 Mở http://localhost:3000/admin — khu vực quản trị, đăng nhập bằng:
 
@@ -51,7 +58,9 @@ Mật khẩu:  HopLuc@2026
 | `npm run db:migrate` | Áp dụng migration đã sinh vào database |
 | `npm test` | Kiểm tra đầu vào API, luồng DB thử nghiệm, phân quyền và token xác thực |
 | `npm run db:seed` | Tạo tài khoản admin + dữ liệu mẫu (chỉ tạo nếu chưa có, chạy lại an toàn) |
+| `npm run db:import-sqlite` | Chép toàn bộ dữ liệu từ file SQLite cũ sang Postgres (thêm `-- --replace` để ghi đè) |
 | `npm run db:studio` | Mở Drizzle Studio — xem/sửa dữ liệu trực quan qua trình duyệt |
+| `docker compose up -d` / `docker compose stop` | Bật / tắt PostgreSQL dev (dữ liệu giữ nguyên) |
 
 ## 3. Cấu trúc thư mục
 
@@ -81,14 +90,17 @@ src/
     constants.ts   # Thông tin trường, menu điều hướng, danh sách ngành đào tạo
     data/programs.ts  # Lớp truy xuất dữ liệu ngành đào tạo (xem mục 4)
     db/
-      schema.ts    # Định nghĩa 22 bảng CSDL
-      client.ts    # Kết nối SQLite (singleton)
+      schema.ts    # Định nghĩa 25 bảng CSDL (PostgreSQL)
+      client.ts    # Pool kết nối Postgres (driver pg, singleton)
       seed.ts      # Script tạo dữ liệu mẫu
+      import-sqlite.ts  # Chép dữ liệu từ SQLite cũ sang Postgres (dùng 1 lần)
     auth.ts        # Hash mật khẩu (bcrypt) + ký/xác minh session cookie (HMAC)
     actions/auth-actions.ts   # Server Actions đăng nhập/đăng xuất
   proxy.ts       # (tên mới của "middleware" trong Next 16) — chặn /admin nếu chưa đăng nhập
 drizzle/
-  dev.db         # File database SQLite (KHÔNG commit lên git — đã có trong .gitignore)
+  0000_init_postgres.sql  # Migration Postgres (sinh bằng db:generate)
+  dev.db         # File SQLite cũ, chỉ để db:import-sqlite đọc (KHÔNG commit — có trong .gitignore)
+docker-compose.yml  # PostgreSQL 17 cho dev
 drizzle.config.ts
 ```
 
@@ -97,42 +109,32 @@ drizzle.config.ts
 - **Design tokens tập trung** ở `tailwind.config.ts` — đổi màu thương hiệu chỉ cần sửa 1 chỗ.
 - **Điều hướng tự nhận diện trang hiện tại** qua `usePathname()` trong `SiteHeader`/`AdminSidebar`.
 - **Lớp truy xuất dữ liệu** (`lib/data/*.ts`): trang/component không đọc thẳng dữ liệu tĩnh hay gọi DB trực tiếp mà luôn qua các hàm ở đây — giúp sau này đổi nguồn dữ liệu (API khác, DB khác) chỉ cần sửa đúng 1 file.
-- **Database dùng Drizzle ORM + SQLite qua `@libsql/client`** — thiết kế portable sang PostgreSQL (Amazon RDS Aurora) gần như không cần sửa code, xem chú thích trong `src/lib/db/schema.ts` và `src/lib/db/client.ts`.
-  > **Vì sao không dùng `better-sqlite3`?** Gói đó cần biên dịch native (node-gyp + Python) lúc `npm install` — nhiều máy Windows không có sẵn Python nên cài lỗi. `@libsql/client` cũng là SQLite nhưng dùng binary dựng sẵn theo từng hệ điều hành (napi-rs), tải tự động qua npm, không cần biên dịch gì cả.
+- **Database dùng Drizzle ORM + PostgreSQL qua driver `pg`** — dev chạy Postgres trong Docker, production chạy Postgres trên VPS; chỉ khác `DATABASE_URL`. Xem chú thích đầu `src/lib/db/schema.ts` (kiểu cột giữ 1-1 với bản SQLite cũ, cột `seq` làm khoá phụ sắp xếp) và `src/lib/db/client.ts`.
 - **Xác thực** bằng bcrypt + cookie HMAC; nhiều tài khoản với phân quyền module. Dashboard lọc dữ liệu theo quyền. Phiên và token reset gắn với phiên bản mật khẩu, mất hiệu lực khi mật khẩu thay đổi. Quyền `users` là quyền quản trị cấp cao vì cho phép cấp quyền và đổi mật khẩu tài khoản khác.
 
-## 5. Lộ trình chuyển sang PostgreSQL (đã thống nhất)
+## 5. PostgreSQL (đã chuyển từ SQLite ngày 06/10/2026)
 
-**Quyết định:** hoàn thiện toàn bộ các trang bằng SQLite trước (đang dùng hiện tại),
-**sau khi web hoàn thiện mới chuyển sang PostgreSQL** trước khi đưa lên mạng cho
-người dùng thật. SQLite (file-based) không phù hợp để chạy production thật —
-xử lý ghi đồng thời hạn chế, không đồng bộ được giữa nhiều server khi scale.
+Hosting đã chọn: **VPS** — Postgres cài ngay trên VPS (hoặc chạy bằng chính
+`docker-compose.yml` với mật khẩu mạnh), ảnh upload vẫn lưu `public/uploads/` trên
+ổ đĩa VPS. Hướng dẫn cài + sao lưu: CLAUDE.md mục 9 "Postgres trên VPS".
 
-Khi tới lúc chuyển đổi, có 2 lựa chọn (chọn lúc đó tuỳ tình hình):
-- **PostgreSQL miễn phí trên mạng (Neon/Supabase)** — nhanh gọn, không cần tài khoản AWS trước, tương thích 100% để chuyển tiếp lên Aurora sau này.
-- **Amazon RDS Aurora PostgreSQL** — đúng kiến trúc dài hạn trong SRS, cần tài khoản AWS.
-
-Vì schema (`src/lib/db/schema.ts`) và client (`src/lib/db/client.ts`) đã viết theo
-Drizzle ORM ở dạng portable, việc chuyển đổi dự kiến chỉ cần:
-1. Đổi `datasource`/import trong `schema.ts`: `drizzle-orm/sqlite-core` → `drizzle-orm/pg-core` (tên các kiểu cột gần như 1-1).
-2. Đổi driver kết nối trong `client.ts`: `@libsql/client` → driver PostgreSQL tương ứng.
-3. Đổi `DATABASE_URL` trong `.env` sang connection string PostgreSQL.
-4. Sinh migration riêng cho PostgreSQL, áp dụng bằng migrator tương ứng và chuyển dữ liệu cần giữ. Không chạy migration SQL SQLite trên PostgreSQL; không dùng seed demo cho dữ liệu production.
-
-Toàn bộ code ở các trang, Server Actions, API route (gọi `db.select()/.insert()/...`)
-**cần được kiểm tra lại** sau khi đổi dialect, đặc biệt kiểu dữ liệu, giá trị mặc định, thời gian và migration.
+Những điểm khác SQLite cần nhớ khi viết code:
+- Danh sách luôn sắp xếp có khoá phụ `seq` cuối cùng (VD `orderBy: [asc(t.sortOrder), asc(t.seq)]`) — Postgres không giữ thứ tự chèn cho các dòng trùng khoá sắp xếp.
+- Đếm dùng `count()` của Drizzle, không dùng ``sql`count(*)` `` (Postgres trả bigint → chuỗi).
+- `like()` phân biệt hoa/thường (SQLite thì không) — cần không phân biệt thì dùng `ilike()`.
+- Thời gian vẫn là `text` "YYYY-MM-DD HH:MM:SS" (UTC) như trước, hiển thị qua `formatDbDateTime()`.
 
 ## 6. Việc cần làm trước khi đưa lên môi trường thật (production)
 
 1. **Đổi `SESSION_SECRET`** trong `.env` thành chuỗi ngẫu nhiên dài (không dùng giá trị mẫu).
 2. **Xoá/đổi mật khẩu tài khoản admin demo** — sửa trực tiếp qua `db:studio` hoặc viết script riêng.
-3. **Chuyển `DATABASE_URL` sang PostgreSQL thật** khi lên AWS (Amazon RDS Aurora) — xem hướng dẫn trong `src/lib/db/schema.ts`.
-4. **Chuyển lưu trữ media** từ `public/uploads/` hiện tại sang Amazon S3 khi triển khai hạ tầng production theo kế hoạch dự án.
-5. Đặt `.env` thật ngoài git (đã có sẵn trong `.gitignore`), dùng biến môi trường của nền tảng hosting (Vercel/AWS) thay vì file `.env` khi deploy.
+3. **Đặt `DATABASE_URL` trỏ tới Postgres trên VPS** với user/mật khẩu riêng, mạnh (không dùng `hopluc_dev`), chạy `npm run db:migrate`, rồi `npm run demo:clean` trước khi nhập dữ liệu thật.
+4. **Sao lưu định kỳ** cả database (`pg_dump`) lẫn thư mục `public/uploads/` — ảnh nằm trên ổ đĩa VPS, không có bản sao nào khác.
+5. Đặt `.env` thật ngoài git (đã có sẵn trong `.gitignore`).
 
 ## 7. Kiểm tra và vận hành
 
-- `npm test`, `npx tsc --noEmit` và `npm run lint` kiểm tra chức năng và mã nguồn. API test dùng SQLite trong bộ nhớ, không truy cập DB thật hoặc gửi email.
+- `npm test`, `npx tsc --noEmit` và `npm run lint` kiểm tra chức năng và mã nguồn. API test dùng PostgreSQL trong bộ nhớ (PGlite, không cần Docker), không truy cập DB thật hoặc gửi email.
 - `npm run build` cần tải font Google khi chưa có cache. Trang chi tiết ngành đọc DB lúc có request; không cần DB lúc build.
 - Sau cập nhật xác thực, phiên cookie cũ không có phiên bản mật khẩu bị từ chối: đăng nhập lại một lần.
 - Cấu hình `TRUST_PROXY_HOPS` chỉ sau khi xác định chuỗi proxy tin cậy, proxy append IP thật/ghi đè header và origin chặn truy cập trực tiếp. Mặc định `0` không tin header và dùng bucket IP chung. Nhiều instance cần bộ đếm dùng chung thay cho Map trong tiến trình.

@@ -21,12 +21,12 @@ export default async function AdminFacultyPage({
   await requirePermission("faculty");
   const { edit } = await searchParams;
   const [allFaculty, departments, attributes, mediaImages] = await Promise.all([
-    db.query.faculty.findMany({ orderBy: asc(schema.faculty.sortOrder) }),
-    db.query.departments.findMany({ orderBy: asc(schema.departments.sortOrder) }),
-    db.query.facultyAttributes.findMany({ orderBy: asc(schema.facultyAttributes.sortOrder) }),
+    db.query.faculty.findMany({ orderBy: [asc(schema.faculty.sortOrder), asc(schema.faculty.seq)] }),
+    db.query.departments.findMany({ orderBy: [asc(schema.departments.sortOrder), asc(schema.departments.seq)] }),
+    db.query.facultyAttributes.findMany({ orderBy: [asc(schema.facultyAttributes.sortOrder), asc(schema.facultyAttributes.seq)] }),
     db.query.mediaItems.findMany({
       where: eq(schema.mediaItems.type, "image"),
-      orderBy: desc(schema.mediaItems.createdAt),
+      orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
     }),
   ]);
   const editing = edit
@@ -281,6 +281,7 @@ export default async function AdminFacultyPage({
                 Ảnh chân dung {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                spec="portrait"
                 fileFieldName="photo"
                 pickedFieldName="photoExisting"
                 images={mediaImages}

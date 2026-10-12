@@ -1,0 +1,28 @@
+# PostgreSQL cho môi trường DEV — chạy: `docker compose up -d` (cần mở Docker Desktop).
+# Dữ liệu nằm trong volume "pgdata", tắt/bật lại container không mất. Xoá hẳn dữ
+# liệu dev: `docker compose down -v`.
+#
+# Mật khẩu dưới đây CHỈ dành cho máy dev (cổng chỉ mở cho 127.0.0.1, máy khác trong
+# mạng không vào được). Trên VPS production: tạo user/mật khẩu riêng, mạnh — xem
+# CLAUDE.md mục 9 "Postgres trên VPS".
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hopluc
+      POSTGRES_PASSWORD: hopluc_dev
+      POSTGRES_DB: hopluc
+      TZ: UTC
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hopluc -d hopluc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

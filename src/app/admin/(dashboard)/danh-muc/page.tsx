@@ -16,7 +16,7 @@ export default async function AdminCategoriesPage({
 }) {
   await requirePermission("posts");
   const { edit } = await searchParams;
-  const categories = await db.query.categories.findMany({ orderBy: asc(schema.categories.name) });
+  const categories = await db.query.categories.findMany({ orderBy: [asc(schema.categories.name), asc(schema.categories.seq)] });
   const editing = edit
     ? await db.query.categories.findFirst({ where: eq(schema.categories.id, edit) })
     : null;

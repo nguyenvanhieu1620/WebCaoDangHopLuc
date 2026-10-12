@@ -1,6 +1,6 @@
 "use server";
 
-import { desc } from "drizzle-orm";
+import { asc, desc } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentAdminUser, hasPermission } from "@/lib/admin-auth";
 import { normalizeSearch } from "@/lib/utils";
@@ -33,26 +33,26 @@ export async function adminSearchAction(rawQuery: string): Promise<AdminSearchRe
   const can = (key: string) => hasPermission(user, key);
   const [posts, programs, faculty, events, pages, admissions, messages] = await Promise.all([
     can("posts")
-      ? db.query.posts.findMany({ columns: { id: true, title: true, status: true }, orderBy: desc(schema.posts.createdAt) })
+      ? db.query.posts.findMany({ columns: { id: true, title: true, status: true }, orderBy: [desc(schema.posts.createdAt), desc(schema.posts.seq)] })
       : [],
-    can("programs") ? db.query.programs.findMany({ columns: { id: true, name: true, code: true } }) : [],
+    can("programs") ? db.query.programs.findMany({ columns: { id: true, name: true, code: true }, orderBy: asc(schema.programs.seq) }) : [],
     can("faculty")
-      ? db.query.faculty.findMany({ columns: { id: true, name: true, degree: true, role: true } })
+      ? db.query.faculty.findMany({ columns: { id: true, name: true, degree: true, role: true }, orderBy: asc(schema.faculty.seq) })
       : [],
     can("events")
-      ? db.query.events.findMany({ columns: { id: true, title: true, location: true }, orderBy: desc(schema.events.startAt) })
+      ? db.query.events.findMany({ columns: { id: true, title: true, location: true }, orderBy: [desc(schema.events.startAt), desc(schema.events.seq)] })
       : [],
-    can("pages") ? db.query.pages.findMany({ columns: { id: true, title: true, slug: true } }) : [],
+    can("pages") ? db.query.pages.findMany({ columns: { id: true, title: true, slug: true }, orderBy: asc(schema.pages.seq) }) : [],
     can("admissions-contact")
       ? db.query.admissionSubmissions.findMany({
           columns: { id: true, fullName: true, phone: true, idNumber: true, program: true },
-          orderBy: desc(schema.admissionSubmissions.createdAt),
+          orderBy: [desc(schema.admissionSubmissions.createdAt), desc(schema.admissionSubmissions.seq)],
         })
       : [],
     can("admissions-contact")
       ? db.query.contactMessages.findMany({
           columns: { id: true, name: true, phone: true, email: true },
-          orderBy: desc(schema.contactMessages.createdAt),
+          orderBy: [desc(schema.contactMessages.createdAt), desc(schema.contactMessages.seq)],
         })
       : [],
   ]);
