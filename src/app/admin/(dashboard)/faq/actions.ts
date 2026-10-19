@@ -47,7 +47,7 @@ export async function upsertFaqAction(formData: FormData) {
   revalidatePath("/admin/faq");
   revalidatePath("/faq");
 
-  redirect("/admin/faq");
+  redirect("/admin/faq?saved=1");
 }
 
 export async function deleteFaqAction(faqId: string) {

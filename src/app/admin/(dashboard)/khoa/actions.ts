@@ -31,7 +31,7 @@ export async function upsertDepartmentAction(formData: FormData) {
   revalidatePath("/admin/giang-vien");
   revalidatePath("/doi-ngu-giang-vien", "layout");
 
-  redirect("/admin/khoa");
+  redirect("/admin/khoa?saved=1");
 }
 
 export async function deleteDepartmentAction(departmentId: string) {

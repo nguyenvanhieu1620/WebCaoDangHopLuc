@@ -100,14 +100,16 @@ export const ADMIN_NAV: AdminNavEntity[] = [
     section: "Giao diện",
     children: [
       { key: "hero-banner", label: "Banner Trang chủ", href: "/admin/banner-trang-chu" },
-      { key: "gallery", label: "Thư viện ảnh Trang chủ", href: "/admin/thu-vien-trang-chu" },
       { key: "homepage-content", label: "Nội dung Trang chủ", href: "/admin/trang-chu" },
+      // 19/10/2026: Đánh giá cựu SV chuyển vào khối Trang chủ (dùng chung quyền "homepage"); Thư viện ảnh
+      // Trang chủ đổi tên theo khối "Đời sống sinh viên – Trải nghiệm Hợp Lực" trên Trang chủ.
+      { key: "testimonials", label: "Đánh giá cựu sinh viên", href: "/admin/danh-gia" },
+      { key: "gallery", label: "Đời sống trải nghiệm", href: "/admin/thu-vien-trang-chu" },
     ],
   },
   { key: "menu", label: "Menu chính", href: "/admin/menu", section: "Giao diện" },
   { key: "page-banners", label: "Banner trang con", href: "/admin/banner-trang-con", section: "Giao diện" },
   { key: "partners", label: "Đối tác", href: "/admin/doi-tac", section: "Giao diện" },
-  { key: "testimonials", label: "Đánh giá cựu SV", href: "/admin/danh-gia", section: "Giao diện" },
   { key: "site-settings", label: "Cài đặt chung", href: "/admin/cai-dat", section: "Hệ thống" },
   { key: "users", label: "Người dùng", href: "/admin/nguoi-dung", section: "Hệ thống" },
 ];

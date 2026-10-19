@@ -46,7 +46,7 @@ export async function upsertQuickContactAction(formData: FormData) {
   revalidatePath("/admin/lien-he-nhanh");
   revalidatePath("/", "layout");
 
-  redirect("/admin/lien-he-nhanh");
+  redirect("/admin/lien-he-nhanh?saved=1");
 }
 
 export async function deleteQuickContactAction(id: string) {

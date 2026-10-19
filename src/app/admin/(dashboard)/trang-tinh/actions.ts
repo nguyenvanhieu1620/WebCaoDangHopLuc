@@ -69,7 +69,7 @@ export async function upsertPageAction(formData: FormData) {
 
   revalidatePath("/admin/trang-tinh");
 
-  redirect("/admin/trang-tinh");
+  redirect("/admin/trang-tinh?saved=1");
 }
 
 export async function deletePageAction(pageId: string) {

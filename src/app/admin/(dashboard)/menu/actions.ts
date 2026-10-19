@@ -56,7 +56,7 @@ export async function upsertNavItemAction(formData: FormData) {
   revalidatePath("/admin/menu", "layout");
   revalidatePath("/", "layout");
 
-  redirect("/admin/menu");
+  redirect("/admin/menu?saved=1");
 }
 
 export async function deleteNavItemAction(navItemId: string) {

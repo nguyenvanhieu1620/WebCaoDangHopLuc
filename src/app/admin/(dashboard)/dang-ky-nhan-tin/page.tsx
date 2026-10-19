@@ -7,15 +7,19 @@ import { desc } from "drizzle-orm";
 import { formatDbDateTime } from "@/lib/utils";
 import { deleteNewsletterSubscriberAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { paginate } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Đăng ký nhận tin" };
 
-export default async function AdminNewsletterPage() {
+export default async function AdminNewsletterPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   await requirePermission("admissions-contact");
+  const { page } = await searchParams;
 
   const subscribers = await db.query.newsletterSubscribers.findMany({
     orderBy: [desc(schema.newsletterSubscribers.createdAt), desc(schema.newsletterSubscribers.seq)],
   });
+  const pg = paginate(subscribers, page);
 
   return (
     <div>
@@ -23,7 +27,7 @@ export default async function AdminNewsletterPage() {
         title="Đăng ký nhận tin"
         description="Email đăng ký nhận bản tin qua form ở Footer website"
       />
-      <div className="p-8">
+      <div className="p-5 sm:p-8">
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm font-semibold text-brand-900">
             Danh sách ({subscribers.length})
@@ -39,7 +43,7 @@ export default async function AdminNewsletterPage() {
             </div>
           ) : (
             <ul className="divide-y divide-line">
-              {subscribers.map((s) => (
+              {pg.items.map((s) => (
                 <li key={s.id} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-ink">{s.email}</div>
@@ -62,6 +66,7 @@ export default async function AdminNewsletterPage() {
               ))}
             </ul>
           )}
+          <AdminPagination pagination={pg} basePath="/admin/dang-ky-nhan-tin" unit="email" />
         </div>
       </div>
     </div>

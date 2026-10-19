@@ -191,7 +191,7 @@ export default async function AdminDashboardPage({
             </div>
             <div className="flex flex-wrap gap-2.5">
               {canPosts && (
-                <Link href="/admin/bai-viet#form-bai-viet" className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-accent-600 to-accent-500 px-4 py-2.5 text-[13px] font-bold text-white shadow-red">
+                <Link href="/admin/bai-viet/them-moi" className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-accent-600 to-accent-500 px-4 py-2.5 text-[13px] font-bold text-white shadow-red">
                   <AdminIcon name="plus" className="h-4 w-4" /> Viết bài mới
                 </Link>
               )}
@@ -318,7 +318,7 @@ export default async function AdminDashboardPage({
                   {recentPosts.map((p) => (
                     <li key={p.id}>
                       <Link
-                        href={`/admin/bai-viet?edit=${p.id}`}
+                        href={`/admin/bai-viet/${p.id}`}
                         className="flex items-center justify-between gap-3 px-6 py-3.5 transition-colors hover:bg-paper-alt"
                       >
                         <span className="min-w-0">

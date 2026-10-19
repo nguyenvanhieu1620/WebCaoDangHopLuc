@@ -39,7 +39,7 @@ export async function upsertPartnerAction(formData: FormData) {
   revalidatePath("/admin/doi-tac");
   revalidatePath("/");
 
-  redirect("/admin/doi-tac");
+  redirect("/admin/doi-tac?saved=1");
 }
 
 export async function deletePartnerAction(partnerId: string) {

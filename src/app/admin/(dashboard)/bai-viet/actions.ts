@@ -110,7 +110,7 @@ export async function upsertPostAction(formData: FormData) {
   revalidatePath("/admin/bai-viet");
   revalidatePath("/admin");
   revalidatePath("/");
-  redirect("/admin/bai-viet");
+  redirect("/admin/bai-viet?saved=1");
 }
 
 export async function togglePublishAction(postId: string, nextStatus: "draft" | "published") {

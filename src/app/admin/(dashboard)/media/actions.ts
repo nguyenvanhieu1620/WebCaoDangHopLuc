@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { db, schema } from "@/lib/db";
@@ -15,6 +16,7 @@ export async function uploadMediaAction(formData: FormData) {
     await saveUploadedFile(file);
   }
   revalidatePath("/admin/media");
+  redirect(`/admin/media?uploaded=${files.length}`);
 }
 
 export async function deleteMediaAction(mediaId: string) {

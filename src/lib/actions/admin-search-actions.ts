@@ -72,27 +72,27 @@ export async function adminSearchAction(rawQuery: string): Promise<AdminSearchRe
 
   push(posts, (p) =>
     matches(p.title)
-      ? { id: `post-${p.id}`, group: "Bài viết", label: p.title, hint: p.status === "published" ? "Đã đăng" : "Bản nháp", href: `/admin/bai-viet?edit=${p.id}` }
+      ? { id: `post-${p.id}`, group: "Bài viết", label: p.title, hint: p.status === "published" ? "Đã đăng" : "Bản nháp", href: `/admin/bai-viet/${p.id}` }
       : null
   );
   push(programs, (p) =>
     matches(p.name, p.code)
-      ? { id: `program-${p.id}`, group: "Ngành đào tạo", label: p.name, hint: `Mã ${p.code}`, href: `/admin/nganh-dao-tao?edit=${p.id}` }
+      ? { id: `program-${p.id}`, group: "Ngành đào tạo", label: p.name, hint: `Mã ${p.code}`, href: `/admin/nganh-dao-tao/${p.id}` }
       : null
   );
   push(faculty, (f) =>
     matches(f.name, f.degree, f.role)
-      ? { id: `faculty-${f.id}`, group: "Giảng viên", label: [f.degree, f.name].filter(Boolean).join(" "), hint: f.role, href: `/admin/giang-vien?edit=${f.id}` }
+      ? { id: `faculty-${f.id}`, group: "Giảng viên", label: [f.degree, f.name].filter(Boolean).join(" "), hint: f.role, href: `/admin/giang-vien/${f.id}` }
       : null
   );
   push(events, (e) =>
     matches(e.title, e.location)
-      ? { id: `event-${e.id}`, group: "Sự kiện", label: e.title, hint: e.location ?? undefined, href: `/admin/su-kien?edit=${e.id}` }
+      ? { id: `event-${e.id}`, group: "Sự kiện", label: e.title, hint: e.location ?? undefined, href: `/admin/su-kien/${e.id}` }
       : null
   );
   push(pages, (p) =>
     matches(p.title, p.slug)
-      ? { id: `page-${p.id}`, group: "Trang tĩnh", label: p.title, hint: `/${p.slug}`, href: `/admin/trang-tinh?edit=${p.id}` }
+      ? { id: `page-${p.id}`, group: "Trang tĩnh", label: p.title, hint: `/${p.slug}`, href: `/admin/trang-tinh/${p.id}` }
       : null
   );
   push(admissions, (a) =>

@@ -77,7 +77,7 @@ export async function upsertFacultyAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/doi-ngu-giang-vien", "layout");
 
-  redirect("/admin/giang-vien");
+  redirect("/admin/giang-vien?saved=1");
 }
 
 export async function deleteFacultyAction(facultyId: string) {

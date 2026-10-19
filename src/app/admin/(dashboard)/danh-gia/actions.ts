@@ -9,7 +9,7 @@ import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
 
 export async function upsertTestimonialAction(formData: FormData) {
-  await requirePermission("testimonials");
+  await requirePermission("homepage");
   const id = String(formData.get("id") || "").trim();
   const quote = String(formData.get("quote") || "").trim();
   const name = String(formData.get("name") || "").trim();
@@ -58,11 +58,11 @@ export async function upsertTestimonialAction(formData: FormData) {
   revalidatePath("/admin/danh-gia");
   revalidatePath("/");
 
-  redirect("/admin/danh-gia");
+  redirect("/admin/danh-gia?saved=1");
 }
 
 export async function deleteTestimonialAction(testimonialId: string) {
-  await requirePermission("testimonials");
+  await requirePermission("homepage");
   await db.delete(schema.testimonials).where(eq(schema.testimonials.id, testimonialId));
   revalidatePath("/admin/danh-gia");
   revalidatePath("/");

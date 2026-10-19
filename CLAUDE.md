@@ -1655,6 +1655,32 @@ Người dùng: trang Đội ngũ giảng viên cần tìm theo nhiều tiêu ch
   server đọc `searchParams` làm giá trị ban đầu → link chia sẻ mở đúng kết quả.
 - Điện thoại: các ô xếp dọc (đặt 2 ô chọn cạnh nhau thì chữ 16px bị cắt), nút khoa cuộn ngang.
 
+### Admin: Thêm/Sửa ở trang riêng + phân trang danh sách (19/10/2026)
+Người dùng: chỗ nào thêm mới thì nhảy sang trang khác để thêm/sửa, không dùng chung 1 trang với danh sách;
+danh sách cần phân trang. Áp dụng cho cả 18 mục có Thêm/Sửa (Bài viết, Danh mục, Sự kiện, FAQ, Trang tĩnh, Cột
+mốc, Ngành, Giảng viên, Khoa, Học hàm/Học vị/Chức vụ, Banner Trang chủ, Thư viện ảnh, Đánh giá, Đối tác, Menu,
+Thông tin tuyển sinh, Liên hệ nhanh, Người dùng) theo quy ước #8 mục 6. Kèm theo:
+- Trang danh sách full chiều rộng, tiêu đề/tên trong dòng bấm được để mở trang sửa; danh sách rỗng có link
+  "Thêm … đầu tiên". Trang form rộng hơn trước (`max-w-3xl`, `wide` = `max-w-5xl` cho form có trình soạn nội
+  dung) nên vài form xếp 2–3 cột (Bài viết: nội dung trái, danh mục/ảnh/tệp/ghim phải). Nội dung ngành đào tạo
+  đổi từ ô chữ thường sang `MarkdownEditor`. Form sửa có link "Trang trên web ↗" khi có trang công khai.
+- **Menu**: phân trang theo danh mục to; mỗi danh mục to có nút "+ Mục con" (`them-moi?parent=<id>`).
+- **Thông tin tuyển sinh**, **Học hàm/Học vị/Chức vụ**: 3 nhóm thành tab `?type=`. Học hàm/… trước đây sửa tại chỗ
+  từng dòng → giờ có trang form riêng thêm ô tên tiếng Anh + vị trí, danh sách hiện số giảng viên đang dùng.
+- Chỉ phân trang (không có form): Đăng ký tuyển sinh, Tin nhắn liên hệ (giữ `status`/`q`), Đăng ký nhận tin,
+  **Thư viện media** (24 tệp/trang; ô tải lên chuyển sang trang riêng `media/tai-len`, tải xong báo "Đã tải lên N tệp").
+- Link cũ `?edit=` (Dashboard "Bài viết gần đây", tìm nhanh Ctrl+K) và "Viết bài mới"/"Thêm sự kiện" đã đổi sang
+  trang mới. `listMediaImages()` (`src/lib/admin-media.ts`) dùng chung cho mọi `ImagePicker`.
+- Sửa kèm: menu bên tô sáng nhầm — `/admin/lien-he-nhanh` khớp `startsWith("/admin/lien-he")` nên "Tin nhắn liên
+  hệ" cũng sáng; giờ so khớp `href` hoặc `href + "/"`.
+- **Khối "Trang chủ" trong sidebar** (cùng ngày): Banner Trang chủ → Nội dung Trang chủ → **Đánh giá cựu sinh viên**
+  (chuyển từ mục riêng vào đây, quyền đổi từ `testimonials` sang `homepage` — mục con luôn dùng quyền của mục to;
+  lúc đổi chỉ có tài khoản toàn quyền nên không ai mất quyền) → **Đời sống trải nghiệm** (tên mới của "Thư viện ảnh
+  Trang chủ", route vẫn `/admin/thu-vien-trang-chu`). Tiêu đề khối trên web ("Đời sống sinh viên" / "Trải nghiệm
+  Hợp Lực") vẫn viết cứng trong `(site)/page.tsx`.
+- Đã thử: 18 mục × (danh sách, thêm mới, sửa) trả 200, id không tồn tại 404; lưu thật bài viết qua trang sửa giữ
+  nguyên dữ liệu; thêm → xoá khoa và chức vụ tạm; "+ Mục con" chọn sẵn cha; 13 trang không tràn ngang ở 375px.
+
 ### Kiểm tra F12 (Console + Issues) — 12/10/2026
 Người dùng nhờ xem F12. Quét 22 trang công khai + 28 trang admin (dev) rồi xác nhận lại 41 trang trên bản
 production: Console sạch. Đã sửa:
@@ -1730,7 +1756,16 @@ Người dùng: "giờ chuyển db sang postgreSQL" — chọn qua `AskUserQuest
 5. **Mọi component/màu mới dùng token trong `tailwind.config.ts`**, không hard-code mã hex mới trừ khi thật sự cần (và phải thêm token mới, không viết tay).
 6. **File tạm/test (screenshot .png, db test data) không commit vào git** — dọn trước khi đóng gói/commit.
 7. **Sửa/xoá bảng đơn dòng** (`site_settings`, `homepage_content`): luôn query/update theo `id = "main"` cố định — không tạo dòng thứ 2, không xoá dòng này (form admin chỉ có Sửa, không có Thêm/Xoá cho 2 bảng này).
-8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ). **Cuối `upsertXxxAction` (sau mọi `revalidatePath`), luôn gọi `redirect(basePath)`** (import từ `next/navigation`) để về danh sách sạch + form "Thêm mới" trống sau khi Lưu — trừ trang cấu hình 1 dòng (`cai-dat`, `trang-chu`) thì không áp dụng (xem mục 5 "Rà soát thao tác admin").
+8. **Form Thêm/Sửa ở TRANG RIÊNG (đổi 19/10/2026), danh sách có phân trang**: mỗi thực thể có
+   `<thực thể>/page.tsx` (chỉ danh sách: `<AdminNewButton>` ở thanh tiêu đề, `<SavedNotice>`, `paginate()` +
+   `<AdminPagination>` — `src/lib/pagination.ts`, 20 dòng/trang, giữ tham số lọc qua `params`),
+   `<thực thể>/them-moi/page.tsx` và `<thực thể>/[id]/page.tsx` — cả 2 chỉ gọi `XxxFormPage({ id? })` trong
+   `<thực thể>/form.tsx` (async server component: `requirePermission`, tải dữ liệu, `notFound()` nếu id không có,
+   `<AdminFormLayout>` + `<FormActions>` — `src/components/admin/AdminFormLayout.tsx`). Link Sửa = `/admin/<thực thể>/<id>`
+   (KHÔNG dùng `?edit=` nữa). **Cuối `upsertXxxAction` luôn `redirect("/admin/<thực thể>?saved=1")`** (sau mọi
+   `revalidatePath`) — trừ trang cấu hình 1 dòng (`cai-dat`, `trang-chu`, `banner-trang-con`) vẫn sửa tại chỗ.
+   Thực thể chia nhóm theo `type` (Thông tin tuyển sinh, Học hàm/Học vị/Chức vụ) dùng tab `?type=` ở danh sách,
+   `them-moi?type=` chọn sẵn nhóm, lưu xong về đúng tab.
 9. **Ô nhập trong form**: `<label htmlFor="f-<trang>-<name>">` + `id` tương ứng trên ô (hoặc bọc ô trong
    `<label>`); ô không có nhãn hiển thị → `aria-label`; nhóm checkbox/radio → `<fieldset><legend>`.
    Thiếu là tab Issues của F12 báo "No label associated with a form field".

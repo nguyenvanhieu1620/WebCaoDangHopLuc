@@ -8,6 +8,8 @@ import { requirePermission } from "@/lib/admin-auth";
 import { formatDbDateTime } from "@/lib/utils";
 import { AdminIcon } from "@/components/admin/AdminIcon";
 import { filterAdmissions, parseStatusFilter } from "./filter";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { paginate } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Đăng ký tuyển sinh" };
 
@@ -33,10 +35,10 @@ const STATUS_FILTERS = [
 export default async function AdminAdmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
   await requirePermission("admissions-contact");
-  const { q, status } = await searchParams;
+  const { q, status, page } = await searchParams;
   const activeStatus = parseStatusFilter(status);
 
   const allSubmissions = await db.query.admissionSubmissions.findMany({
@@ -44,6 +46,7 @@ export default async function AdminAdmissionsPage({
   });
 
   const submissions = filterAdmissions(allSubmissions, { q, status: activeStatus });
+  const pg = paginate(submissions, page);
   const exportParams = new URLSearchParams();
   if (activeStatus !== "all") exportParams.set("status", activeStatus);
   if (q) exportParams.set("q", q);
@@ -137,7 +140,7 @@ export default async function AdminAdmissionsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {submissions.map((s) => (
+                {pg.items.map((s) => (
                   <tr key={s.id} className="align-top">
                     <td className="px-6 py-3.5">
                       <div className="font-medium text-ink">{s.fullName}</div>
@@ -217,6 +220,12 @@ export default async function AdminAdmissionsPage({
             </table>
             </div>
           )}
+          <AdminPagination
+            pagination={pg}
+            basePath="/admin/tuyen-sinh"
+            params={{ status: activeStatus === "all" ? undefined : activeStatus, q: q || undefined }}
+            unit="hồ sơ"
+          />
         </div>
       </div>
     </div>

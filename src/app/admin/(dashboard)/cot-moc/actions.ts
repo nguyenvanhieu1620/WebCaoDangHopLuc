@@ -59,7 +59,7 @@ export async function upsertMilestoneAction(formData: FormData) {
   revalidatePath("/admin/cot-moc");
   revalidatePath("/gioi-thieu");
 
-  redirect("/admin/cot-moc");
+  redirect("/admin/cot-moc?saved=1");
 }
 
 export async function deleteMilestoneAction(milestoneId: string) {

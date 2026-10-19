@@ -42,7 +42,7 @@ export function AdminSidebar({ userName, permissions, badges = {} }: AdminSideba
   const { mobileOpen, close } = useAdminMobileMenu();
   const palette = useCommandPalette();
   const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+    href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
 
   // Đổi trang (bấm 1 link trong menu) thì tự đóng drawer trên di động —
   // không bắt người dùng bấm thêm 1 lần nữa để đóng.

@@ -7,6 +7,8 @@ import { formatDbDateTime } from "@/lib/utils";
 import { AdminIcon } from "@/components/admin/AdminIcon";
 import { markContactMessageAction, deleteContactMessageAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { paginate } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Tin nhắn liên hệ" };
 
@@ -19,16 +21,17 @@ const STATUS_FILTERS = [
 export default async function AdminContactMessagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   await requirePermission("admissions-contact");
-  const { status } = await searchParams;
+  const { status, page } = await searchParams;
   const activeStatus = status === "new" || status === "read" ? status : "all";
 
   const allMessages = await db.query.contactMessages.findMany({
     orderBy: [desc(schema.contactMessages.createdAt), desc(schema.contactMessages.seq)],
   });
   const messages = allMessages.filter((m) => activeStatus === "all" || m.status === activeStatus);
+  const pg = paginate(messages, page);
 
   return (
     <div>
@@ -73,7 +76,7 @@ export default async function AdminContactMessagesPage({
             </div>
           ) : (
             <ul className="divide-y divide-line">
-              {messages.map((m) => (
+              {pg.items.map((m) => (
                 <li key={m.id} className="flex items-start justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -126,6 +129,12 @@ export default async function AdminContactMessagesPage({
               ))}
             </ul>
           )}
+          <AdminPagination
+            pagination={pg}
+            basePath="/admin/lien-he"
+            params={{ status: activeStatus === "all" ? undefined : activeStatus }}
+            unit="tin nhắn"
+          />
         </div>
       </div>
     </div>

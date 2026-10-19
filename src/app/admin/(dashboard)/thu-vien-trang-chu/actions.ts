@@ -45,7 +45,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
   revalidatePath("/admin/thu-vien-trang-chu");
   revalidatePath("/");
 
-  redirect("/admin/thu-vien-trang-chu");
+  redirect("/admin/thu-vien-trang-chu?saved=1");
 }
 
 export async function deleteGalleryItemAction(itemId: string) {

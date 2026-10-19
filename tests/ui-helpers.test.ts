@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { toCsv, digitsCell } from "../src/lib/csv";
 import { IMAGE_SPECS, assessImage } from "../src/lib/image-specs";
 import { checkUpload } from "../src/lib/upload-rules";
+import { pageNumbers, paginate } from "../src/lib/pagination";
 import { buildFacultyDirectory, degreeLevel, filterMembers, EMPTY_FILTERS, NO_DEPARTMENT_KEY } from "../src/lib/faculty-directory";
 import type { Department, Faculty } from "../src/lib/db/schema";
 import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeExternalUrl, normalizeSearch, normalizeZaloUrl, staticPageHref, vnDateKey, youtubeId } from "../src/lib/utils";
@@ -156,4 +157,26 @@ test("buildFacultyDirectory + filterMembers lọc nhiều tiêu chí, không d�
   assert.deepEqual(names({ q: "bs" }), ["ThS.BS Nguyễn Văn An", "BS.CKII Phạm Thị Dung"], "dấu chấm trong học vị tách thành từ");
   assert.deepEqual(names({ q: "dieu duon" }), ["ThS.BS Nguyễn Văn An", "PGS ThS Lê Văn Cường"], "gõ dở vẫn ra (khớp cả tên khoa)");
   assert.equal(filterMembers(dir.members, { ...EMPTY_FILTERS, trinhDo: "thac-si", khoa: "duoc" }, "khoa").length, 2, "đếm theo khoa bỏ qua chính bộ lọc khoa");
+});
+
+test("paginate cắt đúng trang, trang sai/thiếu về 1, vượt quá về trang cuối", () => {
+  const items = Array.from({ length: 45 }, (_, i) => i + 1);
+  const p1 = paginate(items, undefined);
+  assert.deepEqual([p1.page, p1.totalPages, p1.from, p1.to, p1.items.length], [1, 3, 1, 20, 20]);
+  const p3 = paginate(items, "3");
+  assert.deepEqual([p3.page, p3.from, p3.to, p3.items], [3, 41, 45, [41, 42, 43, 44, 45]]);
+  assert.equal(paginate(items, "99").page, 3, "vượt quá → trang cuối (VD vừa xoá dòng cuối)");
+  assert.equal(paginate(items, "abc").page, 1);
+  assert.equal(paginate(items, "-2").page, 1);
+  assert.equal(paginate(items, ["2", "3"]).page, 2, "tham số lặp lấy giá trị đầu");
+  const empty = paginate([], "2");
+  assert.deepEqual([empty.page, empty.totalPages, empty.from, empty.to], [1, 1, 0, 0]);
+});
+
+test("pageNumbers giữ trang đầu/cuối + 2 bên trang hiện tại, lược bằng …", () => {
+  assert.deepEqual(pageNumbers(1, 1), [1]);
+  assert.deepEqual(pageNumbers(2, 4), [1, 2, 3, 4]);
+  assert.deepEqual(pageNumbers(5, 10), [1, "…", 4, 5, 6, "…", 10]);
+  assert.deepEqual(pageNumbers(1, 10), [1, 2, "…", 10]);
+  assert.deepEqual(pageNumbers(4, 10), [1, 2, 3, 4, 5, "…", 10], "khoảng trống đúng 1 trang thì hiện số, không hiện …");
 });

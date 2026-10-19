@@ -49,7 +49,7 @@ export async function upsertAdmissionItemAction(formData: FormData) {
 
   revalidatePath("/admin/thong-tin-tuyen-sinh");
   revalidatePath("/tuyen-sinh");
-  redirect("/admin/thong-tin-tuyen-sinh");
+  redirect(`/admin/thong-tin-tuyen-sinh?type=${type}&saved=1`);
 }
 
 export async function deleteAdmissionItemAction(itemId: string) {

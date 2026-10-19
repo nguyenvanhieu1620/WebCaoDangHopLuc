@@ -94,7 +94,7 @@ export async function upsertProgramAction(formData: FormData) {
   revalidatePath("/nganh-dao-tao");
   revalidatePath("/tuyen-sinh");
 
-  redirect("/admin/nganh-dao-tao");
+  redirect("/admin/nganh-dao-tao?saved=1");
 }
 
 export async function deleteProgramAction(programId: string) {

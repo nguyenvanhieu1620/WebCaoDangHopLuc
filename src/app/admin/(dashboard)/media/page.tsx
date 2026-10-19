@@ -4,11 +4,13 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { db, schema } from "@/lib/db";
 import { desc } from "drizzle-orm";
-import { uploadMediaAction, deleteMediaAction } from "./actions";
+import { deleteMediaAction } from "./actions";
 import { cn } from "@/lib/utils";
 import { requirePermission } from "@/lib/admin-auth";
-import { CheckedFileInput } from "@/components/admin/CheckedFileInput";
-import { MAX_UPLOAD_BYTES, formatBytes } from "@/lib/upload-rules";
+import Link from "next/link";
+import { AdminNewButton } from "@/components/admin/AdminFormLayout";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { paginate } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Thư viện media" };
 
@@ -26,56 +28,37 @@ function formatSize(bytes: number): string {
 export default async function AdminMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; page?: string; uploaded?: string }>;
 }) {
   await requirePermission("media");
-  const { type } = await searchParams;
+  const { type, page, uploaded } = await searchParams;
   const activeType = type === "image" || type === "video" ? type : "all";
 
   const allItems = await db.query.mediaItems.findMany({
     orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
   });
   const items = activeType === "all" ? allItems : allItems.filter((i) => i.type === activeType);
+  // 24 = 4 hàng × 6 cột ở màn hình rộng.
+  const pg = paginate(items, page, 24);
+  const uploadedCount = Number(uploaded) || 0;
 
   return (
     <div>
       <AdminTopbar
         title="Thư viện media"
         description={`${allItems.length} tệp — ảnh/video dùng chung cho toàn site`}
+        actions={<AdminNewButton href="/admin/media/tai-len" label="Tải lên" />}
       />
-      <div className="p-8">
-        <form
-          action={uploadMediaAction}
-          className="mb-6 flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50/40 px-8 py-10 text-center"
-        >
-          <div className="font-display text-[17px] font-semibold text-ink">
-            Chọn tệp để tải lên
+      <div className="p-5 sm:p-8">
+        {uploadedCount > 0 && (
+          <div role="status" className="mb-5 rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
+            ✓ Đã tải lên {uploadedCount} tệp.
           </div>
-          <div className="text-[13px] text-ink-faint">
-            Hỗ trợ JPG, PNG, WEBP, GIF, MP4, WEBM · Tối đa {formatBytes(MAX_UPLOAD_BYTES.image)} ảnh / {formatBytes(MAX_UPLOAD_BYTES.video)} video
-            <br />
-            Ảnh dùng cho banner nên rộng ≥ 1920px — kích thước khuyến nghị riêng từng chỗ hiện ngay dưới ô chọn ảnh ở mỗi form.
-          </div>
-          <CheckedFileInput
-            kinds={["image", "video"]}
-            name="files"
-            aria-label="Chọn tệp để tải lên"
-            multiple
-            required
-            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-            className="mt-2 max-w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-brand-700 file:shadow-sm2"
-          />
-          <button
-            type="submit"
-            className="mt-1 rounded-lg bg-gradient-to-br from-brand-700 to-brand-500 px-5 py-2.5 text-sm font-bold text-white"
-          >
-            Tải lên
-          </button>
-        </form>
+        )}
 
         <div className="mb-5 flex items-center gap-2.5">
           {FILTERS.map((f) => (
-            <a
+            <Link
               key={f.key}
               href={f.key === "all" ? "/admin/media" : `/admin/media?type=${f.key}`}
               className={cn(
@@ -86,24 +69,27 @@ export default async function AdminMediaPage({
               )}
             >
               {f.label}
-            </a>
+            </Link>
           ))}
         </div>
 
         {items.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
-            Chưa có tệp nào. Tải lên ở khu vực phía trên.
+            Chưa có tệp nào.{" "}
+            <Link href="/admin/media/tai-len" className="font-semibold text-brand-700 hover:underline">
+              Tải tệp lên
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {items.map((item) => (
+            {pg.items.map((item) => (
               <div
                 key={item.id}
                 className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm2"
               >
                 <div className="relative h-[110px] bg-paper-alt">
                   {item.type === "image" ? (
-                    <Image src={item.url} alt={item.filename} fill className="object-cover" />
+                    <Image src={item.url} alt={item.filename} fill sizes="200px" className="object-cover" />
                   ) : (
                     <video src={item.url} className="h-full w-full object-cover" muted />
                   )}
@@ -136,6 +122,16 @@ export default async function AdminMediaPage({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {items.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-line bg-white">
+            <AdminPagination
+              pagination={pg}
+              basePath="/admin/media"
+              params={{ type: activeType === "all" ? undefined : activeType }}
+              unit="tệp"
+            />
           </div>
         )}
       </div>

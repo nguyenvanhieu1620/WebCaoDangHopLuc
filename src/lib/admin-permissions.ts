@@ -17,7 +17,7 @@ export function hasPermission(user: PermissionUser, moduleKey: string): boolean 
 }
 
 const TRANSLATABLE_MODULES = [
-  "posts", "programs", "faculty", "partners", "testimonials", "events", "faq",
+  "posts", "programs", "faculty", "partners", "events", "faq",
   "homepage", "pages", "menu", "admissions-contact", "site-settings",
 ];
 

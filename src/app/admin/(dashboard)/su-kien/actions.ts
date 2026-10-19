@@ -69,7 +69,7 @@ export async function upsertEventAction(formData: FormData) {
   revalidatePath("/su-kien");
   revalidatePath("/");
 
-  redirect("/admin/su-kien");
+  redirect("/admin/su-kien?saved=1");
 }
 
 export async function deleteEventAction(eventId: string) {

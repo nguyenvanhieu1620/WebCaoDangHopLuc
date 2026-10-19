@@ -55,8 +55,8 @@ function buildStaticItems(permissions: string[] | null): PaletteItem[] {
       });
     }
   }
-  if (can("posts")) items.push({ id: "act-new-post", group: "Thao tác nhanh", label: "Viết bài mới", href: "/admin/bai-viet#form-bai-viet", icon: "plus" });
-  if (can("events")) items.push({ id: "act-new-event", group: "Thao tác nhanh", label: "Thêm sự kiện", href: "/admin/su-kien", icon: "plus" });
+  if (can("posts")) items.push({ id: "act-new-post", group: "Thao tác nhanh", label: "Viết bài mới", href: "/admin/bai-viet/them-moi", icon: "plus" });
+  if (can("events")) items.push({ id: "act-new-event", group: "Thao tác nhanh", label: "Thêm sự kiện", href: "/admin/su-kien/them-moi", icon: "plus" });
   if (can("admissions-contact")) {
     items.push({ id: "act-export-admissions", group: "Thao tác nhanh", label: "Xuất Excel hồ sơ tuyển sinh", href: "/admin/tuyen-sinh/xuat-csv", icon: "admissions-contact", external: true });
   }

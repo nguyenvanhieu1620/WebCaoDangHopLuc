@@ -37,7 +37,7 @@ export async function upsertCategoryAction(formData: FormData) {
 
   revalidatePath("/admin/danh-muc");
   revalidatePath("/admin/bai-viet");
-  redirect("/admin/danh-muc");
+  redirect("/admin/danh-muc?saved=1");
 }
 
 export async function deleteCategoryAction(categoryId: string) {

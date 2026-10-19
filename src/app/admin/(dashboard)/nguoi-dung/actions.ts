@@ -56,7 +56,7 @@ export async function upsertAdminUserAction(formData: FormData) {
 
   revalidatePath("/admin/nguoi-dung");
 
-  redirect("/admin/nguoi-dung");
+  redirect("/admin/nguoi-dung?saved=1");
 }
 
 export async function deleteAdminUserAction(id: string) {

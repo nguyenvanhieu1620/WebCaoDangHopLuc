@@ -42,7 +42,7 @@ export async function upsertHeroBannerAction(formData: FormData) {
   revalidatePath("/admin/banner-trang-chu");
   revalidatePath("/");
 
-  redirect("/admin/banner-trang-chu");
+  redirect("/admin/banner-trang-chu?saved=1");
 }
 
 export async function deleteHeroBannerAction(bannerId: string) {
