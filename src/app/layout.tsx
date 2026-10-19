@@ -53,12 +53,17 @@ export default async function RootLayout({
   return (
     // data-scroll-behavior="smooth": Next tạm tắt cuộn mượt (globals.css) khi chuyển
     // trang để trang mới hiện ngay từ đầu, chỉ giữ cuộn mượt cho link neo (#dang-ky…).
+    // suppressHydrationWarning: tiện ích trình duyệt (ColorZilla `cz-shortcut-listen`, Grammarly
+    // `data-gr-ext-installed`, Dark Reader…) tự chèn thuộc tính vào <html>/<body> trước khi React
+    // chạy → báo "hydration mismatch" giả. Chỉ bỏ qua thuộc tính của ĐÚNG 2 thẻ này, các thẻ con
+    // vẫn được kiểm tra bình thường.
     <html
       lang={locale}
       data-scroll-behavior="smooth"
       className={montserrat.variable}
+      suppressHydrationWarning
     >
-      <body className="font-sans">
+      <body className="font-sans" suppressHydrationWarning>
         {children}
         {gaId && <GoogleAnalytics measurementId={gaId} />}
       </body>

@@ -33,8 +33,8 @@ export type ImageSpec = {
 export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
   hero: {
     shape: "landscape", ratio: "16:9", minWidth: 1920, minHeight: 1080, ideal: "2560×1440",
-    where: "Phủ kín toàn màn hình Trang chủ.",
-    tip: "Máy tính: ảnh phủ kín, chữ tiêu đề nằm bên trái trên lớp phủ tối → chọn ảnh có chủ thể hơi lệch phải. Điện thoại: ảnh hiện trọn vẹn (không cắt) ở đầu banner, chữ nằm bên dưới. Nên nén dưới ~1MB.",
+    where: "Đầu Trang chủ, rộng hết màn hình, khung 16:9 — ảnh hiện RÕ, không phủ màu, không có chữ đè (tiêu đề và nút nằm bên dưới ảnh).",
+    tip: "Ảnh đúng 16:9 thì hiện trọn, không bị cắt (tỉ lệ khác sẽ bị cắt bớt mép). Dùng được cả ảnh/poster đã thiết kế sẵn chữ. Máy tính: ~70px trên cùng nằm dưới thanh menu (có phủ mờ nhẹ) → đừng đặt chữ quan trọng sát mép trên; góc dưới có nút chuyển ảnh. Nên nén dưới ~1MB.",
   },
   pageBanner: {
     shape: "landscape", ratio: "3:1", minWidth: 1920, minHeight: 600, ideal: "2400×800",
@@ -105,3 +105,13 @@ export function assessImage(spec: ImageSpec, width: number, height: number, isJp
   }
   return notices.length ? notices : [{ level: "ok", text: `Ảnh ${size} — đạt khuyến nghị.` }];
 }
+
+/**
+ * `sizes` cho các lớp ảnh banner chỉ hiện ở 1 khổ màn hình (ảnh phủ kín `hidden lg:block` trên máy
+ * tính; nền mờ + ảnh trọn khung `lg:hidden` trên điện thoại). Khai báo "100vw" cho cả 2 thì lớp đang
+ * bị ẩn (rộng 0px) vẫn chọn ảnh lớn nhất và Next báo cảnh báo "not rendered at full viewport width".
+ * Các lớp cùng khổ dùng chung 1 hằng số → cùng ảnh → trình duyệt chỉ tải 1 lần; lớp bị ẩn chỉ tải
+ * bản nhỏ nhất (vài KB) nếu là ảnh ưu tiên.
+ */
+export const SIZES_DESKTOP_ONLY = "(min-width: 1024px) 100vw, 1px";
+export const SIZES_MOBILE_ONLY = "(min-width: 1024px) 1px, 100vw";

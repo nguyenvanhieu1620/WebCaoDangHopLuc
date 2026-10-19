@@ -110,8 +110,9 @@ export default async function AdminQuickContactsPage({
           <form key={editing?.id ?? "new"} action={upsertQuickContactAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Loại</label>
+              <label htmlFor="f-lien-he-nhanh-type" className="mb-1.5 block text-xs font-semibold text-ink-soft">Loại</label>
               <select
+                id="f-lien-he-nhanh-type"
                 name="type"
                 required
                 defaultValue={editing?.type ?? ""}
@@ -128,8 +129,9 @@ export default async function AdminQuickContactsPage({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên hiển thị</label>
+              <label htmlFor="f-lien-he-nhanh-label" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên hiển thị</label>
               <input
+                id="f-lien-he-nhanh-label"
                 name="label"
                 required
                 defaultValue={editing?.label}
@@ -144,6 +146,7 @@ export default async function AdminQuickContactsPage({
               <div className="mt-3">
                 <AutoTranslateButton pairs={[{ viName: "label", enName: "labelEn" }]} />
                 <input
+                  aria-label="Label (English)"
                   name="labelEn"
                   defaultValue={editing?.labelEn ?? ""}
                   placeholder="Label (English)"
@@ -152,10 +155,11 @@ export default async function AdminQuickContactsPage({
               </div>
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-lien-he-nhanh-href" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Link (nhập nguyên link, VD tel:/https://...)
               </label>
               <input
+                id="f-lien-he-nhanh-href"
                 name="href"
                 required
                 defaultValue={editing?.href}
@@ -167,10 +171,11 @@ export default async function AdminQuickContactsPage({
               </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-lien-he-nhanh-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Vị trí (số nhỏ hiện trước)
               </label>
               <input
+                id="f-lien-he-nhanh-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? all.length}

@@ -32,7 +32,7 @@ export function ProgramExplorer({ programs, locale = "vi" }: { programs: Program
     <div className="space-y-6">
       <div className="rounded-2xl border border-line bg-white p-5 shadow-sm2 sm:p-6">
         <label htmlFor="program-search" className="mb-2 block text-sm font-bold text-brand-900">{t.search}</label>
-        <input id="program-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t.placeholder} className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
+        <input id="program-search" name="q" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t.placeholder} className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-ink-soft">
           <span aria-live="polite">{matches.length} {t.count} · {selected.length}/3 {t.selected}</span>
           {selected.length > 0 && <button type="button" onClick={() => setSelected([])} className="font-semibold text-brand-700 underline">{t.clear}</button>}
@@ -72,7 +72,7 @@ export function ProgramExplorer({ programs, locale = "vi" }: { programs: Program
                 </span>
               </Link>
               <div className="flex flex-1 flex-col p-6">
-              <div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-brand-700">{String(i + 1).padStart(2, "0")} / {p.duration}</span><label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-ink-soft"><input type="checkbox" checked={selected.includes(p.slug)} disabled={!selected.includes(p.slug) && selected.length >= 3} onChange={() => toggle(p.slug)} aria-label={`${t.compare} ${p.name}`} className="h-4 w-4 accent-brand-700" />{t.compare}</label></div>
+              <div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-brand-700">{String(i + 1).padStart(2, "0")} / {p.duration}</span><label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-ink-soft"><input type="checkbox" name="compare" value={p.slug} checked={selected.includes(p.slug)} disabled={!selected.includes(p.slug) && selected.length >= 3} onChange={() => toggle(p.slug)} aria-label={`${t.compare} ${p.name}`} className="h-4 w-4 accent-brand-700" />{t.compare}</label></div>
               <h2 className="mt-5 font-display text-2xl font-semibold text-brand-900">{p.name}</h2>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">{p.summary}</p>
               <div className="mt-5 flex items-center justify-between gap-2 border-t border-line pt-4 text-sm"><span className="text-ink-soft">{t.intake}: <strong className="text-ink">{p.intake}</strong></span><Link href={`/nganh-dao-tao/${p.slug}`} className="font-semibold text-brand-700 hover:underline">{t.details} →</Link></div>

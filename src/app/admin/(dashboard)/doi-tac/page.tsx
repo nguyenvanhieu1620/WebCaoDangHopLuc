@@ -99,8 +99,9 @@ export default async function AdminPartnersPage({
           <form key={editing?.id ?? "new"} action={upsertPartnerAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên đối tác</label>
+              <label htmlFor="f-doi-tac-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên đối tác</label>
               <input
+                id="f-doi-tac-name"
                 name="name"
                 required
                 defaultValue={editing?.name}
@@ -116,6 +117,7 @@ export default async function AdminPartnersPage({
                 <AutoTranslateButton pairs={[{ viName: "name", enName: "nameEn" }]} />
               </div>
               <input
+                aria-label="Partner name (English)"
                 name="nameEn"
                 defaultValue={editing?.nameEn ?? ""}
                 placeholder="Partner name (English)"
@@ -123,10 +125,10 @@ export default async function AdminPartnersPage({
               />
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-doi-tac-logo" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Logo <span className="font-normal text-ink-faint">(tuỳ chọn — không có thì hiện tên chữ)</span>
               </label>
-              <ImagePicker spec="logo" fileFieldName="logo" pickedFieldName="logoExisting" images={mediaImages} currentUrl={editing?.logoUrl} />              {editing?.logoUrl && (
+              <ImagePicker id="f-doi-tac-logo" spec="logo" fileFieldName="logo" pickedFieldName="logoExisting" images={mediaImages} currentUrl={editing?.logoUrl} />              {editing?.logoUrl && (
                 <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
                   <input type="checkbox" name="removeLogo" className="h-4 w-4 rounded border-line" /> Gỡ logo hiện tại
                 </label>
@@ -146,8 +148,9 @@ export default async function AdminPartnersPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
+              <label htmlFor="f-doi-tac-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
               <input
+                id="f-doi-tac-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allPartners.length}

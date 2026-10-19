@@ -38,9 +38,11 @@ export default function ResetPasswordPage() {
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="token" value={token} />
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Mật khẩu mới</label>
+              <label htmlFor="f-dat-lai-mat-khau-password" className="mb-1.5 block text-xs font-semibold text-ink-soft">Mật khẩu mới</label>
               <input
+                id="f-dat-lai-mat-khau-password"
                 type="password"
+                autoComplete="new-password"
                 name="password"
                 required
                 minLength={8}
@@ -49,9 +51,11 @@ export default function ResetPasswordPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Xác nhận mật khẩu</label>
+              <label htmlFor="f-dat-lai-mat-khau-confirmPassword" className="mb-1.5 block text-xs font-semibold text-ink-soft">Xác nhận mật khẩu</label>
               <input
+                id="f-dat-lai-mat-khau-confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 name="confirmPassword"
                 required
                 minLength={8}

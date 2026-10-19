@@ -116,8 +116,9 @@ export default async function AdminProgramsPage({
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Mã ngành</label>
+                <label htmlFor="f-nganh-dao-tao-code" className="mb-1.5 block text-xs font-semibold text-ink-soft">Mã ngành</label>
                 <input
+                  id="f-nganh-dao-tao-code"
                   name="code"
                   required
                   defaultValue={editing?.code}
@@ -126,8 +127,9 @@ export default async function AdminProgramsPage({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Thời gian đào tạo</label>
+                <label htmlFor="f-nganh-dao-tao-duration" className="mb-1.5 block text-xs font-semibold text-ink-soft">Thời gian đào tạo</label>
                 <input
+                  id="f-nganh-dao-tao-duration"
                   name="duration"
                   required
                   defaultValue={editing?.duration}
@@ -137,8 +139,9 @@ export default async function AdminProgramsPage({
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên ngành</label>
+              <label htmlFor="f-nganh-dao-tao-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên ngành</label>
               <input
+                id="f-nganh-dao-tao-name"
                 name="name"
                 required
                 defaultValue={editing?.name}
@@ -148,8 +151,9 @@ export default async function AdminProgramsPage({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chỉ tiêu</label>
+                <label htmlFor="f-nganh-dao-tao-intake" className="mb-1.5 block text-xs font-semibold text-ink-soft">Chỉ tiêu</label>
                 <input
+                  id="f-nganh-dao-tao-intake"
                   name="intake"
                   type="number"
                   required
@@ -175,10 +179,10 @@ export default async function AdminProgramsPage({
             </div>
             <p className="-mt-1.5 text-[11px] text-ink-faint">Để trống học phí thì web hiện &quot;Liên hệ&quot; — chỉ nhập khi trường đã chốt mức chính thức.</p>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-nganh-dao-tao-image" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh ngành <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
               </label>
-              <ImagePicker spec="program" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
+              <ImagePicker id="f-nganh-dao-tao-image" spec="program" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
               <p className="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
                 Để trống thì thẻ ngành chỉ có khối màu như cũ.
               </p>
@@ -189,8 +193,9 @@ export default async function AdminProgramsPage({
               )}
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Mô tả ngắn</label>
+              <label htmlFor="f-nganh-dao-tao-summary" className="mb-1.5 block text-xs font-semibold text-ink-soft">Mô tả ngắn</label>
               <textarea
+                id="f-nganh-dao-tao-summary"
                 name="summary"
                 required
                 rows={3}
@@ -200,10 +205,11 @@ export default async function AdminProgramsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-nganh-dao-tao-content" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Nội dung chi tiết (tuỳ chọn)
               </label>
               <textarea
+                id="f-nganh-dao-tao-content"
                 name="content"
                 rows={4}
                 defaultValue={editing?.content ?? ""}
@@ -225,18 +231,21 @@ export default async function AdminProgramsPage({
                   ]}
                 />
                 <input
+                  aria-label="Tuition (English), e.g. 1,840,000 VND/month"
                   name="tuitionEn"
                   defaultValue={editing?.tuitionEn ?? ""}
                   placeholder="Tuition (English), e.g. 1,840,000 VND/month"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <input
+                  aria-label="Program name (English)"
                   name="nameEn"
                   defaultValue={editing?.nameEn ?? ""}
                   placeholder="Program name (English)"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <textarea
+                  aria-label="Short summary (English)"
                   name="summaryEn"
                   rows={3}
                   defaultValue={editing?.summaryEn ?? ""}
@@ -244,6 +253,7 @@ export default async function AdminProgramsPage({
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <textarea
+                  aria-label="Full detail content (English)"
                   name="contentEn"
                   rows={4}
                   defaultValue={editing?.contentEn ?? ""}

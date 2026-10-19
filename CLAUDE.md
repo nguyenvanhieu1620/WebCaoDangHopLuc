@@ -1260,7 +1260,7 @@ Người dùng: "banner phải to lên vì nó đại diện của trang, còn 3
 hợp lý, giao diện vẫn chưa thấy pro". Đã làm (test trình duyệt desktop +
 mobile 375px, kể cả 2 banner tạm `audit-tmp-*` thêm vào DB dev rồi xoá ngay):
 
-- **`HeroBanner.tsx`** thay `HeroImageCarousel` (đã xoá file): banner **tràn
+- **`HeroBanner.tsx`** (**bố cục dưới đây đã đổi 19/10/2026** — xem mục "Banner Trang chủ ảnh rõ") thay `HeroImageCarousel` (đã xoá file): banner **tràn
   toàn màn hình** (desktop `h-[calc(100svh-104px)]` tối đa 880px; mobile cao
   theo nội dung, tối thiểu 640px để chữ không đè thanh điều khiển). Ảnh phủ
   kín + lớp phủ gradient xanh đậm trái/đáy + hạt nhiễu; chữ Hero (CMS) + 2 CTA
@@ -1416,6 +1416,9 @@ vị trí thứ 3. Người dùng chọn qua `AskUserQuestion` **tất cả** h�
     mép phải), cuộn gốc + scroll-snap, nút ‹ ›, kéo chuột (chặn click sau khi kéo),
     thanh tiến trình. Dùng cho Ngành đào tạo (hiện TẤT CẢ ngành, không chỉ 6 ngành
     nổi bật). `ProgramCard` thành flex-col để dòng cuối nằm sát đáy thẻ cao.
+    **Đổi 19/10/2026**: người dùng thấy kiểu tràn sát mép phải màn hình "trông xấu" → slider giờ nằm GỌN
+    trong khung 1320px (thẻ đầu thẳng lề trái, 3 thẻ/màn hình từ `lg`, 2 thẻ từ `sm`, điện thoại 85% + lộ
+    mép thẻ sau). Đừng đưa lại kiểu tràn mép.
   - `Lightbox.tsx` (`LightboxGroup` + `LightboxTrigger`, `<dialog>` + `showModal()`)
     — ảnh phóng to, YouTube phát tại chỗ qua **youtube-nocookie.com** (CSP
     `frame-src` đã mở riêng domain này), link video khác → nút mở tab mới; ← →,
@@ -1621,6 +1624,57 @@ gõ nối sau thành `#https://www.facebook.com/…` → link chỉ là anchor t
   bằng ×/Esc/bấm ngoài/chọn kênh; khung ngoài `pointer-events-none` (thẻ ẩn không chặn bấm trang);
   không `backdrop-blur`. Nhận prop `locale` (chữ VI/EN). Màu ChatbotAI = token `ai`.
 
+### Banner Trang chủ ảnh rõ, chữ xuống dưới (19/10/2026)
+Người dùng: banner là "bộ mặt" nhưng lớp phủ xanh đậm + chữ lớn đè làm ảnh mờ, không nổi bật. Chọn qua
+`AskUserQuestion` phương án "A. Chữ xuống dưới ảnh" (bỏ B: thẻ chữ nhỏ ở góc, C: chỉ còn ảnh).
+- `HeroBanner.tsx` viết lại: khung ảnh **16:9** (máy tính `h-[min(calc(100svh-33px),56.25vw)]` — ảnh 16:9 hiện
+  trọn, chỉ cắt chút ít khi màn hình thấp), **không lớp phủ màu, không chữ đè, không Ken Burns**; chỉ máy
+  tính có dải mờ nhẹ `h-36` ở mép trên cho chữ trắng của thanh menu trong suốt. Banner có `linkUrl` → cả
+  ảnh là link. Nhãn + tiêu đề + mô tả + 2 nút + 2 số liệu nằm trên dải nền sáng ngay dưới ảnh (bọc
+  `Reveal`); thanh Công cụ nhanh vẫn `-mt-12` đè mép dưới dải đó (dải có `pb-24` chừa chỗ).
+- Điều khiển (đếm, thanh tiến trình, tạm dừng, ‹ ›): từ `sm` là viên thuốc nhỏ góc dưới phải ảnh + chú
+  thích góc dưới trái (tự cắt "…"); điện thoại là hàng riêng ngay dưới ảnh (không che ảnh nhỏ). Có vuốt
+  ngang trên cảm ứng.
+- **Điện thoại**: ảnh bắt đầu NGAY DƯỚI menu (nền xanh đậm sau menu) — ảnh 16:9 chỉ cao ~211px, để menu
+  đè thì mất 1/3 ảnh. Khoảng chừa này phải là `pt-[72px]` trên section: viết `mt-[72px]` cho khung ảnh
+  thì margin gộp với `-mt-[72px]` của section thành 0 → menu chữ trắng nằm trên nền trắng (đã gặp thật).
+- `IMAGE_SPECS.hero` đã ghi lại: ảnh 16:9 hiện trọn, dùng được poster thiết kế sẵn chữ, tránh chữ quan
+  trọng sát mép trên (máy tính có menu đè ~70px).
+
+### Tìm giảng viên theo nhiều tiêu chí (19/10/2026)
+Người dùng: trang Đội ngũ giảng viên cần tìm theo nhiều tiêu chí cho dễ. `/doi-ngu-giang-vien` giờ là danh bạ:
+- `src/lib/faculty-directory.ts` (hàm thuần, có test): `buildFacultyDirectory()` dựng danh sách gọn cho client
+  + lựa chọn lọc **chỉ từ dữ liệu đang có** (kèm số lượng); `degreeLevel()` gom học vị viết tự do thành bậc
+  (Tiến sĩ / Chuyên khoa II / Thạc sĩ / Chuyên khoa I / Đại học — "ThS.BS" và "ThS" cùng ra Thạc sĩ; lạ thì
+  giữ chuỗi gốc); `filterMembers()` lọc AND, từ khoá không dấu khớp **đầu từ** (gõ "an" không ra "Trần"),
+  dấu câu tách từ ("ThS.BS" → "ths bs"); tìm trong tên, học vị, học hàm, chức vụ, chuyên môn, tên khoa.
+- `FacultyDirectory.tsx` (client): ô tìm + chọn Trình độ + Chức vụ (+ Học hàm khi có người có học hàm),
+  nút Khoa/Bộ môn kèm số người theo các bộ lọc còn lại (về 0 thì mờ), thẻ bộ lọc đang áp dụng bấm để bỏ,
+  "Xoá bộ lọc", màn hình không có kết quả. Kết quả vẫn nhóm theo khoa; thẻ hiện thêm chuyên môn.
+- Bộ lọc ghi lên URL (`?q=&khoa=<id khoa>&trinh-do=&hoc-ham=&chuc-vu=`, `history.replaceState`), trang
+  server đọc `searchParams` làm giá trị ban đầu → link chia sẻ mở đúng kết quả.
+- Điện thoại: các ô xếp dọc (đặt 2 ô chọn cạnh nhau thì chữ 16px bị cắt), nút khoa cuộn ngang.
+
+### Kiểm tra F12 (Console + Issues) — 12/10/2026
+Người dùng nhờ xem F12. Quét 22 trang công khai + 28 trang admin (dev) rồi xác nhận lại 41 trang trên bản
+production: Console sạch. Đã sửa:
+- **Cảnh báo `sizes` của next/image ở banner**: lớp ảnh chỉ hiện ở 1 khổ (`hidden lg:block` / `lg:hidden`)
+  khai `sizes="100vw"` → lớp bị ẩn (rộng 0) bị Next báo. Giờ dùng `SIZES_DESKTOP_ONLY` /
+  `SIZES_MOBILE_ONLY` (`src/lib/image-specs.ts`) ở `HeroBanner` + `PageHero`. Cảnh báo "LCP… add
+  loading=eager" còn thấy ở dev là **báo nhầm**: ảnh banner đã ưu tiên, nhưng cùng ảnh demo được dùng lại
+  ở thẻ tin/ngành (lazy) — Next tra theo URL nên lấy nhầm thẻ; hết khi dùng ảnh thật khác nhau.
+- **Tab Issues "No label associated with a form field"** — ~140 ô trong admin có `<label>` đứng cạnh nhưng
+  không gắn. Giờ mọi `<label>` có `htmlFor` = `id` của ô (`f-<trang>-<name>`, ô trong `.map` thêm key);
+  ô không có nhãn hiển thị (bản tiếng Anh trong `<details>`) có `aria-label` = placeholder; nhóm checkbox
+  (quyền ở admin/nguoi-dung) dùng `<fieldset><legend>`; ô mật khẩu tạo mới có `autoComplete="new-password"`.
+  `ImagePicker` nhận `id` (không truyền thì tự sinh + `aria-label`), `MarkdownEditor` nhận `id`/`aria-label`.
+- 7 ô thiếu `id`/`name` ở /nganh-dao-tao (tìm kiếm + ô so sánh) và /tra-cuu-ket-qua.
+- **Quy ước cho form mới**: label luôn `htmlFor` trỏ đúng `id` của ô (hoặc bọc ô trong `<label>`).
+- **Lỗi "A tree hydrated but some attributes… didn't match"** người dùng gặp trên Chrome thật: thuộc tính
+  `cz-shortcut-listen` do tiện ích ColorZilla chèn vào `<body>`, không phải lỗi code. `src/app/layout.tsx`
+  đặt `suppressHydrationWarning` trên `<html>` + `<body>` (chỉ bỏ qua thuộc tính của đúng 2 thẻ đó; đã thử
+  giả lập: chèn vào body → 0 lỗi, chèn vào thẻ con → vẫn báo).
+
 ### Chuyển sang PostgreSQL (06/10/2026)
 Người dùng: "giờ chuyển db sang postgreSQL" — chọn qua `AskUserQuestion`: hosting sẽ là
 **VPS**, **chép toàn bộ dữ liệu SQLite cũ sang**, **chỉ đổi DB** (ảnh vẫn trên ổ đĩa).
@@ -1677,7 +1731,10 @@ Người dùng: "giờ chuyển db sang postgreSQL" — chọn qua `AskUserQuest
 6. **File tạm/test (screenshot .png, db test data) không commit vào git** — dọn trước khi đóng gói/commit.
 7. **Sửa/xoá bảng đơn dòng** (`site_settings`, `homepage_content`): luôn query/update theo `id = "main"` cố định — không tạo dòng thứ 2, không xoá dòng này (form admin chỉ có Sửa, không có Thêm/Xoá cho 2 bảng này).
 8. **Form Thêm/Sửa dùng chung 1 route** (xem `admin/nganh-dao-tao`, `admin/trang-tinh`): sửa qua query param `?edit={id}` ở server component, prefill `defaultValue`, không dùng client state. Đặt `key={editing?.id ?? "new"}` trên `<form>` để React remount form khi đổi giữa Thêm/Sửa (tránh giữ nhầm giá trị cũ). **Cuối `upsertXxxAction` (sau mọi `revalidatePath`), luôn gọi `redirect(basePath)`** (import từ `next/navigation`) để về danh sách sạch + form "Thêm mới" trống sau khi Lưu — trừ trang cấu hình 1 dòng (`cai-dat`, `trang-chu`) thì không áp dụng (xem mục 5 "Rà soát thao tác admin").
-9. **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file. Ô ảnh mới: `<ImagePicker spec="…">` (chọn đúng loại trong `IMAGE_SPECS`, khung hiển thị mới thì thêm loại mới); ô file khác: `<CheckedFileInput kinds={[…]}>` — không dùng `<input type="file">` trần. Giới hạn dung lượng/định dạng chỉ sửa ở `src/lib/upload-rules.ts`.
+9. **Ô nhập trong form**: `<label htmlFor="f-<trang>-<name>">` + `id` tương ứng trên ô (hoặc bọc ô trong
+   `<label>`); ô không có nhãn hiển thị → `aria-label`; nhóm checkbox/radio → `<fieldset><legend>`.
+   Thiếu là tab Issues của F12 báo "No label associated with a form field".
+   **Upload ảnh trong admin**: luôn dùng `saveUploadedFile`/`saveUploadedFileIfPresent` (`src/lib/media.ts`) — không tự viết lại logic ghi file. Field file trong form đặt `name` riêng (VD `photo`, `avatar`, `coverImage`, `heroImage`) để phân biệt khi 1 trang có nhiều input file. Ô ảnh mới: `<ImagePicker spec="…">` (chọn đúng loại trong `IMAGE_SPECS`, khung hiển thị mới thì thêm loại mới); ô file khác: `<CheckedFileInput kinds={[…]}>` — không dùng `<input type="file">` trần. Giới hạn dung lượng/định dạng chỉ sửa ở `src/lib/upload-rules.ts`.
 10. **Danh sách có thứ tự hiển thị** (`partners`, `gallery_items`, `faculty`, `testimonials`): dùng cột `sortOrder` nhập tay, sort bằng `asc(schema.<table>.sortOrder)` ở data layer — không thêm thư viện kéo-thả.
 11. **Trang admin mới cần phân quyền**: thêm entity vào `ADMIN_NAV`
     (`src/lib/constants.ts`, tự trở thành 1 module chọn được ở

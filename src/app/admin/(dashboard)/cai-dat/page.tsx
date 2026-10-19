@@ -46,10 +46,11 @@ export default async function AdminSiteSettingsPage({
           className="max-w-2xl space-y-4 rounded-2xl border border-line bg-white p-6"
         >
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+            <label htmlFor="f-cai-dat-announcement" className="mb-1.5 block text-xs font-semibold text-ink-soft">
               Banner thông báo (thanh chạy trên cùng Header)
             </label>
             <input
+              id="f-cai-dat-announcement"
               name="announcement"
               required
               defaultValue={settings.announcement}
@@ -65,6 +66,7 @@ export default async function AdminSiteSettingsPage({
                 />
               </div>
               <input
+                aria-label="Announcement banner (English)"
                 name="announcementEn"
                 defaultValue={settings.announcementEn ?? ""}
                 placeholder="Announcement banner (English)"
@@ -74,8 +76,9 @@ export default async function AdminSiteSettingsPage({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Hotline</label>
+              <label htmlFor="f-cai-dat-hotline" className="mb-1.5 block text-xs font-semibold text-ink-soft">Hotline</label>
               <input
+                id="f-cai-dat-hotline"
                 name="hotline"
                 required
                 defaultValue={settings.hotline}
@@ -83,8 +86,9 @@ export default async function AdminSiteSettingsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Email</label>
+              <label htmlFor="f-cai-dat-email" className="mb-1.5 block text-xs font-semibold text-ink-soft">Email</label>
               <input
+                id="f-cai-dat-email"
                 name="email"
                 type="email"
                 required
@@ -94,8 +98,9 @@ export default async function AdminSiteSettingsPage({
             </div>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Địa chỉ</label>
+            <label htmlFor="f-cai-dat-address" className="mb-1.5 block text-xs font-semibold text-ink-soft">Địa chỉ</label>
             <input
+              id="f-cai-dat-address"
               name="address"
               required
               defaultValue={settings.address}

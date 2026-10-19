@@ -99,8 +99,9 @@ export default async function AdminDepartmentsPage({
           <form key={editing?.id ?? "new"} action={upsertDepartmentAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên khoa/bộ môn</label>
+              <label htmlFor="f-khoa-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên khoa/bộ môn</label>
               <input
+                id="f-khoa-name"
                 name="name"
                 required
                 defaultValue={editing?.name}
@@ -115,6 +116,7 @@ export default async function AdminDepartmentsPage({
               <div className="mt-3">
                 <AutoTranslateButton pairs={[{ viName: "name", enName: "nameEn" }]} />
                 <input
+                  aria-label="Department name (English)"
                   name="nameEn"
                   defaultValue={editing?.nameEn ?? ""}
                   placeholder="Department name (English)"
@@ -123,10 +125,11 @@ export default async function AdminDepartmentsPage({
               </div>
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-khoa-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Vị trí (số nhỏ hiện trước)
               </label>
               <input
+                id="f-khoa-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allDepartments.length}

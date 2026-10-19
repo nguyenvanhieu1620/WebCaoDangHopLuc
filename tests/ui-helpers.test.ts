@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { toCsv, digitsCell } from "../src/lib/csv";
 import { IMAGE_SPECS, assessImage } from "../src/lib/image-specs";
 import { checkUpload } from "../src/lib/upload-rules";
+import { buildFacultyDirectory, degreeLevel, filterMembers, EMPTY_FILTERS, NO_DEPARTMENT_KEY } from "../src/lib/faculty-directory";
+import type { Department, Faculty } from "../src/lib/db/schema";
 import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeExternalUrl, normalizeSearch, normalizeZaloUrl, staticPageHref, vnDateKey, youtubeId } from "../src/lib/utils";
 
 test("CSV có BOM, CRLF, nháy kép được nhân đôi", () => {
@@ -114,4 +116,44 @@ test("assessImage cảnh báo ảnh nhỏ, sai hướng, logo JPG; đạt chuẩ
   assert.deepEqual(assessImage(IMAGE_SPECS.logo, 300, 120).map((n) => n.level), ["ok"], "logo chỉ xét chiều cao");
   assert.ok(assessImage(IMAGE_SPECS.logo, 300, 120, true).some((n) => /JPG/.test(n.text)));
   assert.ok(assessImage(IMAGE_SPECS.logo, 200, 200).some((n) => /Logo vuông/.test(n.text)));
+});
+
+test("degreeLevel gom học vị viết tự do thành bậc trình độ", () => {
+  assert.equal(degreeLevel("ThS.BS")?.key, "thac-si");
+  assert.equal(degreeLevel("ThS")?.key, "thac-si");
+  assert.equal(degreeLevel("BS.CKII")?.key, "ck2", "CKII không được nhận nhầm thành CKI");
+  assert.equal(degreeLevel("DS.CKI")?.key, "ck1");
+  assert.equal(degreeLevel("TS.BS")?.key, "tien-si");
+  assert.equal(degreeLevel("CN")?.key, "dai-hoc");
+  assert.equal(degreeLevel("  "), null);
+  assert.deepEqual(degreeLevel("KTV cao cấp hạng I"), { key: "dai-hoc", label: "Đại học (BS, DS, CN…)" });
+  assert.equal(degreeLevel("Nghệ nhân ưu tú")?.label, "Nghệ nhân ưu tú", "không nhận ra → giữ chuỗi gốc");
+});
+
+test("buildFacultyDirectory + filterMembers lọc nhiều tiêu chí, không dấu, đếm theo khoa", () => {
+  const dept = (id: string, name: string) => ({ id, name }) as Department;
+  const person = (p: Partial<Faculty>) => ({ id: p.name, slug: null, role: "Giảng viên", degree: null, academicRank: null, specialty: null, photoUrl: null, departmentId: null, ...p }) as Faculty;
+  const dir = buildFacultyDirectory(
+    [
+      person({ name: "Nguyễn Văn An", degree: "ThS.BS", role: "Trưởng khoa Điều dưỡng", departmentId: "dd", specialty: "Hồi sức cấp cứu" }),
+      person({ name: "Trần Thị Bình", degree: "DS.CKI", departmentId: "duoc" }),
+      person({ name: "Lê Văn Cường", degree: "ThS", academicRank: "PGS", departmentId: "dd" }),
+      person({ name: "Phạm Thị Dung", degree: "BS.CKII", role: "Phó Hiệu trưởng" }),
+    ],
+    [dept("dd", "Khoa Điều dưỡng"), dept("duoc", "Khoa Dược"), dept("xn", "Khoa Xét nghiệm")],
+    (f) => [f.academicRank, f.degree, f.name].filter(Boolean).join(" ")
+  );
+  assert.deepEqual(dir.departmentOptions.map((o) => [o.key, o.count]), [["dd", 2], ["duoc", 1], [NO_DEPARTMENT_KEY, 1]], "khoa không có ai thì không hiện");
+  assert.deepEqual(dir.degreeOptions.map((o) => o.key), ["ck2", "thac-si", "ck1"]);
+  assert.deepEqual(dir.rankOptions.map((o) => o.label), ["PGS"]);
+  const names = (f: Partial<typeof EMPTY_FILTERS>) => filterMembers(dir.members, { ...EMPTY_FILTERS, ...f }).map((m) => m.displayName);
+  assert.deepEqual(names({ q: "hoi suc" }), ["ThS.BS Nguyễn Văn An"], "tìm không dấu theo chuyên môn");
+  assert.deepEqual(names({ q: "thac si", khoa: "dd" }), ["ThS.BS Nguyễn Văn An", "PGS ThS Lê Văn Cường"]);
+  assert.deepEqual(names({ trinhDo: "thac-si", hocHam: "pgs" }), ["PGS ThS Lê Văn Cường"]);
+  assert.deepEqual(names({ chucVu: "pho-hieu-truong" }), ["BS.CKII Phạm Thị Dung"]);
+  assert.deepEqual(names({ q: "an binh" }), [], "mọi từ khoá phải cùng khớp 1 người");
+  assert.deepEqual(names({ q: "an" }), ["ThS.BS Nguyễn Văn An"], "khớp đầu từ: \"an\" không ra \"Trần\"");
+  assert.deepEqual(names({ q: "bs" }), ["ThS.BS Nguyễn Văn An", "BS.CKII Phạm Thị Dung"], "dấu chấm trong học vị tách thành từ");
+  assert.deepEqual(names({ q: "dieu duon" }), ["ThS.BS Nguyễn Văn An", "PGS ThS Lê Văn Cường"], "gõ dở vẫn ra (khớp cả tên khoa)");
+  assert.equal(filterMembers(dir.members, { ...EMPTY_FILTERS, trinhDo: "thac-si", khoa: "duoc" }, "khoa").length, 2, "đếm theo khoa bỏ qua chính bộ lọc khoa");
 });

@@ -41,6 +41,7 @@ function AttributeSection({
                 <input type="hidden" name="type" value={type} />
                 <input
                   name="name"
+                  aria-label={`Tên ${item.name}`}
                   required
                   defaultValue={item.name}
                   className="w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 font-medium text-ink outline-none focus:border-line focus:bg-white"
@@ -75,6 +76,7 @@ function AttributeSection({
         <input type="hidden" name="type" value={type} />
         <input
           name="name"
+          aria-label={placeholder}
           required
           placeholder={placeholder}
           // min-w-0: ô nhập có độ rộng mặc định của trình duyệt, không co thì đẩy nút "Thêm" ra ngoài khung trên mobile.

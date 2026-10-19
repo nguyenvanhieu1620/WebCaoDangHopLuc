@@ -116,10 +116,11 @@ export default async function AdminFacultyPage({
           <form key={editing?.id ?? "new"} action={upsertFacultyAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-giang-vien-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Họ tên (chỉ tên thuần, không gõ học vị vào đây)
               </label>
               <input
+                id="f-giang-vien-name"
                 name="name"
                 required
                 defaultValue={editing?.name}
@@ -129,10 +130,11 @@ export default async function AdminFacultyPage({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-giang-vien-degree" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Học vị (tuỳ chọn)
                 </label>
                 <select
+                  id="f-giang-vien-degree"
                   name="degree"
                   defaultValue={editing?.degree ?? ""}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -146,10 +148,11 @@ export default async function AdminFacultyPage({
                 </select>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-giang-vien-academicRank" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Học hàm (hiếm, tuỳ chọn)
                 </label>
                 <select
+                  id="f-giang-vien-academicRank"
                   name="academicRank"
                   defaultValue={editing?.academicRank ?? ""}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -172,8 +175,9 @@ export default async function AdminFacultyPage({
               ThS.BS Nguyễn Văn An&quot;.
             </p>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chức vụ</label>
+              <label htmlFor="f-giang-vien-role" className="mb-1.5 block text-xs font-semibold text-ink-soft">Chức vụ</label>
               <select
+                id="f-giang-vien-role"
                 name="role"
                 required
                 defaultValue={editing?.role ?? ""}
@@ -190,10 +194,11 @@ export default async function AdminFacultyPage({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-giang-vien-departmentId" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Khoa / Bộ môn (tuỳ chọn)
               </label>
               <select
+                id="f-giang-vien-departmentId"
                 name="departmentId"
                 defaultValue={editing?.departmentId ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -207,10 +212,11 @@ export default async function AdminFacultyPage({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-giang-vien-specialty" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Chuyên môn (tuỳ chọn)
               </label>
               <input
+                id="f-giang-vien-specialty"
                 name="specialty"
                 defaultValue={editing?.specialty ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -218,10 +224,11 @@ export default async function AdminFacultyPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-giang-vien-bio" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Tiểu sử đầy đủ (tuỳ chọn — hiện ở trang chi tiết)
               </label>
               <MarkdownEditor
+                id="f-giang-vien-bio"
                 name="bio"
                 rows={5}
                 defaultValue={editing?.bio ?? ""}
@@ -243,6 +250,7 @@ export default async function AdminFacultyPage({
                   ]}
                 />
                 <input
+                  aria-label="Role (English) — VD: Head of Nursing Department"
                   name="roleEn"
                   defaultValue={editing?.roleEn ?? ""}
                   placeholder="Role (English) — VD: Head of Nursing Department"
@@ -250,12 +258,14 @@ export default async function AdminFacultyPage({
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <input
+                    aria-label="Degree (English)"
                     name="degreeEn"
                     defaultValue={editing?.degreeEn ?? ""}
                     placeholder="Degree (English)"
                     className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   />
                   <input
+                    aria-label="Academic rank (English)"
                     name="academicRankEn"
                     defaultValue={editing?.academicRankEn ?? ""}
                     placeholder="Academic rank (English)"
@@ -263,12 +273,14 @@ export default async function AdminFacultyPage({
                   />
                 </div>
                 <input
+                  aria-label="Specialty (English)"
                   name="specialtyEn"
                   defaultValue={editing?.specialtyEn ?? ""}
                   placeholder="Specialty (English)"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <MarkdownEditor
+                  aria-label="Full bio (English)"
                   name="bioEn"
                   rows={5}
                   defaultValue={editing?.bioEn ?? ""}
@@ -277,10 +289,11 @@ export default async function AdminFacultyPage({
               </div>
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-giang-vien-photo" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh chân dung {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                id="f-giang-vien-photo"
                 spec="portrait"
                 fileFieldName="photo"
                 pickedFieldName="photoExisting"
@@ -289,8 +302,9 @@ export default async function AdminFacultyPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
+              <label htmlFor="f-giang-vien-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
               <input
+                id="f-giang-vien-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allFaculty.length}

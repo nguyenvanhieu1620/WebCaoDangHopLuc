@@ -118,8 +118,9 @@ export default async function AdminUsersPage({
           <form key={editing?.id ?? "new"} action={upsertAdminUserAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Họ tên</label>
+              <label htmlFor="f-nguoi-dung-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">Họ tên</label>
               <input
+                id="f-nguoi-dung-name"
                 name="name"
                 required
                 defaultValue={editing?.name}
@@ -127,8 +128,9 @@ export default async function AdminUsersPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Email đăng nhập</label>
+              <label htmlFor="f-nguoi-dung-email" className="mb-1.5 block text-xs font-semibold text-ink-soft">Email đăng nhập</label>
               <input
+                id="f-nguoi-dung-email"
                 name="email"
                 type="email"
                 required
@@ -137,22 +139,24 @@ export default async function AdminUsersPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-nguoi-dung-password" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Mật khẩu {editing ? "(để trống nếu không đổi)" : ""}
               </label>
               <input
+                id="f-nguoi-dung-password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 required={!editing}
                 minLength={8}
                 placeholder={editing ? "••••••••" : "Tối thiểu 8 ký tự"}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
               />
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+            <fieldset>
+              <legend className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Quyền truy cập từng phần
-              </label>
+              </legend>
               {isEditingSelf && (
                 <p className="mb-2 text-[11px] text-ink-faint">
                   Đang sửa chính tài khoản của bạn — mục &quot;Người dùng&quot; luôn được giữ để tránh tự khoá quyền quản lý tài khoản.
@@ -183,7 +187,7 @@ export default async function AdminUsersPage({
                   thành danh sách quyền cụ thể theo các ô đã tick ở trên.
                 </p>
               )}
-            </div>
+            </fieldset>
             <button
               type="submit"
               className="w-full rounded-lg bg-gradient-to-br from-accent-600 to-accent-500 py-2.5 text-sm font-bold text-white shadow-red"

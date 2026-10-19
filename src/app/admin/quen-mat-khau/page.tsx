@@ -37,8 +37,9 @@ export default function ForgotPasswordPage() {
         ) : (
           <form action={formAction} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Email</label>
+              <label htmlFor="f-quen-mat-khau-email" className="mb-1.5 block text-xs font-semibold text-ink-soft">Email</label>
               <input
+                id="f-quen-mat-khau-email"
                 type="email"
                 name="email"
                 required

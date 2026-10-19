@@ -94,8 +94,9 @@ export default async function AdminEventsPage({
           <form key={editing?.id ?? "new"} action={upsertEventAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên sự kiện</label>
+              <label htmlFor="f-su-kien-title" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên sự kiện</label>
               <input
+                id="f-su-kien-title"
                 name="title"
                 required
                 defaultValue={editing?.title}
@@ -105,8 +106,9 @@ export default async function AdminEventsPage({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Bắt đầu</label>
+                <label htmlFor="f-su-kien-startAt" className="mb-1.5 block text-xs font-semibold text-ink-soft">Bắt đầu</label>
                 <input
+                  id="f-su-kien-startAt"
                   name="startAt"
                   type="datetime-local"
                   required
@@ -115,10 +117,11 @@ export default async function AdminEventsPage({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-su-kien-endAt" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Kết thúc (tuỳ chọn)
                 </label>
                 <input
+                  id="f-su-kien-endAt"
                   name="endAt"
                   type="datetime-local"
                   defaultValue={isoToVnDatetimeLocal(editing?.endAt)}
@@ -127,10 +130,11 @@ export default async function AdminEventsPage({
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-su-kien-location" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Địa điểm (tuỳ chọn)
               </label>
               <input
+                id="f-su-kien-location"
                 name="location"
                 defaultValue={editing?.location ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -138,10 +142,11 @@ export default async function AdminEventsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-su-kien-description" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Mô tả (tuỳ chọn)
               </label>
               <MarkdownEditor
+                id="f-su-kien-description"
                 name="description"
                 rows={5}
                 defaultValue={editing?.description ?? ""}
@@ -149,10 +154,11 @@ export default async function AdminEventsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-su-kien-coverImage" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh sự kiện (tuỳ chọn) {editing ? "— để trống = giữ ảnh cũ" : ""}
               </label>
               <ImagePicker
+                id="f-su-kien-coverImage"
                 spec="cover"
                 fileFieldName="coverImage"
                 pickedFieldName="coverImageExisting"
@@ -173,18 +179,21 @@ export default async function AdminEventsPage({
                   ]}
                 />
                 <input
+                  aria-label="Title (English)"
                   name="titleEn"
                   defaultValue={editing?.titleEn ?? ""}
                   placeholder="Title (English)"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <input
+                  aria-label="Location (English)"
                   name="locationEn"
                   defaultValue={editing?.locationEn ?? ""}
                   placeholder="Location (English)"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <MarkdownEditor
+                  aria-label="Description (English)"
                   name="descriptionEn"
                   rows={5}
                   defaultValue={editing?.descriptionEn ?? ""}

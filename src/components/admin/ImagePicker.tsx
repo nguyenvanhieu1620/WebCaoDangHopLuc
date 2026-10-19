@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { IMAGE_SPECS, assessImage, type ImageSpecKey } from "@/lib/image-specs";
@@ -21,6 +21,8 @@ type ImagePickerProps = {
   spec: ImageSpecKey;
   /** Form đã tự hiện ảnh đang dùng (VD thẻ Banner trang con) → không lặp ảnh nhỏ, vẫn đo + cảnh báo. */
   hideCurrentPreview?: boolean;
+  /** `id` của ô chọn file — để `<label htmlFor>` bên ngoài gắn đúng vào ô (không truyền thì tự sinh). */
+  id?: string;
 };
 
 const isJpegUrl = (url: string) => /\.jpe?g($|\?)/i.test(url);
@@ -36,7 +38,9 @@ const isJpegUrl = (url: string) => /\.jpe?g($|\?)/i.test(url);
  * - Đo kích thước thật của ảnh đang xem trước (file mới, ảnh chọn từ thư viện, hoặc ảnh
  *   đang dùng) → cảnh báo vàng nếu nhỏ hơn khuyến nghị/sai hướng. Chỉ cảnh báo, vẫn cho lưu.
  */
-export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl, spec, hideCurrentPreview }: ImagePickerProps) {
+export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl, spec, hideCurrentPreview, id }: ImagePickerProps) {
+  const autoId = useId();
+  const inputId = id ?? autoId;
   const info = IMAGE_SPECS[spec];
   const [pickedUrl, setPickedUrl] = useState<string | null>(null);
   const [newFile, setNewFile] = useState<{ name: string; url: string; isJpeg: boolean } | null>(null);
@@ -104,8 +108,11 @@ export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl
       <div className="flex flex-wrap items-center gap-3">
         <input
           ref={fileInputRef}
+          id={inputId}
           type="file"
           name={fileFieldName}
+          // Nhãn dự phòng khi form không có <label htmlFor> trỏ tới ô này (VD thẻ Banner trang con).
+          aria-label={id ? undefined : "Tải ảnh lên"}
           accept="image/jpeg,image/png,image/webp,image/gif"
           onChange={(e) => {
             const file = e.target.files?.[0];

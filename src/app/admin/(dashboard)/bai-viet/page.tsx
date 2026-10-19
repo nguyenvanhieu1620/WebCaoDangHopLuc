@@ -80,6 +80,7 @@ export default async function AdminPostsPage({
               <form action="/admin/bai-viet" method="get" className="flex items-center gap-1.5">
                 {activeStatus !== "all" && <input type="hidden" name="status" value={activeStatus} />}
                 <input
+                  aria-label="Tìm theo tiêu đề..."
                   type="text"
                   name="q"
                   defaultValue={q ?? ""}
@@ -191,10 +192,11 @@ export default async function AdminPostsPage({
             <form key={editing?.id ?? "new"} action={upsertPostAction} className="space-y-3.5">
               {editing && <input type="hidden" name="id" value={editing.id} />}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-bai-viet-title" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Tiêu đề
                 </label>
                 <input
+                  id="f-bai-viet-title"
                   name="title"
                   required
                   defaultValue={editing?.title}
@@ -220,18 +222,21 @@ export default async function AdminPostsPage({
                     ]}
                   />
                   <input
+                    aria-label="Title (English)"
                     name="titleEn"
                     defaultValue={editing?.titleEn ?? ""}
                     placeholder="Title (English)"
                     className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   />
                   <input
+                    aria-label="Short excerpt (English)"
                     name="excerptEn"
                     defaultValue={editing?.excerptEn ?? ""}
                     placeholder="Short excerpt (English)"
                     className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   />
                   <MarkdownEditor
+                    aria-label="Full content in English..."
                     name="contentEn"
                     rows={6}
                     defaultValue={editing?.contentEn ?? ""}
@@ -241,7 +246,7 @@ export default async function AdminPostsPage({
               </details>
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-ink-soft">Danh mục</label>
+                  <label htmlFor="f-bai-viet-categoryId" className="block text-xs font-semibold text-ink-soft">Danh mục</label>
                   <a
                     href="/admin/danh-muc"
                     className="text-[11px] font-semibold text-brand-700 hover:underline"
@@ -250,6 +255,7 @@ export default async function AdminPostsPage({
                   </a>
                 </div>
                 <select
+                  id="f-bai-viet-categoryId"
                   name="categoryId"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   defaultValue={editing?.categoryId ?? ""}
@@ -263,10 +269,11 @@ export default async function AdminPostsPage({
                 </select>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-bai-viet-excerpt" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Mô tả ngắn
                 </label>
                 <input
+                  id="f-bai-viet-excerpt"
                   name="excerpt"
                   defaultValue={editing?.excerpt ?? ""}
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -274,10 +281,11 @@ export default async function AdminPostsPage({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-bai-viet-coverImage" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Ảnh đại diện (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
                 </label>
                 <ImagePicker
+                  id="f-bai-viet-coverImage"
                   spec="cover"
                   fileFieldName="coverImage"
                   pickedFieldName="coverImageExisting"
@@ -286,7 +294,7 @@ export default async function AdminPostsPage({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-bai-viet-attachment" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Tệp đính kèm (tuỳ chọn) — PDF/Word/Excel
                 </label>
                 {editing?.attachmentUrl && (
@@ -306,6 +314,7 @@ export default async function AdminPostsPage({
                   </div>
                 )}
                 <CheckedFileInput
+                  id="f-bai-viet-attachment"
                   kinds={["document"]}
                   name="attachment"
                   accept=".pdf,.doc,.docx,.xls,.xlsx"
@@ -316,10 +325,11 @@ export default async function AdminPostsPage({
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-bai-viet-content" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Nội dung
                 </label>
                 <MarkdownEditor
+                  id="f-bai-viet-content"
                   name="content"
                   required
                   rows={6}

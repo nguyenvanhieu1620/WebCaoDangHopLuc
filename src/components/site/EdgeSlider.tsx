@@ -4,17 +4,12 @@ import { Children, useEffect, useRef, useState, type PointerEvent, type ReactNod
 import { cn } from "@/lib/utils";
 
 /**
- * Slider thẻ "tràn mép" kiểu VinUni (khối "Tại sao chọn VinUni"): thẻ đầu
- * thẳng lề nội dung (container 1320px), dải thẻ chạy tràn ra sát mép phải màn
- * hình nên thẻ cuối lộ 1 phần — gợi ý còn nữa. Dùng cuộn ngang GỐC của trình
- * duyệt (scroll-snap) nên vuốt cảm ứng/trackpad/bàn phím chạy sẵn; thêm:
- * nút ‹ › (cuộn đúng 1 thẻ), kéo bằng chuột, thanh tiến trình.
- *
- * Lề trái = `max(gutter, (100% - 1320px)/2)` — khớp `mx-auto max-w-[1320px]`
- * + `px-6 sm:px-8` của các khối khác trên Trang chủ.
+ * Slider thẻ nằm GỌN trong khung nội dung 1320px như các khối khác của Trang chủ (19/10/2026: người
+ * dùng thấy kiểu "tràn mép" chạy sát mép phải màn hình trông xấu → bỏ). Thẻ đầu thẳng lề trái, thẻ cuối
+ * thẳng lề phải khi cuộn hết. Dùng cuộn ngang GỐC của trình duyệt (scroll-snap) nên vuốt cảm ứng/
+ * trackpad/bàn phím chạy sẵn; thêm: nút ‹ › (cuộn đúng 1 thẻ), kéo bằng chuột, thanh tiến trình.
+ * Dải cuộn nới ra 8px mỗi bên (`-mx-2 px-2`) để bóng đổ / hiệu ứng nhấc thẻ không bị cắt sát mép.
  */
-const EDGE_PAD = "px-[max(1.5rem,calc((100%-1320px)/2))] sm:px-[max(2rem,calc((100%-1320px)/2))]";
-const EDGE_SCROLL_PAD = "scroll-pl-[max(1.5rem,calc((100%-1320px)/2))] sm:scroll-pl-[max(2rem,calc((100%-1320px)/2))]";
 
 export function EdgeSlider({
   children,
@@ -110,18 +105,14 @@ export function EdgeSlider({
   );
 
   return (
-    <div role="region" aria-roledescription="carousel" aria-label={label}>
+    <div role="region" aria-roledescription="carousel" aria-label={label} className="mx-auto max-w-[1320px] px-6 sm:px-8">
       <div
         ref={track}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        className={cn(
-          "no-scrollbar flex cursor-grab snap-x snap-mandatory gap-5 overflow-x-auto pb-2 pt-3",
-          EDGE_PAD,
-          EDGE_SCROLL_PAD
-        )}
+        className="no-scrollbar -mx-2 flex cursor-grab snap-x snap-mandatory scroll-px-2 gap-5 overflow-x-auto px-2 pb-2 pt-3"
       >
         {items.map((child, i) => (
           <div key={i} data-edge-item className={cn("shrink-0 snap-start", itemClassName)}>
@@ -130,7 +121,7 @@ export function EdgeSlider({
         ))}
       </div>
 
-      <div className="mx-auto mt-8 flex max-w-[1320px] items-center gap-6 px-6 sm:px-8">
+      <div className="mt-8 flex items-center gap-6">
         <div className={cn("relative h-[3px] flex-1 overflow-hidden rounded-full", onDark ? "bg-white/15" : "bg-brand-900/10")} aria-hidden="true">
           <div
             className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent-600 to-accent-500 transition-[width] duration-200"

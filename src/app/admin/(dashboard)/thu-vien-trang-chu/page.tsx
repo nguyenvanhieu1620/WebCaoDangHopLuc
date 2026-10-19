@@ -110,8 +110,9 @@ export default async function AdminGalleryPage({
           <form key={editing?.id ?? "new"} action={upsertGalleryItemAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Chú thích</label>
+              <label htmlFor="f-thu-vien-trang-chu-caption" className="mb-1.5 block text-xs font-semibold text-ink-soft">Chú thích</label>
               <input
+                id="f-thu-vien-trang-chu-caption"
                 name="caption"
                 required
                 defaultValue={editing?.caption}
@@ -127,6 +128,7 @@ export default async function AdminGalleryPage({
                 <AutoTranslateButton pairs={[{ viName: "caption", enName: "captionEn" }]} />
               </div>
               <input
+                aria-label="Caption (English)"
                 name="captionEn"
                 defaultValue={editing?.captionEn ?? ""}
                 placeholder="Caption (English)"
@@ -134,10 +136,11 @@ export default async function AdminGalleryPage({
               />
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-thu-vien-trang-chu-image" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                id="f-thu-vien-trang-chu-image"
                 spec="gallery"
                 fileFieldName="image"
                 pickedFieldName="imageExisting"
@@ -146,10 +149,11 @@ export default async function AdminGalleryPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-thu-vien-trang-chu-videoUrl" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Link video (YouTube, tuỳ chọn)
               </label>
               <input
+                id="f-thu-vien-trang-chu-videoUrl"
                 name="videoUrl"
                 type="url"
                 defaultValue={editing?.videoUrl ?? ""}
@@ -161,8 +165,9 @@ export default async function AdminGalleryPage({
               </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
+              <label htmlFor="f-thu-vien-trang-chu-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
               <input
+                id="f-thu-vien-trang-chu-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allItems.length}

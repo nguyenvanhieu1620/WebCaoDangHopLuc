@@ -154,10 +154,10 @@ export default async function AdminMilestonesPage({
               <textarea id="ms-desc" name="description" rows={4} maxLength={2000} defaultValue={editing?.description ?? ""} className={input} />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-cot-moc-image" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh <span className="font-normal text-ink-faint">(tuỳ chọn)</span>
               </label>
-              <ImagePicker spec="milestone" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
+              <ImagePicker id="f-cot-moc-image" spec="milestone" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
               {editing?.imageUrl && (
                 <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
                   <input type="checkbox" name="removeImage" className="h-4 w-4 rounded border-line" /> Gỡ ảnh hiện tại
@@ -174,9 +174,9 @@ export default async function AdminMilestonesPage({
                     { viName: "description", enName: "descriptionEn" },
                   ]}
                 />
-                <input name="periodEn" defaultValue={editing?.periodEn ?? ""} placeholder="Period (English)" className={input} />
-                <input name="titleEn" defaultValue={editing?.titleEn ?? ""} placeholder="Title (English)" className={input} />
-                <textarea name="descriptionEn" rows={3} defaultValue={editing?.descriptionEn ?? ""} placeholder="Description (English)" className={input} />
+                <input aria-label="Period (English)" name="periodEn" defaultValue={editing?.periodEn ?? ""} placeholder="Period (English)" className={input} />
+                <input aria-label="Title (English)" name="titleEn" defaultValue={editing?.titleEn ?? ""} placeholder="Title (English)" className={input} />
+                <textarea aria-label="Description (English)" name="descriptionEn" rows={3} defaultValue={editing?.descriptionEn ?? ""} placeholder="Description (English)" className={input} />
               </div>
             </details>
             <div>

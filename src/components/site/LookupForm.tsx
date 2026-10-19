@@ -47,6 +47,9 @@ export function LookupForm() {
     <div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
         <input
+          id="lookup-id-number"
+          name="idNumber"
+          autoComplete="off"
           aria-label="Số CCCD đã đăng ký"
           inputMode="numeric"
           pattern="[0-9]{12}"

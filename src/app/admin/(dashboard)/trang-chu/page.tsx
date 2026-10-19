@@ -107,13 +107,14 @@ export default async function AdminHomepagePage({
 
           <FormSection title="Hero">
             <div>
-              <label className={labelClass}>Badge nhỏ trên tiêu đề</label>
-              <input name="heroBadge" required defaultValue={content.heroBadge} className={inputClass} />
+              <label htmlFor="f-trang-chu-heroBadge" className={labelClass}>Badge nhỏ trên tiêu đề</label>
+              <input id="f-trang-chu-heroBadge" name="heroBadge" required defaultValue={content.heroBadge} className={inputClass} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Tiêu đề dòng 1</label>
+                <label htmlFor="f-trang-chu-heroTitleLine1" className={labelClass}>Tiêu đề dòng 1</label>
                 <input
+                  id="f-trang-chu-heroTitleLine1"
                   name="heroTitleLine1"
                   required
                   defaultValue={content.heroTitleLine1}
@@ -121,8 +122,9 @@ export default async function AdminHomepagePage({
                 />
               </div>
               <div>
-                <label className={labelClass}>Tiêu đề dòng 2 (chữ nhấn đỏ)</label>
+                <label htmlFor="f-trang-chu-heroTitleLine2" className={labelClass}>Tiêu đề dòng 2 (chữ nhấn đỏ)</label>
                 <input
+                  id="f-trang-chu-heroTitleLine2"
                   name="heroTitleLine2"
                   required
                   defaultValue={content.heroTitleLine2}
@@ -131,8 +133,9 @@ export default async function AdminHomepagePage({
               </div>
             </div>
             <div>
-              <label className={labelClass}>Mô tả</label>
+              <label htmlFor="f-trang-chu-heroDescription" className={labelClass}>Mô tả</label>
               <textarea
+                id="f-trang-chu-heroDescription"
                 name="heroDescription"
                 required
                 rows={3}
@@ -141,8 +144,9 @@ export default async function AdminHomepagePage({
               />
             </div>
             <div>
-              <label className={labelClass}>Ảnh Hero (để trống = giữ ảnh cũ)</label>
+              <label htmlFor="f-trang-chu-heroImage" className={labelClass}>Ảnh Hero (để trống = giữ ảnh cũ)</label>
               <ImagePicker
+                id="f-trang-chu-heroImage"
                 spec="hero"
                 fileFieldName="heroImage"
                 pickedFieldName="heroImageExisting"
@@ -152,8 +156,9 @@ export default async function AdminHomepagePage({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Badge nổi 1 — số liệu (VD: &quot;12+&quot;)</label>
+                <label htmlFor="f-trang-chu-heroBadge1Value" className={labelClass}>Badge nổi 1 — số liệu (VD: &quot;12+&quot;)</label>
                 <input
+                  id="f-trang-chu-heroBadge1Value"
                   name="heroBadge1Value"
                   required
                   defaultValue={content.heroBadge1Value}
@@ -161,8 +166,9 @@ export default async function AdminHomepagePage({
                 />
               </div>
               <div>
-                <label className={labelClass}>Badge nổi 1 — nhãn</label>
+                <label htmlFor="f-trang-chu-heroBadge1Label" className={labelClass}>Badge nổi 1 — nhãn</label>
                 <input
+                  id="f-trang-chu-heroBadge1Label"
                   name="heroBadge1Label"
                   required
                   defaultValue={content.heroBadge1Label}
@@ -172,8 +178,9 @@ export default async function AdminHomepagePage({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Badge nổi 2 — số liệu (VD: &quot;96%&quot;)</label>
+                <label htmlFor="f-trang-chu-heroBadge2Value" className={labelClass}>Badge nổi 2 — số liệu (VD: &quot;96%&quot;)</label>
                 <input
+                  id="f-trang-chu-heroBadge2Value"
                   name="heroBadge2Value"
                   required
                   defaultValue={content.heroBadge2Value}
@@ -181,8 +188,9 @@ export default async function AdminHomepagePage({
                 />
               </div>
               <div>
-                <label className={labelClass}>Badge nổi 2 — nhãn</label>
+                <label htmlFor="f-trang-chu-heroBadge2Label" className={labelClass}>Badge nổi 2 — nhãn</label>
                 <input
+                  id="f-trang-chu-heroBadge2Label"
                   name="heroBadge2Label"
                   required
                   defaultValue={content.heroBadge2Label}
@@ -196,6 +204,7 @@ export default async function AdminHomepagePage({
               </summary>
               <div className="mt-3 space-y-3">
                 <input
+                  aria-label="Badge (English)"
                   name="heroBadgeEn"
                   defaultValue={row.heroBadgeEn ?? ""}
                   placeholder="Badge (English)"
@@ -203,12 +212,14 @@ export default async function AdminHomepagePage({
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <input
+                    aria-label="Title line 1 (English)"
                     name="heroTitleLine1En"
                     defaultValue={row.heroTitleLine1En ?? ""}
                     placeholder="Title line 1 (English)"
                     className={inputClass}
                   />
                   <input
+                    aria-label="Title line 2 (English)"
                     name="heroTitleLine2En"
                     defaultValue={row.heroTitleLine2En ?? ""}
                     placeholder="Title line 2 (English)"
@@ -216,6 +227,7 @@ export default async function AdminHomepagePage({
                   />
                 </div>
                 <textarea
+                  aria-label="Description (English)"
                   name="heroDescriptionEn"
                   rows={3}
                   defaultValue={row.heroDescriptionEn ?? ""}
@@ -224,12 +236,14 @@ export default async function AdminHomepagePage({
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <input
+                    aria-label="Badge 1 label (English)"
                     name="heroBadge1LabelEn"
                     defaultValue={row.heroBadge1LabelEn ?? ""}
                     placeholder="Badge 1 label (English)"
                     className={inputClass}
                   />
                   <input
+                    aria-label="Badge 2 label (English)"
                     name="heroBadge2LabelEn"
                     defaultValue={row.heroBadge2LabelEn ?? ""}
                     placeholder="Badge 2 label (English)"
@@ -242,8 +256,9 @@ export default async function AdminHomepagePage({
 
           <FormSection title="Sứ mệnh - Tầm nhìn (tuỳ chọn — để trống thì ẩn cả khối này ở Trang chủ)">
             <div>
-              <label className={labelClass}>Sứ mệnh</label>
+              <label htmlFor="f-trang-chu-missionText" className={labelClass}>Sứ mệnh</label>
               <textarea
+                id="f-trang-chu-missionText"
                 name="missionText"
                 rows={3}
                 defaultValue={row.missionText ?? ""}
@@ -252,8 +267,9 @@ export default async function AdminHomepagePage({
               />
             </div>
             <div>
-              <label className={labelClass}>Tầm nhìn</label>
+              <label htmlFor="f-trang-chu-visionText" className={labelClass}>Tầm nhìn</label>
               <textarea
+                id="f-trang-chu-visionText"
                 name="visionText"
                 rows={3}
                 defaultValue={row.visionText ?? ""}
@@ -273,6 +289,7 @@ export default async function AdminHomepagePage({
                   ]}
                 />
                 <textarea
+                  aria-label="Mission (English)"
                   name="missionTextEn"
                   rows={3}
                   defaultValue={row.missionTextEn ?? ""}
@@ -280,6 +297,7 @@ export default async function AdminHomepagePage({
                   className={inputClass}
                 />
                 <textarea
+                  aria-label="Vision (English)"
                   name="visionTextEn"
                   rows={3}
                   defaultValue={row.visionTextEn ?? ""}
@@ -295,12 +313,12 @@ export default async function AdminHomepagePage({
               <div key={i} className="space-y-2 rounded-lg border border-line p-3">
                 <div className="grid grid-cols-[120px_1fr] gap-3">
                   <div>
-                    <label className={labelClass}>Số liệu</label>
-                    <input name={`stat${i}_value`} required defaultValue={s.value} className={inputClass} />
+                    <label htmlFor={`f-trang-chu-stat${i}_value`} className={labelClass}>Số liệu</label>
+                    <input id={`f-trang-chu-stat${i}_value`} name={`stat${i}_value`} required defaultValue={s.value} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Nhãn</label>
-                    <input name={`stat${i}_label`} required defaultValue={s.label} className={inputClass} />
+                    <label htmlFor={`f-trang-chu-stat${i}_label`} className={labelClass}>Nhãn</label>
+                    <input id={`f-trang-chu-stat${i}_label`} name={`stat${i}_label`} required defaultValue={s.label} className={inputClass} />
                   </div>
                 </div>
                 <details>
@@ -308,6 +326,7 @@ export default async function AdminHomepagePage({
                     🇬🇧 Nhãn tiếng Anh (tuỳ chọn)
                   </summary>
                   <input
+                    aria-label="Label (English)"
                     name={`stat${i}_label_en`}
                     defaultValue={statsEn[i]?.label ?? ""}
                     placeholder="Label (English)"
@@ -322,12 +341,13 @@ export default async function AdminHomepagePage({
             {content.features.map((f, i) => (
               <div key={i} className="space-y-2 rounded-lg border border-line p-3">
                 <div>
-                  <label className={labelClass}>Tiêu đề</label>
-                  <input name={`feature${i}_title`} required defaultValue={f.title} className={inputClass} />
+                  <label htmlFor={`f-trang-chu-feature${i}_title`} className={labelClass}>Tiêu đề</label>
+                  <input id={`f-trang-chu-feature${i}_title`} name={`feature${i}_title`} required defaultValue={f.title} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Mô tả</label>
+                  <label htmlFor={`f-trang-chu-feature${i}_desc`} className={labelClass}>Mô tả</label>
                   <textarea
+                    id={`f-trang-chu-feature${i}_desc`}
                     name={`feature${i}_desc`}
                     required
                     rows={2}
@@ -341,12 +361,14 @@ export default async function AdminHomepagePage({
                   </summary>
                   <div className="mt-2 space-y-2">
                     <input
+                      aria-label="Title (English)"
                       name={`feature${i}_title_en`}
                       defaultValue={featuresEn[i]?.title ?? ""}
                       placeholder="Title (English)"
                       className={inputClass}
                     />
                     <textarea
+                      aria-label="Description (English)"
                       name={`feature${i}_desc_en`}
                       rows={2}
                       defaultValue={featuresEn[i]?.desc ?? ""}
@@ -363,12 +385,13 @@ export default async function AdminHomepagePage({
             {content.steps.map((s, i) => (
               <div key={i} className="space-y-2 rounded-lg border border-line p-3">
                 <div>
-                  <label className={labelClass}>Bước {i + 1} — Tiêu đề</label>
-                  <input name={`step${i}_title`} required defaultValue={s.title} className={inputClass} />
+                  <label htmlFor={`f-trang-chu-step${i}_title`} className={labelClass}>Bước {i + 1} — Tiêu đề</label>
+                  <input id={`f-trang-chu-step${i}_title`} name={`step${i}_title`} required defaultValue={s.title} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Mô tả</label>
+                  <label htmlFor={`f-trang-chu-step${i}_desc`} className={labelClass}>Mô tả</label>
                   <textarea
+                    id={`f-trang-chu-step${i}_desc`}
                     name={`step${i}_desc`}
                     required
                     rows={2}
@@ -382,12 +405,14 @@ export default async function AdminHomepagePage({
                   </summary>
                   <div className="mt-2 space-y-2">
                     <input
+                      aria-label="Title (English)"
                       name={`step${i}_title_en`}
                       defaultValue={stepsEn[i]?.title ?? ""}
                       placeholder="Title (English)"
                       className={inputClass}
                     />
                     <textarea
+                      aria-label="Description (English)"
                       name={`step${i}_desc_en`}
                       rows={2}
                       defaultValue={stepsEn[i]?.desc ?? ""}
@@ -402,12 +427,13 @@ export default async function AdminHomepagePage({
 
           <FormSection title="CTA band (cuối trang)">
             <div>
-              <label className={labelClass}>Tiêu đề</label>
-              <input name="ctaTitle" required defaultValue={content.ctaTitle} className={inputClass} />
+              <label htmlFor="f-trang-chu-ctaTitle" className={labelClass}>Tiêu đề</label>
+              <input id="f-trang-chu-ctaTitle" name="ctaTitle" required defaultValue={content.ctaTitle} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Mô tả</label>
+              <label htmlFor="f-trang-chu-ctaDescription" className={labelClass}>Mô tả</label>
               <textarea
+                id="f-trang-chu-ctaDescription"
                 name="ctaDescription"
                 required
                 rows={2}
@@ -421,12 +447,14 @@ export default async function AdminHomepagePage({
               </summary>
               <div className="mt-3 space-y-3">
                 <input
+                  aria-label="Title (English)"
                   name="ctaTitleEn"
                   defaultValue={row.ctaTitleEn ?? ""}
                   placeholder="Title (English)"
                   className={inputClass}
                 />
                 <textarea
+                  aria-label="Description (English)"
                   name="ctaDescriptionEn"
                   rows={2}
                   defaultValue={row.ctaDescriptionEn ?? ""}

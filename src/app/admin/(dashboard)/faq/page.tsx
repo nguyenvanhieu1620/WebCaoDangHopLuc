@@ -89,8 +89,9 @@ export default async function AdminFaqPage({
           <form key={editing?.id ?? "new"} action={upsertFaqAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Câu hỏi</label>
+              <label htmlFor="f-faq-question" className="mb-1.5 block text-xs font-semibold text-ink-soft">Câu hỏi</label>
               <input
+                id="f-faq-question"
                 name="question"
                 required
                 defaultValue={editing?.question}
@@ -99,8 +100,9 @@ export default async function AdminFaqPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Câu trả lời</label>
+              <label htmlFor="f-faq-answer" className="mb-1.5 block text-xs font-semibold text-ink-soft">Câu trả lời</label>
               <textarea
+                id="f-faq-answer"
                 name="answer"
                 required
                 rows={4}
@@ -120,12 +122,14 @@ export default async function AdminFaqPage({
                   ]}
                 />
                 <input
+                  aria-label="Question (English)"
                   name="questionEn"
                   defaultValue={editing?.questionEn ?? ""}
                   placeholder="Question (English)"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <textarea
+                  aria-label="Answer (English)"
                   name="answerEn"
                   rows={4}
                   defaultValue={editing?.answerEn ?? ""}
@@ -135,10 +139,11 @@ export default async function AdminFaqPage({
               </div>
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-faq-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Vị trí (số nhỏ hiện trước)
               </label>
               <input
+                id="f-faq-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allFaqs.length}

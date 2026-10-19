@@ -143,8 +143,9 @@ export default async function AdminMenuPage({
           <form key={editing?.id ?? "new"} action={upsertNavItemAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên hiển thị</label>
+              <label htmlFor="f-menu-label" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên hiển thị</label>
               <input
+                id="f-menu-label"
                 name="label"
                 required
                 defaultValue={editing?.label}
@@ -153,8 +154,9 @@ export default async function AdminMenuPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Đường dẫn</label>
+              <label htmlFor="f-menu-href" className="mb-1.5 block text-xs font-semibold text-ink-soft">Đường dẫn</label>
               <input
+                id="f-menu-href"
                 name="href"
                 required
                 defaultValue={editing?.href}
@@ -188,12 +190,14 @@ export default async function AdminMenuPage({
                 />
               </div>
               <input
+                aria-label="VD: Programs"
                 name="labelEn"
                 defaultValue={editing?.labelEn ?? ""}
                 placeholder="VD: Programs"
                 className="mt-3 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
               />
               <input
+                aria-label="Short description (English)"
                 name="descriptionEn"
                 defaultValue={editing?.descriptionEn ?? ""}
                 placeholder="Short description (English)"
@@ -201,8 +205,9 @@ export default async function AdminMenuPage({
               />
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Danh mục cha</label>
+              <label htmlFor="f-menu-parentId" className="mb-1.5 block text-xs font-semibold text-ink-soft">Danh mục cha</label>
               <select
+                id="f-menu-parentId"
                 name="parentId"
                 defaultValue={editing?.parentId ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -227,8 +232,9 @@ export default async function AdminMenuPage({
               Hiện ở menu chính (chỉ áp dụng cho danh mục to — bỏ chọn = nằm trong nút ☰)
             </label>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
+              <label htmlFor="f-menu-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
               <input
+                id="f-menu-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allItems.length}

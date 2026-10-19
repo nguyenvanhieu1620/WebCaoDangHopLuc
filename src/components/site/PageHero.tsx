@@ -6,6 +6,7 @@ import { getSiteSettings } from "@/lib/data/site-settings";
 import { getPageBanner } from "@/lib/data/page-banners";
 import type { PageBannerKey } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { SIZES_DESKTOP_ONLY, SIZES_MOBILE_ONLY } from "@/lib/image-specs";
 
 export type Crumb = { label: string; href?: string };
 
@@ -47,9 +48,9 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
       {bg ? (
         <>
           {/* ≥ lg: ảnh phủ kín banner. < lg: cùng ảnh phóng to + làm mờ làm nền, ảnh rõ nét hiện TRỌN
-              phía trên tiêu đề (khối "Ảnh trọn vẹn" bên dưới) — cùng src + sizes nên chỉ tải 1 lần. */}
-          <Image src={bg} alt="" fill priority sizes="100vw" className="hero-kenburns hidden object-cover lg:block" />
-          <Image src={bg} alt="" aria-hidden fill priority sizes="100vw" className="scale-110 object-cover blur-2xl lg:hidden" />
+              phía trên tiêu đề (khối "Ảnh trọn vẹn" bên dưới) — `sizes` theo khổ màn hình nên mỗi khổ chỉ tải 1 ảnh lớn. */}
+          <Image src={bg} alt="" fill priority sizes={SIZES_DESKTOP_ONLY} className="hero-kenburns hidden object-cover lg:block" />
+          <Image src={bg} alt="" aria-hidden fill priority sizes={SIZES_MOBILE_ONLY} className="scale-110 object-cover blur-2xl lg:hidden" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-900/95 via-brand-900/70 to-brand-900/20" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-900/80 via-transparent to-brand-900/60" />
         </>
@@ -79,7 +80,7 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
               width={1920}
               height={1080}
               priority
-              sizes="100vw"
+              sizes={SIZES_MOBILE_ONLY}
               className="h-auto max-h-[52svh] w-full rounded-2xl object-contain shadow-lg2 ring-1 ring-white/15"
             />
           </div>

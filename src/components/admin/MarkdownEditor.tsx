@@ -9,6 +9,10 @@ type MarkdownEditorProps = {
   rows?: number;
   placeholder?: string;
   required?: boolean;
+  /** `id` của ô soạn — để `<label htmlFor>` bên ngoài gắn đúng vào ô. */
+  id?: string;
+  /** Nhãn cho trình đọc màn hình khi ô không có `<label>` hiển thị (VD bản tiếng Anh). */
+  "aria-label"?: string;
 };
 
 type ToolbarAction =
@@ -39,6 +43,8 @@ export function MarkdownEditor({
   rows = 10,
   placeholder,
   required,
+  id,
+  "aria-label": ariaLabel,
 }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -118,6 +124,8 @@ export function MarkdownEditor({
       {/* Textarea luôn trong DOM (kể cả khi đang xem trước) để FormData không mất dữ liệu lúc submit — chỉ ẩn bằng CSS. */}
       <textarea
         ref={textareaRef}
+        id={id}
+        aria-label={ariaLabel}
         name={name}
         defaultValue={defaultValue}
         rows={rows}

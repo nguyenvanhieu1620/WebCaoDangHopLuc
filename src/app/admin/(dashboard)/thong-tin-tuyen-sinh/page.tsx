@@ -162,9 +162,9 @@ export default async function AdminAdmissionInfoPage({
                     { viName: "detail", enName: "detailEn" },
                   ]}
                 />
-                <input name="titleEn" defaultValue={editing?.titleEn ?? ""} placeholder="Title (English)" className={inputClass} />
-                <input name="metaEn" defaultValue={editing?.metaEn ?? ""} placeholder="Time (English)" className={inputClass} />
-                <textarea name="detailEn" rows={3} defaultValue={editing?.detailEn ?? ""} placeholder="Description (English)" className={inputClass} />
+                <input aria-label="Title (English)" name="titleEn" defaultValue={editing?.titleEn ?? ""} placeholder="Title (English)" className={inputClass} />
+                <input aria-label="Time (English)" name="metaEn" defaultValue={editing?.metaEn ?? ""} placeholder="Time (English)" className={inputClass} />
+                <textarea aria-label="Description (English)" name="detailEn" rows={3} defaultValue={editing?.detailEn ?? ""} placeholder="Description (English)" className={inputClass} />
               </div>
             </details>
             <div>

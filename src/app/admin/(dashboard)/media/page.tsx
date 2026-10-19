@@ -59,6 +59,7 @@ export default async function AdminMediaPage({
           <CheckedFileInput
             kinds={["image", "video"]}
             name="files"
+            aria-label="Chọn tệp để tải lên"
             multiple
             required
             accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"

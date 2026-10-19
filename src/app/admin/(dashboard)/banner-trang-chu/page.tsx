@@ -33,7 +33,7 @@ export default async function AdminHeroBannerPage({
     <div>
       <AdminTopbar
         title="Banner Trang chủ"
-        description="Ảnh banner tràn toàn màn hình ở đầu Trang chủ, tự chuyển 6,5 giây/ảnh — chưa có ảnh nào thì dùng ảnh Hero cũ hoặc ảnh minh hoạ tạm"
+        description="Ảnh banner rộng hết màn hình ở đầu Trang chủ, hiện rõ nguyên ảnh (không phủ màu, không chữ đè), tự chuyển 6,5 giây/ảnh — chưa có ảnh nào thì dùng ảnh Hero cũ hoặc ảnh minh hoạ tạm"
       />
       <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="rounded-2xl border border-line bg-white">
@@ -106,10 +106,11 @@ export default async function AdminHeroBannerPage({
           <form key={editing?.id ?? "new"} action={upsertHeroBannerAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-banner-trang-chu-image" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                id="f-banner-trang-chu-image"
                 spec="hero"
                 fileFieldName="image"
                 pickedFieldName="imageExisting"
@@ -118,10 +119,11 @@ export default async function AdminHeroBannerPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-banner-trang-chu-caption" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Chú thích (tuỳ chọn)
               </label>
               <input
+                id="f-banner-trang-chu-caption"
                 name="caption"
                 defaultValue={editing?.caption ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -135,6 +137,7 @@ export default async function AdminHeroBannerPage({
               <div className="mt-3">
                 <AutoTranslateButton pairs={[{ viName: "caption", enName: "captionEn" }]} />
                 <input
+                  aria-label="Caption (English)"
                   name="captionEn"
                   defaultValue={editing?.captionEn ?? ""}
                   placeholder="Caption (English)"
@@ -143,10 +146,11 @@ export default async function AdminHeroBannerPage({
               </div>
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-banner-trang-chu-linkUrl" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Bấm vào banner đi tới đâu (tuỳ chọn)
               </label>
               <input
+                id="f-banner-trang-chu-linkUrl"
                 name="linkUrl"
                 defaultValue={editing?.linkUrl ?? ""}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -154,10 +158,11 @@ export default async function AdminHeroBannerPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-banner-trang-chu-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Vị trí (số nhỏ hiện trước)
               </label>
               <input
+                id="f-banner-trang-chu-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allBanners.length}

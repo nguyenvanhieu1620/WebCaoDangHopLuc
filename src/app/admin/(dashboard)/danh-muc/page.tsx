@@ -81,6 +81,7 @@ export default async function AdminCategoriesPage({
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div className="flex gap-2">
               <input
+                aria-label="Tên danh mục mới"
                 name="categoryName"
                 required
                 defaultValue={editing?.name}
@@ -95,6 +96,7 @@ export default async function AdminCategoriesPage({
               </button>
             </div>
             <input
+              aria-label="Category name (English, tuỳ chọn)"
               name="categoryNameEn"
               defaultValue={editing?.nameEn ?? ""}
               placeholder="Category name (English, tuỳ chọn)"

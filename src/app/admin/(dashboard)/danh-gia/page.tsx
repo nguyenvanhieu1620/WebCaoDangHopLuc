@@ -104,8 +104,9 @@ export default async function AdminTestimonialsPage({
           <form key={editing?.id ?? "new"} action={upsertTestimonialAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Trích dẫn</label>
+              <label htmlFor="f-danh-gia-quote" className="mb-1.5 block text-xs font-semibold text-ink-soft">Trích dẫn</label>
               <textarea
+                id="f-danh-gia-quote"
                 name="quote"
                 required
                 rows={3}
@@ -115,8 +116,9 @@ export default async function AdminTestimonialsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Họ tên</label>
+              <label htmlFor="f-danh-gia-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">Họ tên</label>
               <input
+                id="f-danh-gia-name"
                 name="name"
                 required
                 defaultValue={editing?.name}
@@ -124,8 +126,9 @@ export default async function AdminTestimonialsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vai trò hiện tại</label>
+              <label htmlFor="f-danh-gia-role" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vai trò hiện tại</label>
               <input
+                id="f-danh-gia-role"
                 name="role"
                 required
                 defaultValue={editing?.role}
@@ -145,6 +148,7 @@ export default async function AdminTestimonialsPage({
                   ]}
                 />
                 <textarea
+                  aria-label="Quote (English)"
                   name="quoteEn"
                   rows={3}
                   defaultValue={editing?.quoteEn ?? ""}
@@ -152,6 +156,7 @@ export default async function AdminTestimonialsPage({
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <input
+                  aria-label="Role (English)"
                   name="roleEn"
                   defaultValue={editing?.roleEn ?? ""}
                   placeholder="Role (English)"
@@ -160,10 +165,11 @@ export default async function AdminTestimonialsPage({
               </div>
             </details>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-danh-gia-avatar" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh đại diện {editing ? "(để trống = giữ ảnh cũ)" : ""}
               </label>
               <ImagePicker
+                id="f-danh-gia-avatar"
                 spec="avatar"
                 fileFieldName="avatar"
                 pickedFieldName="avatarExisting"
@@ -172,8 +178,9 @@ export default async function AdminTestimonialsPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
+              <label htmlFor="f-danh-gia-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
               <input
+                id="f-danh-gia-sortOrder"
                 name="sortOrder"
                 type="number"
                 defaultValue={editing?.sortOrder ?? allTestimonials.length}

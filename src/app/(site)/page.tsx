@@ -194,7 +194,7 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* ============ 1. BANNER (tràn toàn màn hình) + CÔNG CỤ NHANH ============
+      {/* ============ 1. BANNER (ảnh rõ 16:9, chữ bên dưới) + CÔNG CỤ NHANH ============
           Thứ tự 10 khối Trang chủ (gọn theo kiểu VinUni, xem CLAUDE.md mục 5 "Đợt VinUni lượt 2"):
           Banner → Vì sao chọn → Tin tức·Thông báo·Sự kiện → Ngành → Sứ mệnh → Giảng viên →
           Câu chuyện thành công → Trải nghiệm (thư viện) → Đối tác → Tuyển sinh (4 bước + CTA). */}
@@ -210,7 +210,7 @@ export default async function HomePage() {
         ]}
       />
 
-      {/* ============ CÔNG CỤ NHANH — thanh nổi đè lên mép dưới banner ============ */}
+      {/* ============ CÔNG CỤ NHANH — thanh nổi ngay dưới dải chữ của banner ============ */}
       <section className="relative z-20 -mt-12 px-4 sm:px-8">
         <div className="mx-auto grid max-w-[1320px] grid-cols-2 overflow-hidden rounded-[22px] border border-white bg-white/95 shadow-[0_30px_70px_-30px_rgba(6,50,90,0.45)] backdrop-blur-xl lg:grid-cols-4">
           {quickTools.map((tool, i) => (
@@ -510,7 +510,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ============ 4. NGÀNH ĐÀO TẠO — slider thẻ màu "tràn mép" kiểu VinUni ============ */}
+      {/* ============ 4. NGÀNH ĐÀO TẠO — slider thẻ màu gọn trong khung 1320px (3 thẻ/màn hình máy tính) ============ */}
       {allPrograms.length > 0 && (
         <section className="overflow-hidden bg-paper-alt py-24">
           <div className="mx-auto mb-10 flex max-w-[1320px] flex-wrap items-end justify-between gap-6 px-6 sm:px-8">
@@ -525,7 +525,7 @@ export default async function HomePage() {
               <MoreLink href="/nganh-dao-tao">Xem tất cả ngành</MoreLink>
             </Reveal>
           </div>
-          <EdgeSlider label="Danh sách ngành đào tạo" itemClassName="min-h-[340px] w-[82%] sm:min-h-[360px] sm:w-[46%] lg:w-[31%] xl:w-[27%]">
+          <EdgeSlider label="Danh sách ngành đào tạo" itemClassName="min-h-[340px] w-[85%] sm:min-h-[360px] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]">
             {allPrograms.map((p, i) => (
               <ProgramCard key={p.slug} program={p} gradientClass={programGradient(i)} delay={Math.min(i, 3) * 80} />
             ))}
@@ -600,10 +600,10 @@ export default async function HomePage() {
                   </>
                 );
                 const className =
-                  "group block overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
+                  "group block h-full overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
                 return (
                   <Reveal key={f.id} delay={i * 90} className={MOBILE_SWIPE_ITEM_NARROW}>
-                    <TiltCard className="rounded-2xl">
+                    <TiltCard className="h-full rounded-2xl">
                       {f.slug ? (
                         <Link href={`/doi-ngu-giang-vien/${f.slug}`} className={className}>
                           {card}

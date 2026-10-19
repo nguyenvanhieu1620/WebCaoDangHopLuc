@@ -109,8 +109,9 @@ export default async function AdminPagesPage({
           <form key={editing?.id ?? "new"} action={upsertPageAction} className="space-y-3.5">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Tiêu đề</label>
+              <label htmlFor="f-trang-tinh-title" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tiêu đề</label>
               <input
+                id="f-trang-tinh-title"
                 name="title"
                 required
                 defaultValue={editing?.title}
@@ -120,10 +121,11 @@ export default async function AdminPagesPage({
             </div>
             {!editing && (
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                <label htmlFor="f-trang-tinh-slug" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   Slug (để trống = tự tạo từ tiêu đề)
                 </label>
                 <input
+                  id="f-trang-tinh-slug"
                   name="slug"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                   placeholder="VD: gioi-thieu"
@@ -131,10 +133,11 @@ export default async function AdminPagesPage({
               </div>
             )}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <label htmlFor="f-trang-tinh-coverImage" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 Ảnh banner (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
               </label>
               <ImagePicker
+                id="f-trang-tinh-coverImage"
                 spec="pageBanner"
                 fileFieldName="coverImage"
                 pickedFieldName="coverImageExisting"
@@ -143,7 +146,7 @@ export default async function AdminPagesPage({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">Nội dung</label>
+              <label htmlFor="f-trang-tinh-content" className="mb-1.5 block text-xs font-semibold text-ink-soft">Nội dung</label>
               {editing && hasPlaceholder(editing.content) && (
                 <p className="mb-1.5 rounded-lg bg-accent-100 px-3 py-2 text-[11.5px] font-semibold text-accent-700">
                   ⚠️ Nội dung còn chỗ dạng <code>[...]</code> chưa điền — khách xem trang này trên
@@ -151,6 +154,7 @@ export default async function AdminPagesPage({
                 </p>
               )}
               <MarkdownEditor
+                id="f-trang-tinh-content"
                 name="content"
                 required
                 rows={8}
@@ -170,12 +174,14 @@ export default async function AdminPagesPage({
                   ]}
                 />
                 <input
+                  aria-label="Title (English)"
                   name="titleEn"
                   defaultValue={editing?.titleEn ?? ""}
                   placeholder="Title (English)"
                   className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
                 />
                 <MarkdownEditor
+                  aria-label="Full content (English)"
                   name="contentEn"
                   rows={8}
                   defaultValue={editing?.contentEn ?? ""}
