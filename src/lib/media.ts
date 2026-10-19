@@ -1,8 +1,9 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { db, schema } from "@/lib/db";
-import { slugify } from "@/lib/utils";
+import { normalizeExternalUrl, slugify, videoSource } from "@/lib/utils";
 import { checkUpload, uploadKindOf } from "@/lib/upload-rules";
+import { UPLOAD_DIR } from "@/lib/upload-dir";
 
 /**
  * Lưu file upload thật vào public/uploads/ trên ổ đĩa máy chủ — đủ dùng khi deploy
@@ -10,8 +11,6 @@ import { checkUpload, uploadKindOf } from "@/lib/upload-rules";
  * sang serverless thì đổi sang S3/R2: chỉ cần sửa hàm này, mọi nơi gọi
  * saveUploadedFile() không cần đổi.
  */
-
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
 export type SavedMedia = { url: string; type: "image" | "video" | "document"; filename: string };
 
@@ -58,6 +57,30 @@ export async function saveUploadedFileIfPresent(
  * viện media (dùng cùng <ImagePicker>, xem src/components/admin/ImagePicker.tsx).
  * Thứ tự ưu tiên: file mới tải lên > ảnh chọn từ thư viện > giá trị cũ (khi sửa).
  */
+/**
+ * Video của 1 mục (Đời sống trải nghiệm, Banner Trang chủ): file mới tải lên > video chọn từ Thư viện media >
+ * link gõ tay (YouTube… — chỉ khi truyền `linkFieldName`). Tất cả để trống → `null` = không có / gỡ video.
+ * Video chọn từ thư viện phải là đường dẫn `/uploads/….mp4|webm`; link gõ tay chuẩn hoá như link mạng xã hội.
+ */
+export async function resolveVideoUrl(
+  formData: FormData,
+  fileFieldName: string,
+  pickedFieldName: string,
+  linkFieldName?: string
+): Promise<string | null> {
+  const file = formData.get(fileFieldName);
+  if (file instanceof File && file.size > 0) {
+    const problem = checkUpload(file, ["video"]);
+    if (problem) throw new Error(problem);
+    return (await saveUploadedFile(file)).url;
+  }
+  const picked = String(formData.get(pickedFieldName) || "").trim();
+  if (picked && videoSource(picked)?.kind === "file") return picked;
+  const link = linkFieldName ? String(formData.get(linkFieldName) || "").trim() : "";
+  if (!link) return null;
+  return videoSource(link)?.kind === "file" ? link : normalizeExternalUrl(link);
+}
+
 export async function resolveImageUrl(
   formData: FormData,
   fileFieldName: string,

@@ -1,5 +1,7 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import { Reveal } from "@/components/site/Reveal";
+import { VideoEmbed } from "@/components/ui/VideoEmbed";
+import { videoSource, type VideoSource } from "@/lib/utils";
 
 type MarkdownContentProps = {
   content: string;
@@ -10,7 +12,24 @@ type MarkdownContentProps = {
    * xem trước trong admin.
    */
   reveal?: boolean;
+  /** Đoạn chỉ có 1 link video (YouTube / file đã tải lên) → khung phát video. Tắt cho đoạn trích ngắn trong thẻ. */
+  media?: boolean;
 };
+
+type HastLike = { type?: string; value?: string; tagName?: string; properties?: { href?: unknown }; children?: HastLike[] };
+
+/**
+ * Đoạn văn chỉ gồm ĐÚNG 1 link video — dán nguyên link trên 1 dòng riêng (chữ thường) hoặc viết dạng
+ * `[tiêu đề](link)` — thì trả nguồn video; đoạn có chữ khác đi kèm vẫn là đoạn văn bình thường.
+ */
+function paragraphVideo(node: unknown): VideoSource | null {
+  const kids = ((node as HastLike | undefined)?.children ?? []).filter((c) => !(c.type === "text" && !c.value?.trim()));
+  if (kids.length !== 1) return null;
+  const only = kids[0];
+  if (only.type === "text") return videoSource(only.value);
+  if (only.type === "element" && only.tagName === "a" && typeof only.properties?.href === "string") return videoSource(only.properties.href);
+  return null;
+}
 
 /**
  * Hiển thị nội dung Markdown (bài viết, trang tĩnh...) theo đúng token màu/
@@ -21,12 +40,16 @@ type MarkdownContentProps = {
  * khối (mb-*, mt-*, first:/last:) đặt trên LỚP BỌC chứ không đặt trên phần tử
  * bên trong, vì bên trong lớp bọc phần tử nào cũng là "first/last child".
  */
-export function MarkdownContent({ content, className, reveal = true }: MarkdownContentProps) {
+export function MarkdownContent({ content, className, reveal = true, media = true }: MarkdownContentProps) {
   const block = (spacing: string, el: React.ReactNode) =>
     reveal ? <Reveal className={spacing}>{el}</Reveal> : <div className={spacing}>{el}</div>;
 
   const components: Components = {
-    p: ({ children }) => block("mb-4 last:mb-0", <p className="text-[15.5px] leading-relaxed text-ink-soft">{children}</p>),
+    p: ({ node, children }) => {
+      const video = media ? paragraphVideo(node) : null;
+      if (video) return block("my-6 first:mt-0 last:mb-0", <VideoEmbed source={video} title="Video" />);
+      return block("mb-4 last:mb-0", <p className="text-[15.5px] leading-relaxed text-ink-soft">{children}</p>);
+    },
     h1: ({ children }) =>
       block("mb-3 mt-8 first:mt-0", <h2 className="font-display text-2xl font-semibold text-brand-900">{children}</h2>),
     h2: ({ children }) =>

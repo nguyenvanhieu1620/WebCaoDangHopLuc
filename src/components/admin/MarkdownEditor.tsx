@@ -18,7 +18,8 @@ type MarkdownEditorProps = {
 type ToolbarAction =
   | { type: "wrap"; before: string; after?: string }
   | { type: "line-prefix"; prefix: string }
-  | { type: "link" };
+  | { type: "link" }
+  | { type: "video" };
 
 const TOOLBAR: { label: string; title: string; action: ToolbarAction }[] = [
   { label: "B", title: "In đậm", action: { type: "wrap", before: "**" } },
@@ -29,6 +30,7 @@ const TOOLBAR: { label: string; title: string; action: ToolbarAction }[] = [
   { label: "•", title: "Gạch đầu dòng", action: { type: "line-prefix", prefix: "- " } },
   { label: "1.", title: "Danh sách số", action: { type: "line-prefix", prefix: "1. " } },
   { label: "🔗", title: "Chèn liên kết", action: { type: "link" } },
+  { label: "▶ Video", title: "Chèn video (link YouTube hoặc video đã tải lên Thư viện media)", action: { type: "video" } },
 ];
 
 /**
@@ -75,6 +77,21 @@ export function MarkdownEditor({
       const offset = action.prefix.length;
       el.selectionStart = selectionStart + offset;
       el.selectionEnd = selectionEnd + offset;
+      return;
+    }
+
+    if (action.type === "video") {
+      const url = window.prompt(
+        "Dán link video YouTube (VD https://www.youtube.com/watch?v=…) hoặc link video đã tải lên Thư viện media (VD /uploads/…mp4):"
+      );
+      if (!url?.trim()) return;
+      // Link đứng 1 mình trên 1 dòng riêng → web hiện thành khung phát video (MarkdownContent).
+      const before = value.slice(0, selectionStart).replace(/\s*$/, "");
+      const after = value.slice(selectionEnd).replace(/^\s*/, "");
+      const snippet = `${before ? "\n\n" : ""}${url.trim()}\n\n`;
+      el.value = before + snippet + after;
+      el.focus();
+      el.selectionStart = el.selectionEnd = before.length + snippet.length;
       return;
     }
 

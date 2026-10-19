@@ -8,6 +8,13 @@
       "when": 1791269464149,
       "tag": "0000_init_postgres",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791792441299,
+      "tag": "0001_hero_banner_video",
+      "breakpoints": true
     }
   ]
 }

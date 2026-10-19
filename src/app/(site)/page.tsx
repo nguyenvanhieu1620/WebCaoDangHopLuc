@@ -74,10 +74,11 @@ const MOBILE_SWIPE_ITEM_NARROW = "w-[68%] shrink-0 snap-start sm:w-auto";
  * khi trường tải ảnh thật — Dashboard admin có nhắc việc này).
  */
 function heroSlides(
-  banners: { id: string; imageUrl: string; caption: string | null; linkUrl: string | null }[],
+  banners: { id: string; imageUrl: string; caption: string | null; linkUrl: string | null; videoUrl: string | null }[],
   heroImageUrl: string | null
 ): HeroSlide[] {
-  if (banners.length > 0) return banners.map(({ id, imageUrl, caption, linkUrl }) => ({ id, imageUrl, caption, linkUrl }));
+  if (banners.length > 0)
+    return banners.map(({ id, imageUrl, caption, linkUrl, videoUrl }) => ({ id, imageUrl, caption, linkUrl, videoUrl }));
   if (heroImageUrl) return [{ id: "hero-image", imageUrl: heroImageUrl, caption: null, linkUrl: null }];
   return [{ id: "fallback", imageUrl: "/images/3d/medical-learning.webp", caption: null, linkUrl: null }];
 }

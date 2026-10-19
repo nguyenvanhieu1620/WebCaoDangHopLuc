@@ -1681,6 +1681,34 @@ Thông tin tuyển sinh, Liên hệ nhanh, Người dùng) theo quy ước #8 m�
 - Đã thử: 18 mục × (danh sách, thêm mới, sửa) trả 200, id không tồn tại 404; lưu thật bài viết qua trang sửa giữ
   nguyên dữ liệu; thêm → xoá khoa và chức vụ tạm; "+ Mục con" chọn sẵn cha; 13 trang không tràn ngang ở 375px.
 
+### Video: trong nội dung, Đời sống trải nghiệm, nền banner + sửa lỗi file tải lên (19/10/2026)
+Người dùng hỏi video hiện được ở đâu, rồi đồng ý làm cả 3 hướng đề xuất:
+- **Nhận diện video dùng chung**: `videoSource()` (`src/lib/utils.ts`, có test) — link YouTube → `{kind:"youtube"}`,
+  `/uploads/….mp4|webm` → `{kind:"file"}`, link khác → null (CSP chỉ cho phát từ chính web + youtube-nocookie.com).
+  Khung phát `<VideoEmbed>` (`src/components/ui/VideoEmbed.tsx`): iframe youtube-nocookie hoặc `<video controls>`.
+- **Trong nội dung Markdown** (bài viết, sự kiện, trang tĩnh, ngành, tiểu sử…): đoạn văn CHỈ gồm 1 link video (dán link
+  trên 1 dòng riêng hoặc `[chữ](link)`) → khung phát video; link nằm trong câu vẫn là link chữ. `MarkdownEditor` có nút
+  **▶ Video** (hỏi link, tự chèn trên dòng riêng). `MarkdownContent media={false}` cho đoạn trích trong thẻ (sự kiện).
+  Thư viện media có nút **"Chép link"** từng tệp (`CopyTextButton`) để lấy đường dẫn `/uploads/…`.
+- **Đời sống trải nghiệm**: video = link YouTube HOẶC chọn video trong Thư viện media HOẶC tải video mới (ưu tiên file
+  tải lên > chọn thư viện > link; để trống cả 3 = gỡ video) — `resolveVideoUrl()` trong `src/lib/media.ts`. Lightbox
+  phát cả video tải lên (`<video autoplay controls>`); link video lạ vẫn là nút "Mở video ↗".
+- **Video nền banner Trang chủ** (dùng lại từ bản 12/10 đã gỡ): cột `hero_banners.video_url` (migration
+  `drizzle/0001_hero_banner_video.sql` — máy khác nhớ `npm run db:migrate`), admin Banner chọn video thư viện hoặc tải
+  lên (chỉ file MP4/WEBM của web, không YouTube). `HeroVideo` trong `HeroBanner.tsx`: chỉ tạo `<video muted loop>` ở
+  ≥ lg và khi không giảm chuyển động (điện thoại không tải video), hiện khi đã `playing`, banner có video chạy 12s,
+  nút tạm dừng dừng cả video; chỉ 1 banner có video vẫn hiện nút tạm dừng (máy tính).
+- **SỬA LỖI quan trọng trước khi lên VPS**: `next start` chỉ phục vụ file có trong `public/` LÚC KHỞI ĐỘNG — ảnh/video
+  admin tải lên sau đó trả 404 (cả `/_next/image`) tới khi khởi động lại (đo thật). Thêm route
+  `src/app/uploads/[...path]/route.ts` đọc thẳng từ ổ đĩa mỗi request (file có sẵn lúc khởi động Next vẫn tự phục vụ
+  trước), hỗ trợ `Range` (206 — video tua/phát trên Safari), chặn lách thư mục/dotfile/đuôi lạ (404), cache 1 năm
+  (tên file có tiền tố thời gian). `UPLOAD_DIR` chung ở `src/lib/upload-dir.ts`, `parseRange` ở `src/lib/http-range.ts`
+  (file route không được export hàm khác). `/* turbopackIgnore: true */` trên đường dẫn động để build không cảnh báo.
+- Đã thử: Markdown xem trước (YouTube → iframe, `/uploads/…webm` → video, link trong câu giữ nguyên); mục Đời sống
+  trải nghiệm + banner tạm với video WEBM tạo trong trình duyệt → lightbox phát, banner phát trên máy tính, tạm dừng
+  được, điện thoại 0 thẻ video/0 lượt tải; bản production: file thêm sau khi khởi động → 200, `/_next/image` 200,
+  Range 206, lách thư mục 404; tải ảnh thật qua admin hiện ngay. Đã xoá hết dữ liệu thử.
+
 ### Kiểm tra F12 (Console + Issues) — 12/10/2026
 Người dùng nhờ xem F12. Quét 22 trang công khai + 28 trang admin (dev) rồi xác nhận lại 41 trang trên bản
 production: Console sạch. Đã sửa:

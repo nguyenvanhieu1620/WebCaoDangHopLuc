@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { resolveImageUrl } from "@/lib/media";
+import { resolveImageUrl, resolveVideoUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
@@ -14,7 +14,6 @@ export async function upsertGalleryItemAction(formData: FormData) {
   const caption = String(formData.get("caption") || "").trim();
   const sortOrder = Number(formData.get("sortOrder") || 0);
   const captionEn = String(formData.get("captionEn") || "").trim();
-  const videoUrl = String(formData.get("videoUrl") || "").trim();
 
   if (!caption) return;
 
@@ -24,6 +23,7 @@ export async function upsertGalleryItemAction(formData: FormData) {
   const imageUrl = await resolveImageUrl(formData, "image", "imageExisting", current?.imageUrl ?? null);
 
   if (!imageUrl) return;
+  const videoUrl = await resolveVideoUrl(formData, "videoFile", "videoExisting", "videoUrl");
 
   const [captionEnFinal] = await autoFillTranslations([{ vi: caption, en: captionEn }]);
 

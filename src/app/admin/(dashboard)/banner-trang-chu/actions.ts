@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { resolveImageUrl } from "@/lib/media";
+import { resolveImageUrl, resolveVideoUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
@@ -22,6 +22,8 @@ export async function upsertHeroBannerAction(formData: FormData) {
   const imageUrl = await resolveImageUrl(formData, "image", "imageExisting", current?.imageUrl ?? null);
 
   if (!imageUrl) return;
+  // Video nền: chỉ file MP4/WEBM của web (tải lên hoặc chọn trong Thư viện media) — video nền không nhúng YouTube.
+  const videoUrl = await resolveVideoUrl(formData, "video", "videoExisting");
 
   const [captionEnFinal] = await autoFillTranslations([{ vi: caption, en: captionEn }]);
 
@@ -31,6 +33,7 @@ export async function upsertHeroBannerAction(formData: FormData) {
     linkUrl: linkUrl || null,
     sortOrder,
     imageUrl,
+    videoUrl,
   };
 
   if (id) {

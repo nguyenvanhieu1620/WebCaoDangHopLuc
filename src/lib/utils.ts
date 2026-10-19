@@ -52,6 +52,23 @@ export function youtubeId(url: string | null | undefined): string | null {
   return id && /^[\w-]{11}$/.test(id) ? id : null;
 }
 
+/** Nguồn video phát được ngay trên web: YouTube (nhúng qua youtube-nocookie) hoặc file MP4/WEBM đã tải lên Thư viện media. */
+export type VideoSource = { kind: "youtube"; id: string } | { kind: "file"; src: string };
+
+/**
+ * Nhận diện link video: link YouTube (watch / youtu.be / shorts / embed) hoặc đường dẫn file đã tải lên
+ * `/uploads/….mp4|webm`. Link khác (Facebook, Vimeo, file trang ngoài…) → null: CSP chỉ cho phát video từ
+ * chính web này và youtube-nocookie.com, nơi gọi tự xử lý (VD nút "Mở video ↗" sang tab mới).
+ */
+export function videoSource(url: string | null | undefined): VideoSource | null {
+  const raw = url?.trim();
+  if (!raw) return null;
+  const id = youtubeId(raw);
+  if (id) return { kind: "youtube", id };
+  if (/^\/uploads\/[^?#\s/]+\.(mp4|webm)$/i.test(raw)) return { kind: "file", src: raw };
+  return null;
+}
+
 /**
  * Đường dẫn công khai của 1 trang tĩnh (bảng `pages`) theo slug — `null` nếu trang
  * đó không có route trên web (chỉ là nội dung dùng nội bộ). Dùng chung cho tìm

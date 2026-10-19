@@ -57,6 +57,7 @@ export default async function AdminHeroBannerPage({
                       </Link>
                       <div className="text-[11.5px] text-ink-faint">
                         vị trí #{b.sortOrder}
+                        {b.videoUrl && <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 font-semibold text-brand-700">🎬 Có video</span>}
                         {b.linkUrl && <span className="ml-2 font-mono">→ {b.linkUrl}</span>}
                       </div>
                     </div>

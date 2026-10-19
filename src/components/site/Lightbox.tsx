@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import Image from "next/image";
-import { cn, youtubeId } from "@/lib/utils";
+import { VideoEmbed } from "@/components/ui/VideoEmbed";
+import { cn, videoSource } from "@/lib/utils";
 
 export type LightboxItem = {
   id: string;
@@ -22,8 +23,9 @@ const OpenContext = createContext<(index: number) => void>(() => {});
  * - Dùng `<dialog>` + `showModal()`: Esc đóng, focus nằm trong hộp, phần còn
  *   lại của trang bị khoá tương tác — không phải tự viết focus trap.
  * - Video YouTube phát qua youtube-nocookie.com (CSP `frame-src` đã mở riêng
- *   domain này, xem next.config.js); link video khác (Facebook, Vimeo…) không
- *   nhúng được → hiện ảnh bìa + nút mở tab mới.
+ *   domain này, xem next.config.js), video MP4/WEBM đã tải lên Thư viện media
+ *   phát bằng `<video>`; link video khác (Facebook, Vimeo…) không nhúng được →
+ *   hiện ảnh bìa + nút mở tab mới.
  * - ← → / vuốt ngang để chuyển mục; khoá cuộn trang nền khi đang mở.
  */
 export function LightboxGroup({ items, children }: { items: LightboxItem[]; children: ReactNode }) {
@@ -75,7 +77,7 @@ function LightboxDialog({
   const item = items[index];
   const count = items.length;
   const go = useCallback((step: number) => onIndex((index + step + count) % count), [index, count, onIndex]);
-  const videoId = youtubeId(item.videoUrl);
+  const video = videoSource(item.videoUrl);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -169,16 +171,8 @@ function LightboxDialog({
 
           {/* key theo mục → mỗi lần chuyển, khung nội dung "bật" lên lại (CSS .lightbox-media) */}
           <div key={item.id} className="lightbox-media relative w-full max-w-[1200px]">
-            {videoId ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-2xl">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
-                  title={item.caption || "Video"}
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                  allowFullScreen
-                  className="absolute inset-0 h-full w-full"
-                />
-              </div>
+            {video ? (
+              <VideoEmbed source={video} title={item.caption || "Video"} autoPlay />
             ) : (
               <div className="relative h-[min(72vh,820px)] w-full">
                 <Image src={item.imageUrl} alt={item.caption} fill sizes="(max-width: 1200px) 100vw, 1200px" className="object-contain" priority />

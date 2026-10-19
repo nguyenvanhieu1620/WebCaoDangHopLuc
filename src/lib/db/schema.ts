@@ -334,6 +334,11 @@ export const heroBanners = pgTable("hero_banners", {
     .$defaultFn(() => crypto.randomUUID()),
   seq: seq(),
   imageUrl: text("image_url").notNull(),
+  /**
+   * Video nền MP4/WEBM (tuỳ chọn, thêm 12/10/2026, dùng lại 19/10/2026) — chỉ phát trên máy tính, tự chạy không
+   * tiếng + lặp; `image_url` vẫn bắt buộc: ảnh chờ khi video chưa tải, ảnh trên điện thoại và khi giảm chuyển động.
+   */
+  videoUrl: text("video_url"),
   caption: text("caption"),
   captionEn: text("caption_en"),
   /** Bấm vào banner điều hướng tới đâu — tuỳ chọn, để trống thì banner không phải link. */

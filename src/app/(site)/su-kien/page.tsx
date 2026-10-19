@@ -117,7 +117,7 @@ function EventCard({
         </div>
         <h3 className="mt-2 font-display text-xl font-semibold text-ink transition-colors group-hover:text-brand-700">{event.title}</h3>
         {event.description && (
-          <MarkdownContent content={event.description} reveal={false} className="mt-2.5 line-clamp-3 text-[14px]" />
+          <MarkdownContent content={event.description} reveal={false} media={false} className="mt-2.5 line-clamp-3 text-[14px]" />
         )}
         {event.slug && (
           <span className="mt-3 inline-block text-sm font-bold text-brand-700">

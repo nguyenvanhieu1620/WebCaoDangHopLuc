@@ -4,9 +4,10 @@ import { toCsv, digitsCell } from "../src/lib/csv";
 import { IMAGE_SPECS, assessImage } from "../src/lib/image-specs";
 import { checkUpload } from "../src/lib/upload-rules";
 import { pageNumbers, paginate } from "../src/lib/pagination";
+import { parseRange } from "../src/lib/http-range";
 import { buildFacultyDirectory, degreeLevel, filterMembers, EMPTY_FILTERS, NO_DEPARTMENT_KEY } from "../src/lib/faculty-directory";
 import type { Department, Faculty } from "../src/lib/db/schema";
-import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeExternalUrl, normalizeSearch, normalizeZaloUrl, staticPageHref, vnDateKey, youtubeId } from "../src/lib/utils";
+import { dbTimestampToISO, formatDbDateTime, hasPlaceholder, normalizeExternalUrl, normalizeSearch, normalizeZaloUrl, staticPageHref, vnDateKey, videoSource, youtubeId } from "../src/lib/utils";
 
 test("CSV có BOM, CRLF, nháy kép được nhân đôi", () => {
   const csv = toCsv(["Họ tên", "Ghi chú"], [["Nguyễn Văn An", 'nói "xin chào"\nxuống dòng']]);
@@ -179,4 +180,27 @@ test("pageNumbers giữ trang đầu/cuối + 2 bên trang hiện tại, lược
   assert.deepEqual(pageNumbers(5, 10), [1, "…", 4, 5, 6, "…", 10]);
   assert.deepEqual(pageNumbers(1, 10), [1, 2, "…", 10]);
   assert.deepEqual(pageNumbers(4, 10), [1, 2, 3, 4, 5, "…", 10], "khoảng trống đúng 1 trang thì hiện số, không hiện …");
+});
+
+test("videoSource nhận link YouTube và video đã tải lên, bỏ qua link khác", () => {
+  assert.deepEqual(videoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ"), { kind: "youtube", id: "dQw4w9WgXcQ" });
+  assert.deepEqual(videoSource("  https://youtu.be/dQw4w9WgXcQ  "), { kind: "youtube", id: "dQw4w9WgXcQ" });
+  assert.deepEqual(videoSource("/uploads/1792-gioi-thieu.mp4"), { kind: "file", src: "/uploads/1792-gioi-thieu.mp4" });
+  assert.deepEqual(videoSource("/uploads/clip.WEBM"), { kind: "file", src: "/uploads/clip.WEBM" });
+  assert.equal(videoSource("/uploads/anh.jpg"), null, "ảnh không phải video");
+  assert.equal(videoSource("/uploads/../secret.mp4"), null, "không cho lách thư mục");
+  assert.equal(videoSource("https://example.com/clip.mp4"), null, "file ở trang ngoài bị CSP chặn → không nhúng");
+  assert.equal(videoSource("https://www.facebook.com/watch?v=123"), null);
+  assert.equal(videoSource(""), null);
+});
+
+test("parseRange đọc đúng 1 khoảng byte, sai thì null", () => {
+  assert.deepEqual(parseRange("bytes=0-99", 1000), [0, 99]);
+  assert.deepEqual(parseRange("bytes=500-", 1000), [500, 999]);
+  assert.deepEqual(parseRange("bytes=-200", 1000), [800, 999]);
+  assert.deepEqual(parseRange("bytes=900-5000", 1000), [900, 999], "vượt cuối file thì cắt về byte cuối");
+  assert.equal(parseRange("bytes=1000-", 1000), null, "bắt đầu sau cuối file");
+  assert.equal(parseRange("bytes=50-10", 1000), null);
+  assert.equal(parseRange("bytes=0-1,5-9", 1000), null, "nhiều khoảng: không hỗ trợ");
+  assert.equal(parseRange("items=0-1", 1000), null);
 });

@@ -14,6 +14,8 @@ export type HeroSlide = {
   imageUrl: string;
   caption: string | null;
   linkUrl: string | null;
+  /** Video nền MP4/WEBM (tuỳ chọn) — chỉ phát trên máy tính; ảnh vẫn là ảnh chờ + ảnh điện thoại. */
+  videoUrl?: string | null;
 };
 
 type HeroBannerProps = {
@@ -27,6 +29,57 @@ type HeroBannerProps = {
 
 /** Thời gian mỗi banner hiện trước khi tự chuyển — khớp thời lượng thanh tiến trình (CSS `hero-progress`). */
 const INTERVAL_MS = 6500;
+/** Banner có video: hiện lâu hơn để video kịp chạy hết 1 vòng ngắn (khuyến nghị 5–15 giây). */
+const VIDEO_INTERVAL_MS = 12000;
+
+/**
+ * Video nền trong khung ảnh banner — CHỈ tạo trên máy tính (≥ lg) và khi không bật giảm chuyển động, nên
+ * điện thoại không tải video. Tắt tiếng + lặp + `playsInline` (trình duyệt cho tự chạy). Ẩn (opacity 0) tới
+ * khi thật sự chạy → trước đó người xem thấy ảnh banner bên dưới, không chớp đen. `play` = banner đang hiện
+ * và chưa bấm tạm dừng (WCAG 2.2.2: nút tạm dừng phải dừng được video).
+ */
+function HeroVideo({ src, play, enabled }: { src: string; play: boolean; enabled: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [desktop, setDesktop] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setDesktop(mq.matches);
+    const frame = requestAnimationFrame(update);
+    mq.addEventListener("change", update);
+    return () => {
+      cancelAnimationFrame(frame);
+      mq.removeEventListener("change", update);
+    };
+  }, []);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    if (play) v.play().catch(() => {});
+    else v.pause();
+  }, [play, desktop, enabled]);
+
+  if (!desktop || !enabled) return null;
+  return (
+    <video
+      ref={ref}
+      src={src}
+      muted
+      loop
+      playsInline
+      preload={play ? "auto" : "metadata"}
+      aria-hidden="true"
+      tabIndex={-1}
+      onPlaying={() => setReady(true)}
+      className={cn(
+        "pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-700",
+        ready ? "opacity-100" : "opacity-0"
+      )}
+    />
+  );
+}
 
 /**
  * Banner chính Trang chủ — "bộ mặt" của website (đổi 19/10/2026 theo yêu cầu người dùng: ảnh phải RÕ
@@ -47,6 +100,8 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
   const touchX = useRef<number | null>(null);
   const count = slides.length;
   const current = slides[index] ?? slides[0];
+  const hasVideo = slides.some((s) => s.videoUrl);
+  const intervalMs = current?.videoUrl ? VIDEO_INTERVAL_MS : INTERVAL_MS;
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -62,9 +117,9 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
   // Hẹn giờ theo từng lượt (gắn với `index`) — bấm chuyển tay thì đếm lại từ đầu.
   useEffect(() => {
     if (count < 2 || paused || reducedMotion) return;
-    const id = window.setTimeout(() => setIndex((i) => (i + 1) % count), INTERVAL_MS);
+    const id = window.setTimeout(() => setIndex((i) => (i + 1) % count), intervalMs);
     return () => window.clearTimeout(id);
-  }, [index, count, paused, reducedMotion]);
+  }, [index, count, paused, reducedMotion, intervalMs]);
 
   const go = (next: number) => setIndex((next + count) % count);
   const autoplay = count > 1 && !paused && !reducedMotion;
@@ -102,7 +157,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
               <span
                 key={`${index}-${autoplay}`}
                 className={cn("absolute inset-y-0 left-0 rounded-full", light ? "bg-white" : "bg-accent-600", autoplay ? "hero-progress" : "w-full")}
-                style={autoplay ? { animationDuration: `${INTERVAL_MS}ms` } : undefined}
+                style={autoplay ? { animationDuration: `${intervalMs}ms` } : undefined}
               />
             )}
             {i < index && <span className={cn("absolute inset-0 rounded-full", light ? "bg-white/70" : "bg-brand-900/35")} />}
@@ -122,7 +177,9 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
         <button
           type="button"
           onClick={() => setPaused((v) => !v)}
-          aria-label={paused ? "Tiếp tục trình chiếu" : "Tạm dừng trình chiếu"}
+          aria-label={
+            count > 1 ? (paused ? "Tiếp tục trình chiếu" : "Tạm dừng trình chiếu") : paused ? "Phát tiếp video" : "Tạm dừng video"
+          }
           aria-pressed={paused}
           className={btn}
         >
@@ -132,12 +189,16 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
           )}
         </button>
-        <button type="button" onClick={() => go(index - 1)} aria-label="Banner trước" className={btn}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
-        <button type="button" onClick={() => go(index + 1)} aria-label="Banner tiếp theo" className={btn}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
+        {count > 1 && (
+          <>
+            <button type="button" onClick={() => go(index - 1)} aria-label="Banner trước" className={btn}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+            <button type="button" onClick={() => go(index + 1)} aria-label="Banner tiếp theo" className={btn}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          </>
+        )}
       </div>
     );
   };
@@ -185,6 +246,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
                 sizes="100vw"
                 className="object-cover"
               />
+              {slide.videoUrl && <HeroVideo src={slide.videoUrl} play={i === index && !paused} enabled={!reducedMotion} />}
               {slide.linkUrl && (
                 <Link
                   href={slide.linkUrl}
@@ -199,7 +261,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
           <div className="pointer-events-none absolute inset-x-0 top-0 hidden h-36 bg-gradient-to-b from-brand-900/55 to-transparent lg:block" />
 
           {/* ≥ sm: chú thích + điều khiển gọn ở góc dưới ảnh */}
-          {(count > 1 || current?.caption) && (
+          {(count > 1 || current?.caption || hasVideo) && (
             <div className="pointer-events-none absolute inset-x-0 bottom-5 hidden sm:block lg:bottom-8">
               <div className="mx-auto flex max-w-[1320px] items-end justify-between gap-6 px-8">
                 <div className="min-w-0 flex-1" aria-live="polite">
@@ -217,10 +279,16 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
                     </div>
                   )}
                 </div>
-                {count > 1 && (
-                  <div className="pointer-events-auto flex shrink-0 items-center gap-3 rounded-full bg-brand-900/60 py-1 pl-4 pr-1 backdrop-blur-md">
-                    {counter(true)}
-                    {progressBars(true)}
+                {/* Nhiều banner: đủ bộ điều khiển. 1 banner có video: chỉ nút tạm dừng, chỉ máy tính (nơi video phát). */}
+                {(count > 1 || hasVideo) && (
+                  <div
+                    className={cn(
+                      "pointer-events-auto shrink-0 items-center gap-3 rounded-full bg-brand-900/60 py-1 pr-1 backdrop-blur-md",
+                      count > 1 ? "flex pl-4" : "hidden pl-1 lg:flex"
+                    )}
+                  >
+                    {count > 1 && counter(true)}
+                    {count > 1 && progressBars(true)}
                     {controlButtons(true)}
                   </div>
                 )}

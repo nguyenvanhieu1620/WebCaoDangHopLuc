@@ -10,6 +10,7 @@ import { requirePermission } from "@/lib/admin-auth";
 import Link from "next/link";
 import { AdminNewButton } from "@/components/admin/AdminFormLayout";
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { CopyTextButton } from "@/components/admin/CopyTextButton";
 import { paginate } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Thư viện media" };
@@ -104,7 +105,7 @@ export default async function AdminMediaPage({
                     {item.filename}
                   </div>
                   <div className="mt-1 flex items-center justify-between">
-                    <span className="text-[10px] text-ink-faint">{item.type}</span>
+                    <CopyTextButton text={item.url} className="text-[10.5px] font-semibold text-brand-700 hover:underline" />
                     <form
                       action={async () => {
                         "use server";
