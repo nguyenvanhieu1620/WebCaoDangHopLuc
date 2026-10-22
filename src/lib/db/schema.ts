@@ -1,4 +1,4 @@
-import { pgTable, text, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 /**
@@ -94,7 +94,11 @@ export const posts = pgTable("posts", {
   updatedAt: text("updated_at")
     .notNull()
     .default(nowText),
-});
+}, (t) => [
+  // Trang tin công khai: bài đã đăng mới nhất trước (+ lọc theo chuyên mục).
+  index("posts_status_published_at_idx").on(t.status, t.publishedAt),
+  index("posts_category_id_idx").on(t.categoryId),
+]);
 
 /** Trang tĩnh có thể chỉnh sửa nội dung qua CMS (Giới thiệu, Liên hệ...). */
 export const pages = pgTable("pages", {
@@ -127,7 +131,9 @@ export const mediaItems = pgTable("media_items", {
   createdAt: text("created_at")
     .notNull()
     .default(nowText),
-});
+}, (t) => [
+  index("media_items_created_at_idx").on(t.createdAt),
+]);
 
 /** Ngành đào tạo — hiển thị ở Trang chủ và /nganh-dao-tao. */
 export const programs = pgTable("programs", {
@@ -453,7 +459,9 @@ export const events = pgTable("events", {
   createdAt: text("created_at")
     .notNull()
     .default(nowText),
-});
+}, (t) => [
+  index("events_start_at_idx").on(t.startAt),
+]);
 
 /** Tin nhắn gửi từ form Liên hệ công khai — admin xem/đổi trạng thái qua admin/lien-he. */
 export const contactMessages = pgTable("contact_messages", {
@@ -470,7 +478,11 @@ export const contactMessages = pgTable("contact_messages", {
   createdAt: text("created_at")
     .notNull()
     .default(nowText),
-});
+}, (t) => [
+  // Dashboard/danh sách admin: đếm tin "mới", lọc theo trạng thái, xếp theo ngày gửi.
+  index("contact_messages_status_idx").on(t.status),
+  index("contact_messages_created_at_idx").on(t.createdAt),
+]);
 
 /** Câu hỏi thường gặp — hiện ở /faq, admin sắp xếp qua sortOrder. */
 export const faqs = pgTable("faqs", {
@@ -591,7 +603,11 @@ export const admissionSubmissions = pgTable("admission_submissions", {
   createdAt: text("created_at")
     .notNull()
     .default(nowText),
-});
+}, (t) => [
+  // Mùa tuyển sinh bảng này phình nhanh nhất: Dashboard đếm hồ sơ mới + biểu đồ 30 ngày, danh sách lọc trạng thái.
+  index("admission_submissions_status_idx").on(t.status),
+  index("admission_submissions_created_at_idx").on(t.createdAt),
+]);
 
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type Post = typeof posts.$inferSelect;

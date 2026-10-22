@@ -1,0 +1,7 @@
+# /etc/cron.d/hopluc-backup — sao lưu CSDL + ảnh tải lên lúc 2:15 sáng mỗi ngày (giờ của VPS — đặt múi giờ
+# Asia/Ho_Chi_Minh, xem deploy/README.md mục 1). Cài: sudo install -m 644 deploy/cron/hopluc-backup /etc/cron.d/
+# Muốn đẩy bản sao lưu (đã mã hoá) ra ngoài VPS: bỏ dấu # ở dòng RCLONE_REMOTE và đặt tên remote của rclone.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# RCLONE_REMOTE=gdrive:hopluc-backups
+15 2 * * * hopluc bash /srv/hopluc/current/deploy/scripts/backup.sh >> /srv/hopluc/backups/backup.log 2>&1

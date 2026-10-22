@@ -116,7 +116,7 @@ drizzle.config.ts
 
 Hosting đã chọn: **VPS** — Postgres cài ngay trên VPS (hoặc chạy bằng chính
 `docker-compose.yml` với mật khẩu mạnh), ảnh upload vẫn lưu `public/uploads/` trên
-ổ đĩa VPS. Hướng dẫn cài + sao lưu: CLAUDE.md mục 9 "Postgres trên VPS".
+ổ đĩa VPS. Hướng dẫn triển khai VPS từng bước (Nginx, systemd, triển khai, sao lưu mã hoá, khôi phục): **`deploy/README.md`**.
 
 Những điểm khác SQLite cần nhớ khi viết code:
 - Danh sách luôn sắp xếp có khoá phụ `seq` cuối cùng (VD `orderBy: [asc(t.sortOrder), asc(t.seq)]`) — Postgres không giữ thứ tự chèn cho các dòng trùng khoá sắp xếp.

@@ -1,0 +1,32 @@
+# Dependabot tự mở Pull Request cập nhật thư viện (CI ở .github/workflows/ci.yml kiểm tra trước khi gộp).
+# Bản vá bảo mật được mở ngay khi có cảnh báo nếu bật "Dependabot security updates" trong
+# GitHub → Settings → Code security (bật tay, file này không bật được).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    groups:
+      # Gộp các bản nhỏ (minor/patch) thành 1 PR/tuần cho đỡ nhiễu.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Phiên bản lớn của các công cụ này phải sửa code/cấu hình nhiều — nâng chủ động khi có kế hoạch.
+      - dependency-name: tailwindcss
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

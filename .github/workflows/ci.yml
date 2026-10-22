@@ -1,0 +1,48 @@
+# Kiểm tra tự động mỗi lần push / mở Pull Request: lint → kiểu TypeScript → test → build,
+# và chặn nếu thư viện chạy trên web (không tính công cụ dev) có lỗ hổng mức cao/nghiêm trọng.
+# Không cần Postgres: test dùng PGlite (Postgres trong bộ nhớ), build không truy vấn CSDL.
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cài thư viện
+        run: npm ci --no-fund
+
+      - name: Lỗ hổng thư viện chạy trên web (mức cao trở lên)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Kiểm tra kiểu TypeScript
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

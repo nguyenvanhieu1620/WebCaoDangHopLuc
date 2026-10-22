@@ -1728,6 +1728,47 @@ Người dùng hỏi video hiện được ở đâu, rồi đồng ý làm cả
   được, điện thoại 0 thẻ video/0 lượt tải; bản production: file thêm sau khi khởi động → 200, `/_next/image` 200,
   Range 206, lách thư mục 404; tải ảnh thật qua admin hiện ngay. Đã xoá hết dữ liệu thử.
 
+### DevOps lượt 2 — CI, Node 24, index DB, bộ triển khai VPS (22/10/2026)
+Làm tiếp các mục còn lại của đợt rà soát (không cần chọn VPS/tên miền trước):
+- **CI** `.github/workflows/ci.yml` (push `main`/`feat/**` + PR): `npm ci` → `npm audit --omit=dev --audit-level=high`
+  → lint → tsc → test → build. Không cần Postgres (test dùng PGlite; đã thử `next build` với DATABASE_URL trỏ cổng
+  chết vẫn build được). **Dependabot** `.github/dependabot.yml`: npm hằng tuần (gộp minor/patch, bỏ qua major của
+  Tailwind/ESLint/TypeScript/@types/node), GitHub Actions hằng tháng. "Dependabot security updates" phải tự bật trong
+  GitHub → Settings → Code security.
+- **Node 24 cố định**: `.nvmrc` = 24, `engines.node` ">=24 <25", `@types/node` ^24. `next.config.js`
+  `poweredByHeader: false`. `.gitattributes` ép LF cho `*.sh`, `*.service`, `*.conf`, `deploy/**`.
+- **Index DB** (migration `0002_add_list_indexes.sql`): posts(status, published_at), posts(category_id),
+  admission_submissions(status), (created_at), contact_messages(status), (created_at), events(start_at),
+  media_items(created_at).
+- **`/api/health` thêm `disk`**: ổ chứa `public/uploads` còn < `HEALTH_MIN_FREE_MB` (mặc định 1024) → 503 —
+  dịch vụ theo dõi uptime báo động trước khi ổ đầy làm hỏng upload/Postgres.
+- **Bộ triển khai `deploy/`** — hướng dẫn từng bước ở `deploy/README.md` (Ubuntu 24.04: bảo vệ VPS, Node 24
+  NodeSource, **Postgres 17 từ kho PGDG** vì Ubuntu mặc định 16 không khôi phục được dump từ máy dev 17, user
+  `hopluc`, deploy key chỉ đọc, .env, systemd, certbot, Nginx, sao lưu, khôi phục, UptimeRobot). Thư mục VPS:
+  `/srv/hopluc/{repo, releases/<thời điểm>, current → bản đang chạy, shared/.env, shared/uploads, backups}`.
+  - `scripts/deploy.sh`: `git archive origin/main` → release mới → `npm ci --include=dev` → migrate → build →
+    gắn symlink `public/uploads` → `shared/uploads` (SAU build) → đổi `current` → restart → chờ `/api/health` 60s,
+    không đạt thì tự quay về bản trước; lỗi trước khi đổi thì xoá release dở, bản đang chạy không bị ảnh hưởng;
+    khoá `flock` chống chạy chồng (restart dùng `9>&-` để không truyền khoá); giữ 3 release; từ chối chạy nếu
+    `.env` thiếu `TRUST_PROXY_HOPS` ≥ 1.
+  - `scripts/backup.sh` (cron 2:15 `cron/hopluc-backup`): `pg_dump -Fc` + nén `shared/uploads` → 1 tệp/ngày, mã hoá
+    `age` bằng khoá CÔNG KHAI (khoá bí mật cất ở máy tính trường, không để trên VPS), quyền 600, giữ 7 ngày + 4 Chủ
+    nhật, `RCLONE_REMOTE` đẩy ra ngoài (chỉ bản đã mã hoá).
+  - `nginx/hopluc.conf` (thay `__DOMAIN__`): http→https, www→tên miền chính, HSTS, `client_max_body_size 60m`,
+    header IP cho `TRUST_PROXY_HOPS="1"`, `limit_req` 5r/s burst 20 cho `/api/`, `/uploads/` đọc thẳng từ
+    `/srv/hopluc/shared` chỉ các đuôi cho phép (khác → 404). `systemd/hopluc-web.service`: `next start -H 127.0.0.1
+    -p 3000` từ `current`, Restart=always, MemoryMax 1536M, NoNewPrivileges/ProtectSystem. `sudoers/hopluc`: chỉ
+    restart/status/journalctl dịch vụ web.
+- **Lỗi thật phát hiện khi thử `deploy.sh` trong container Linux**: Turbopack lần theo `UPLOAD_DIR` lúc build, gặp
+  `public/uploads` là symlink ra ngoài dự án → build hỏng. Sửa 2 lớp: `/* turbopackIgnore: true */` trong
+  `src/lib/upload-dir.ts` + deploy gắn symlink sau khi build. **Đừng bỏ comment turbopackIgnore đó.**
+- Đã kiểm chứng: `nginx -t` + chạy thật Nginx 1.24 (Docker) trước bản production — redirect, HSTS, không còn
+  X-Powered-By, `/uploads` 200 + Range 206, `.gitkeep`/`.html` 404, `/_next/image` 200, body 5MB tới được web (web
+  tự trả 413 JSON), 70MB bị Nginx chặn, 40 request dồn → 429. `backup.sh` trong container Postgres 17 với DB dev:
+  giải mã lại được, 26 bảng có dữ liệu, đủ ảnh, chạy lại cùng ngày giữ 1 bản. `deploy.sh` trong container Node 24
+  (systemctl giả lập): triển khai lần đầu, health sai → tự quay về, KEEP_RELEASES=1 dọn đúng, build với symlink OK.
+  tsc, lint, `npm test` 62/62.
+
 ### Rà soát DevOps — vá 7 điểm trước khi lên VPS (22/10/2026)
 Người dùng nhờ "đóng vai DevOps" rà cả dự án, rồi chọn sửa 7 mục đầu (các mục còn lại — bộ file `deploy/`
 Nginx/systemd/backup, CI, theo dõi uptime, cache — để sau khi chọn VPS/tên miền):
@@ -1899,7 +1940,7 @@ Người dùng: "giờ chuyển db sang postgreSQL" — chọn qua `AskUserQuest
 5. ~~Rà soát lần 2 (admin + web công khai)~~ — **XONG** (xem mục 5 "Rà soát admin + web công khai lần 2") — vá 8 vấn đề.
 6. ~~Nhóm nâng cấp nhỏ đã hoãn~~ — **XONG** (xem mục 5 "Nội dung demo + nhóm nâng cấp nhỏ đã hoãn"): 404/error page tuỳ chỉnh, CSP thật (đã test kỹ), hạ tầng gửi email qua Resend + "Quên mật khẩu" cho admin, Google Analytics (code sẵn, chờ người dùng điền Measurement ID), nội dung demo cho 6 ngành đào tạo.
 7. **Còn lại, cần người dùng tự làm** (không phải việc kỹ thuật): ảnh thật cho các mục đang trống (`gallery_items`/`heroImageUrl`/`photoUrl`/`avatarUrl` — đã thử tự lấy demo từ Wikimedia Commons nhưng không dùng được, xem mục 5 lý do), số liệu "3 công khai" thật (4 trang `admin/trang-tinh` slug `cong-khai-*`, xác nhận với trường có bắt buộc theo Thông tư 36/2017 không), cấu hình `lmsUrl` (`admin/cai-dat`), tạo tài khoản Resend/Google Analytics rồi điền key/Measurement ID vào `.env` (xem mục 9).
-8. ~~Chuyển DB sang PostgreSQL~~ — **XONG 06/10/2026** (xem mục 5 "Chuyển sang PostgreSQL"). Ảnh KHÔNG chuyển S3 vì hosting chọn VPS (ổ đĩa bền). Việc tiếp theo trước khi lên mạng: thuê VPS, cài Postgres + Node theo mục 9 "Postgres trên VPS", cấu hình `.env` production, sao lưu định kỳ.
+8. ~~Chuyển DB sang PostgreSQL~~ — **XONG 06/10/2026** (xem mục 5 "Chuyển sang PostgreSQL"). Ảnh KHÔNG chuyển S3 vì hosting chọn VPS (ổ đĩa bền). Việc tiếp theo trước khi lên mạng: thuê VPS rồi làm theo **`deploy/README.md`** (đầy đủ hơn mục 9 "Postgres trên VPS" — dùng bản trong deploy/ khi 2 nơi khác nhau).
 9. Giai đoạn 2 (xa hơn): thiết kế lại UI cho Quản lý đào tạo/Điểm số/Học phí/LMS riêng — SRS gốc có đặc tả chi tiết, nhưng nên viết SRS riêng cập nhật khi bắt đầu (SRS gốc đã hơi cũ so với quyết định thực tế đã đổi dọc đường).
 
 ---

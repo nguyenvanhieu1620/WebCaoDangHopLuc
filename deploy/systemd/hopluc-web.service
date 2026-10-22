@@ -1,0 +1,36 @@
+# Chạy web như dịch vụ hệ thống: tự bật khi VPS khởi động, tự chạy lại khi lỗi, log vào journald.
+# Cài: sudo cp deploy/systemd/hopluc-web.service /etc/systemd/system/
+#      sudo systemctl daemon-reload && sudo systemctl enable --now hopluc-web
+# Xem log: journalctl -u hopluc-web -f
+[Unit]
+Description=Website Truong Cao dang Y Duoc Hop Luc (Next.js)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hopluc
+Group=hopluc
+# "current" là symlink tới bản build đang dùng (deploy/scripts/deploy.sh đổi symlink rồi khởi động lại).
+WorkingDirectory=/srv/hopluc/current
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+# Chỉ nghe 127.0.0.1 — khách vào qua Nginx (https), không vào thẳng được cổng 3000.
+# CHỈ 1 tiến trình: giới hạn tần suất lưu trong bộ nhớ (src/lib/rate-limit.ts), đừng chạy nhiều bản song song.
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+# Rò rỉ bộ nhớ không làm treo cả VPS (4GB): vượt ngưỡng thì dịch vụ bị khởi động lại.
+MemoryMax=1536M
+LimitNOFILE=65536
+# Hạn chế quyền của tiến trình web
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

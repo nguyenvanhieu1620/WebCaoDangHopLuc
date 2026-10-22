@@ -140,11 +140,25 @@ test("honeypot không ghi dữ liệu; giới hạn tần suất vẫn có hiệ
   }
 });
 
-test("/api/health báo ok khi CSDL trả lời và thư mục upload ghi được, không cache", async () => {
+test("/api/health báo ok khi CSDL trả lời, thư mục upload ghi được, ổ đĩa còn trống; không cache", async () => {
   const response = await health.GET();
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store");
   const data = await response.json();
   assert.equal(data.status, "ok");
-  assert.deepEqual(data.checks, { database: "ok", uploads: "ok" });
+  assert.deepEqual(data.checks, { database: "ok", uploads: "ok", disk: "ok" });
+});
+
+test("/api/health trả 503 khi ổ đĩa còn trống ít hơn ngưỡng", async () => {
+  process.env.HEALTH_MIN_FREE_MB = String(Number.MAX_SAFE_INTEGER);
+  try {
+    const response = await health.GET();
+    assert.equal(response.status, 503);
+    const data = await response.json();
+    assert.equal(data.status, "error");
+    assert.equal(data.checks.disk, "error");
+    assert.equal(data.checks.database, "ok");
+  } finally {
+    delete process.env.HEALTH_MIN_FREE_MB;
+  }
 });
