@@ -4,6 +4,7 @@ import { createClient } from "@libsql/client";
 import { count, getTableColumns, getTableName, is, sql } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
 import { closeDb, db } from "./client";
+import { refuseInProduction } from "./script-guard";
 import * as schema from "./schema";
 
 /**
@@ -40,6 +41,7 @@ function coerce(value: unknown, dataType: string): unknown {
 }
 
 async function main() {
+  refuseInProduction("db:import-sqlite", "--allow-production");
   const filePath = SQLITE_URL.replace(/^file:/, "");
   if (!fs.existsSync(filePath)) throw new Error(`Không thấy file SQLite: ${filePath} (đặt SQLITE_URL trong .env).`);
   const sqlite = createClient({ url: SQLITE_URL });

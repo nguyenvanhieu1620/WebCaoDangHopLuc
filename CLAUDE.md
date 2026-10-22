@@ -113,7 +113,7 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
 ## 4. Kiến trúc kỹ thuật & lý do lựa chọn
 
 ### 4.1 Stack
-- **Next.js 16.3.1** (App Router, Turbopack) + **React 19.2** + TypeScript
+- **Next.js 16.4.2** (App Router, Turbopack; nâng từ 16.3.1 ngày 22/10/2026 vì lỗ hổng RCE — xem mục 5 "Rà soát DevOps") + **React 19.2** + TypeScript
 - **Tailwind CSS 3** — design tokens tập trung ở `tailwind.config.ts`
 - **Drizzle ORM** + **PostgreSQL** (driver `pg`; dev chạy Postgres 17 trong Docker, production Postgres trên VPS — chuyển từ SQLite/`@libsql/client` ngày 06/10/2026, xem mục 5 "Chuyển sang PostgreSQL")
 - Auth tự viết: **bcryptjs** (hash mật khẩu) + session cookie tự ký bằng HMAC (`node:crypto`)
@@ -1721,6 +1721,43 @@ Người dùng hỏi video hiện được ở đâu, rồi đồng ý làm cả
   trải nghiệm + banner tạm với video WEBM tạo trong trình duyệt → lightbox phát, banner phát trên máy tính, tạm dừng
   được, điện thoại 0 thẻ video/0 lượt tải; bản production: file thêm sau khi khởi động → 200, `/_next/image` 200,
   Range 206, lách thư mục 404; tải ảnh thật qua admin hiện ngay. Đã xoá hết dữ liệu thử.
+
+### Rà soát DevOps — vá 7 điểm trước khi lên VPS (22/10/2026)
+Người dùng nhờ "đóng vai DevOps" rà cả dự án, rồi chọn sửa 7 mục đầu (các mục còn lại — bộ file `deploy/`
+Nginx/systemd/backup, CI, theo dõi uptime, cache — để sau khi chọn VPS/tên miền):
+1. **Next 16.3.1 → 16.4.2** (+ `eslint-config-next`, `npm audit fix` → sharp 0.35.5): 16.3.1 có lỗ hổng
+   critical (RCE qua Image Optimization/AVIF, qua `next/og` — web dùng ở `opengraph-image.tsx`, RCE riêng máy
+   chủ Windows, đầu độc cache, SSRF). `npm audit --omit=dev`: **0 lỗ hổng**. Còn 13 lỗi chỉ ở công cụ build/dev
+   (Tailwind 3, drizzle-kit, ESLint) — vá phải nâng major, không chạy lúc web phục vụ khách. Version Next giữ
+   ghim cứng (không `^`). **Máy dev đang chạy `npm run dev` phải khởi động lại** sau khi đổi node_modules.
+2. **Cảnh báo cấu hình lúc khởi động** — `src/instrumentation.ts` + `src/lib/prod-config.ts` (hàm thuần, có
+   test): production mà `TRUST_PROXY_HOPS=0` (cả web dùng chung 1 bộ đếm → chỉ 5 hồ sơ/10 phút!), tên miền
+   còn localhost/không https, `SESSION_SECRET` < 32 ký tự, thiếu `DATABASE_URL` → in cảnh báo đầu log (không
+   chặn khởi động). `.env.example` ghi rõ VPS sau Nginx BẮT BUỘC `TRUST_PROXY_HOPS="1"`.
+3. **Upload: đuôi file theo loại đã kiểm tra + kiểm tra nội dung** — `src/lib/file-signature.ts`
+   (`EXTENSION_BY_MIME`, `contentMatchesType` đọc chữ ký đầu file). Trước đây đuôi lấy từ tên gốc: `x.html`
+   khai `image/png` được lưu nguyên `.html`, `next start` sẽ phục vụ như trang HTML trên tên miền trường
+   (XSS từ tài khoản admin quyền thấp). Giờ nội dung không khớp → lỗi (trang lỗi admin), khớp → lưu đuôi chuẩn.
+   **Thêm loại file cho phép mới: thêm cả vào `EXTENSION_BY_MIME` + `CHECKS`** (test `ops.test.ts` bắt thiếu).
+4. **Chặn script dev trên máy thật** — `src/lib/db/script-guard.ts`: nhận môi trường thật qua
+   `NODE_ENV=production` HOẶC `NEXT_PUBLIC_SITE_URL` không phải localhost/`.test`. `demo:load` bị chặn hẳn
+   (`demo:clean` vẫn chạy được). `db:seed`/`db:import-sqlite` chặn trừ khi thêm `-- --allow-production`;
+   seed ở môi trường thật lấy mật khẩu admin đầu tiên từ `SEED_ADMIN_PASSWORD` (≥ 12 ký tự, đặt tạm khi chạy,
+   không lưu .env) và KHÔNG tạo 3 hồ sơ tuyển sinh mẫu. Đã thử trên DB nháp rồi xoá.
+5. **Thời gian chờ gọi dịch vụ ngoài**: Resend 8s (`email.ts`), DeepL 15s (`translate.ts`, báo lỗi tiếng Việt
+   khi quá giờ). Form tuyển sinh/liên hệ gửi email báo admin bằng `sendEmailAfterResponse()` (`after()` của
+   Next — trả kết quả cho người nộp trước, gửi email sau; ngoài request thì gửi luôn không chờ). Quên mật khẩu
+   vẫn chờ gửi (có timeout).
+6. **Pool Postgres** (`client.ts`): `connectionTimeoutMillis` 5s (pg mặc định chờ vô hạn → trang treo khi
+   Postgres sập), `statement_timeout` 30s (đổi qua `DATABASE_STATEMENT_TIMEOUT_MS`),
+   `idle_in_transaction_session_timeout` 60s. Đã đo: host không tới được → lỗi sau 5,0s; `pg_sleep(5)` với
+   giới hạn 1,5s → huỷ sau 1,5s.
+7. **`GET /api/health`** — `SELECT 1` (3s) + thư mục `public/uploads` ghi được → 200 `{"status":"ok",…}` /
+   503; `no-store`, không lộ chi tiết lỗi. Dùng cho theo dõi uptime và script triển khai sau khi khởi động lại.
+- Kiểm chứng: tsc, lint, `npm test` **61/61** (thêm `tests/ops.test.ts` + test health), `next build`; bản
+  production: 15 route công khai 200, 404 đúng, `/opengraph-image` + `/_next/image` 200, gửi thật hồ sơ/liên hệ
+  (~40ms, đã xoá), upload `.html` giả PNG bị chặn (không ghi gì), PNG thật tên `.html` lưu thành `.png` (đã
+  xoá), Console sạch ở trang chủ + admin.
 
 ### Kiểm tra F12 (Console + Issues) — 12/10/2026
 Người dùng nhờ xem F12. Quét 22 trang công khai + 28 trang admin (dev) rồi xác nhận lại 41 trang trên bản

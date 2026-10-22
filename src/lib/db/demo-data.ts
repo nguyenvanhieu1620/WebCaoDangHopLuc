@@ -4,6 +4,7 @@ import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import { closeDb, db } from "./client";
+import { refuseInProduction } from "./script-guard";
 import * as s from "./schema";
 
 /**
@@ -418,6 +419,9 @@ async function clean() {
 }
 
 const command = process.argv[2];
+// Nạp demo (ảnh người mẫu Unsplash làm "giảng viên"…) KHÔNG BAO GIỜ được chạy trên môi trường thật — không có cờ
+// vượt qua. `clean` vẫn cho chạy: dùng để gỡ nếu lỡ nạp.
+if (command === "load") refuseInProduction("demo:load");
 (command === "clean" ? clean() : command === "load" ? load() : Promise.reject(new Error("Dùng: demo-data.ts load | clean")))
   .catch((err) => {
     console.error(err);

@@ -32,6 +32,13 @@ function createPool(): Pool {
       process.env.DATABASE_URL || (process.env.NODE_ENV === "production" ? undefined : DEV_DATABASE_URL),
     // 10 kết nối là thừa cho 1 trường (mỗi trang chạy song song ~5-10 truy vấn ngắn).
     max: Number(process.env.DATABASE_POOL_MAX) || 10,
+    // Postgres không trả lời (tắt, mất mạng, hết kết nối) → báo lỗi sau 5 giây thay vì để trang treo mãi
+    // (mặc định của pg là chờ vô hạn).
+    connectionTimeoutMillis: 5_000,
+    // Câu truy vấn chạy quá lâu thì Postgres tự huỷ — 1 truy vấn kẹt không giữ mãi 1 kết nối trong pool.
+    statement_timeout: Number(process.env.DATABASE_STATEMENT_TIMEOUT_MS) || 30_000,
+    // Transaction bị bỏ dở (lỗi giữa chừng không rollback) không giữ khoá bảng mãi.
+    idle_in_transaction_session_timeout: 60_000,
     // Script (migrate/seed/demo) tự thoát khi xong việc thay vì treo chờ kết nối rảnh.
     allowExitOnIdle: true,
   });

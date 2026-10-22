@@ -10,6 +10,7 @@ let admission: typeof import("../src/app/api/admissions/route");
 let lookup: typeof import("../src/app/api/admissions/tra-cuu/route");
 let contact: typeof import("../src/app/api/contact/route");
 let newsletter: typeof import("../src/app/api/newsletter/route");
+let health: typeof import("../src/app/api/health/route");
 let database: typeof import("../src/lib/db");
 let pglite: PGlite;
 let requestId = 0;
@@ -36,6 +37,7 @@ before(async () => {
   lookup = await import("../src/app/api/admissions/tra-cuu/route");
   contact = await import("../src/app/api/contact/route");
   newsletter = await import("../src/app/api/newsletter/route");
+  health = await import("../src/app/api/health/route");
 });
 
 after(async () => {
@@ -136,4 +138,13 @@ test("honeypot không ghi dữ liệu; giới hạn tần suất vẫn có hiệ
     }));
     assert.equal(result.status, index < 5 ? 400 : 429);
   }
+});
+
+test("/api/health báo ok khi CSDL trả lời và thư mục upload ghi được, không cache", async () => {
+  const response = await health.GET();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  const data = await response.json();
+  assert.equal(data.status, "ok");
+  assert.deepEqual(data.checks, { database: "ok", uploads: "ok" });
 });

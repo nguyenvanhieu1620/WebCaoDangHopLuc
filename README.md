@@ -131,6 +131,9 @@ Những điểm khác SQLite cần nhớ khi viết code:
 3. **Đặt `DATABASE_URL` trỏ tới Postgres trên VPS** với user/mật khẩu riêng, mạnh (không dùng `hopluc_dev`), chạy `npm run db:migrate`, rồi `npm run demo:clean` trước khi nhập dữ liệu thật.
 4. **Sao lưu định kỳ** cả database (`pg_dump`) lẫn thư mục `public/uploads/` — ảnh nằm trên ổ đĩa VPS, không có bản sao nào khác.
 5. Đặt `.env` thật ngoài git (đã có sẵn trong `.gitignore`).
+6. **Chạy sau Nginx: đặt `TRUST_PROXY_HOPS="1"`** — để `0` thì mọi khách dùng chung 1 bộ đếm giới hạn (cả web chỉ nhận 5 hồ sơ tuyển sinh / 10 phút). Web in cảnh báo cấu hình còn thiếu ngay khi khởi động ở chế độ production.
+7. **Theo dõi `/api/health`** (200 = CSDL + thư mục upload ổn, 503 = có lỗi) bằng dịch vụ uptime và sau mỗi lần triển khai.
+8. `demo:load` không chạy được trên môi trường thật; `db:seed`/`db:import-sqlite` cần thêm `-- --allow-production` (seed khi đó lấy mật khẩu admin đầu tiên từ biến `SEED_ADMIN_PASSWORD`).
 
 ## 7. Kiểm tra và vận hành
 

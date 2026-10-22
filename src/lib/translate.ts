@@ -6,6 +6,8 @@
  *    không cần thao tác thêm. Ô nào admin đã tự gõ/sửa tay thì KHÔNG bị ghi đè.
  */
 
+const TRANSLATE_TIMEOUT_MS = 15_000;
+
 function endpointFor(apiKey: string): string {
   // Key DeepL Free có đuôi ":fx" — endpoint free/pro khác nhau, key nào endpoint đó.
   return apiKey.endsWith(":fx")
@@ -32,14 +34,24 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
   params.set("source_lang", "VI");
   params.set("target_lang", "EN-US");
 
-  const res = await fetch(endpointFor(apiKey), {
-    method: "POST",
-    headers: {
-      Authorization: `DeepL-Auth-Key ${apiKey}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params.toString(),
-  });
+  let res: Response;
+  try {
+    res = await fetch(endpointFor(apiKey), {
+      method: "POST",
+      headers: {
+        Authorization: `DeepL-Auth-Key ${apiKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+      // DeepL treo thì bỏ — không giữ thao tác Lưu của admin chờ mãi (lỗi dịch không chặn việc lưu).
+      signal: AbortSignal.timeout(TRANSLATE_TIMEOUT_MS),
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "TimeoutError") {
+      throw new Error(`DeepL không phản hồi sau ${TRANSLATE_TIMEOUT_MS / 1000} giây — thử dịch lại sau.`);
+    }
+    throw new Error("Không kết nối được tới DeepL — kiểm tra mạng của máy chủ rồi thử lại.");
+  }
 
   if (!res.ok) {
     if (res.status === 403) {

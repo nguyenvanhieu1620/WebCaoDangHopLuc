@@ -8,6 +8,11 @@
  * gửi liên hệ, quên mật khẩu vẫn phải hoạt động dù chưa bật email).
  */
 
+import { after } from "next/server";
+
+/** Resend chậm/treo thì bỏ sau chừng này — không giữ request (và người dùng) chờ mãi. */
+const SEND_TIMEOUT_MS = 8000;
+
 /** Escape HTML cơ bản — dữ liệu người dùng nhập (họ tên, nội dung...) được chèn thẳng vào email HTML. */
 export function escapeHtml(input: string): string {
   return input
@@ -34,11 +39,24 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ from, to, subject, html }),
+      signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
     });
     if (!res.ok) {
       console.error("Gửi email thất bại:", res.status, await res.text().catch(() => ""));
     }
   } catch (err) {
     console.error("Gửi email lỗi:", err);
+  }
+}
+
+/**
+ * Gửi email báo admin SAU khi đã trả phản hồi cho người dùng (`after()` của Next) — người nộp hồ
+ * sơ/liên hệ không phải chờ Resend. Gọi ngoài request (test, script) thì gửi luôn, không chờ.
+ */
+export function sendEmailAfterResponse(input: SendEmailInput): void {
+  try {
+    after(() => sendEmail(input));
+  } catch {
+    void sendEmail(input);
   }
 }

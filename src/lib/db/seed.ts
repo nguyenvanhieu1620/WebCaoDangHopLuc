@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { closeDb, db } from "./client";
 import { slugify } from "../utils";
 import { autoFillTranslations } from "../translate";
+import { looksLikeProduction, refuseInProduction } from "./script-guard";
 import {
   adminUsers,
   posts,
@@ -30,6 +31,18 @@ import {
  * Dùng: npm run db:seed
  */
 async function main() {
+  // Môi trường thật: dừng hẳn, trừ khi cố ý thêm cờ --allow-production (xem script-guard.ts).
+  refuseInProduction("db:seed", "--allow-production");
+  const production = looksLikeProduction();
+  // Máy dev: mật khẩu mẫu ghi trong CLAUDE.md. Môi trường thật: KHÔNG BAO GIỜ dùng mật khẩu mẫu —
+  // lấy từ SEED_ADMIN_PASSWORD (chỉ đặt tạm khi chạy lệnh, không lưu vào .env).
+  const adminPassword = production ? (process.env.SEED_ADMIN_PASSWORD ?? "") : "HopLuc@2026";
+  if (production && adminPassword.length < 12) {
+    console.error("✋ Môi trường thật: đặt SEED_ADMIN_PASSWORD (ít nhất 12 ký tự) cho tài khoản admin đầu tiên rồi chạy lại.");
+    process.exitCode = 1;
+    return;
+  }
+
   console.log("Đang seed dữ liệu mẫu...");
 
   // Tài khoản admin đầu tiên
@@ -37,13 +50,13 @@ async function main() {
     where: (u, { eq }) => eq(u.email, "admin@hopluc.edu.vn"),
   });
   if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash("HopLuc@2026", 10);
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
     await db.insert(adminUsers).values({
       email: "admin@hopluc.edu.vn",
       passwordHash,
       name: "Admin Hợp Lực",
     });
-    console.log("✓ Tạo tài khoản admin: admin@hopluc.edu.vn / HopLuc@2026");
+    console.log(production ? "✓ Tạo tài khoản admin: admin@hopluc.edu.vn (mật khẩu = SEED_ADMIN_PASSWORD)" : "✓ Tạo tài khoản admin: admin@hopluc.edu.vn / HopLuc@2026");
   } else {
     console.log("• Tài khoản admin đã tồn tại, bỏ qua.");
   }
@@ -83,7 +96,9 @@ async function main() {
 
   // Vài hồ sơ đăng ký tuyển sinh mẫu
   const existingSubmissions = await db.query.admissionSubmissions.findMany();
-  if (existingSubmissions.length === 0) {
+  if (production) {
+    console.log("• Môi trường thật: không tạo hồ sơ tuyển sinh mẫu.");
+  } else if (existingSubmissions.length === 0) {
     await db.insert(admissionSubmissions).values([
       { fullName: "Nguyễn Thị Mai", phone: "0901234567", idNumber: "038201001234", program: "Điều dưỡng", status: "new" },
       { fullName: "Trần Văn Nam", phone: "0912345678", idNumber: "038201005678", program: "Dược", status: "reviewed" },

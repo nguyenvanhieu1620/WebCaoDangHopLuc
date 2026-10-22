@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { normalizeExternalUrl, slugify, videoSource } from "@/lib/utils";
 import { checkUpload, uploadKindOf } from "@/lib/upload-rules";
 import { UPLOAD_DIR } from "@/lib/upload-dir";
+import { contentMatchesType, EXTENSION_BY_MIME } from "@/lib/file-signature";
 
 /**
  * Lưu file upload thật vào public/uploads/ trên ổ đĩa máy chủ — đủ dùng khi deploy
@@ -21,13 +22,18 @@ export async function saveUploadedFile(file: File): Promise<SavedMedia> {
   const problem = checkUpload(file, ["image", "video", "document"]);
   if (problem) throw new Error(problem);
   const kind = uploadKindOf(file.type)!;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  // Loại file do trình duyệt tự khai — đọc chữ ký ở đầu file để chặn file giả dạng (file-signature.ts).
+  if (!contentMatchesType(file.type, buffer)) {
+    throw new Error(`"${file.name}" không phải tệp ${file.type} thật (nội dung không khớp định dạng) — hãy xuất/lưu lại đúng định dạng rồi tải lên.`);
+  }
 
   await mkdir(UPLOAD_DIR, { recursive: true });
 
-  const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-  const base = slugify(file.name.slice(0, file.name.length - ext.length)) || "file";
-  const filename = `${Date.now()}-${base}${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  // Đuôi lưu trên đĩa theo loại đã kiểm tra, KHÔNG theo tên gốc (tên "x.html" khai là ảnh PNG → "x.png").
+  const originalExt = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+  const base = slugify(file.name.slice(0, file.name.length - originalExt.length)) || "file";
+  const filename = `${Date.now()}-${base}${EXTENSION_BY_MIME[file.type]}`;
   await writeFile(path.join(UPLOAD_DIR, filename), buffer);
 
   const url = `/uploads/${filename}`;

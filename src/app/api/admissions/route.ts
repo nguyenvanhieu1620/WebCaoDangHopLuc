@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { sendEmail, escapeHtml } from "@/lib/email";
+import { sendEmailAfterResponse, escapeHtml } from "@/lib/email";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import {
   isValidCccd,
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     where: (s, { eq }) => eq(s.id, "main"),
   });
   if (settings?.email) {
-    await sendEmail({
+    sendEmailAfterResponse({
       to: settings.email,
       subject: `Hồ sơ tuyển sinh mới — ${created.fullName}`,
       html: `<p><strong>Có hồ sơ đăng ký xét tuyển mới từ website:</strong></p>
