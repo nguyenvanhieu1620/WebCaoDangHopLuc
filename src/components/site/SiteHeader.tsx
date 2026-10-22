@@ -112,8 +112,9 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
   // Kiểu VinUni: thanh điều hướng TRONG SUỐT đè lên banner đầu trang, chữ
   // trắng; cuộn xuống > 24px (hoặc mở menu/tìm kiếm) thì chuyển nền xanh đậm
   // mờ. Áp dụng MỌI trang công khai — trang nào cũng mở đầu bằng khối nền tối
-  // (HeroBanner ở Trang chủ, PageHero ở trang con), cả 2 kéo lên -mt-[72px]
-  // để nằm dưới thanh này. Đổi chiều cao (h-[72px] bên dưới) thì đổi cả 2 chỗ đó.
+  // (HeroBanner ở Trang chủ, PageHero ở trang con), cả 2 kéo lên -mt-[72px] lg:-mt-[84px]
+  // để nằm dưới thanh này. Đổi chiều cao (h-[72px] lg:h-[84px] bên dưới) thì đổi cả 2 chỗ đó
+  // (và các khối dính lg:top-32 / neo cuộn scroll-mt ở trang con — header tổng ~120px trên máy tính).
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -223,20 +224,20 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
     <div className="sticky top-0 z-50 font-sans" style={{ viewTransitionName: "site-header" }}>
       {/* Thanh thông báo */}
       <div className="bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 text-white">
-        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-6 py-2 font-mono text-[11px] uppercase tracking-wider sm:px-8">
+        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-6 py-2 font-mono text-[12px] uppercase tracking-wider sm:px-8 lg:text-[13px]">
           <span className="truncate">{settings.announcement}</span>
           <div className="flex shrink-0 items-center gap-5 opacity-90">
             <span className="hidden md:inline">Hotline: {settings.hotline}</span>
-            <span className="hidden md:inline">{settings.email}</span>
+            <span className="hidden xl:inline">{settings.email}</span>
             <LanguageSwitcher locale={locale} />
           </div>
         </div>
       </div>
 
-      {/* Thanh điều hướng chính — cao cố định 72px (HeroBanner dựa vào số này để kéo ảnh lên dưới header) */}
+      {/* Thanh điều hướng chính — cao cố định 72px, máy tính 84px (HeroBanner/PageHero dựa vào số này để nằm dưới header) */}
       <div
         className={cn(
-          "relative h-[72px] border-b transition-[background-color,box-shadow,border-color] duration-300",
+          "relative h-[72px] border-b transition-[background-color,box-shadow,border-color] duration-300 lg:h-[84px]",
           transparentNav
             ? "border-white/10 bg-transparent"
             : // Kính mờ chỉ từ lg: trên điện thoại (nhất là Safari iOS) backdrop-blur của thanh cố định phải
@@ -257,7 +258,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
               width={1137}
               height={315}
               sizes="160px"
-              className="h-8 w-auto lg:h-10"
+              className="h-8 w-auto lg:h-11"
               priority
             />
           </Link>
@@ -279,7 +280,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                   href={item.href}
                   className={cn(
                     // 1024–1279px: chữ/khoảng cách nhỏ hơn để menu Montserrat (rộng) không xuống 2 dòng.
-                    "relative flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors xl:px-3 xl:text-[13.5px]",
+                    "relative flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-2.5 text-[15px] font-semibold transition-colors xl:px-3 xl:text-[16px]",
                     // Gạch chân đỏ chạy ra khi hover / đang ở mục đó (kiểu VinUni).
                     "after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-accent-500 after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100",
                     isActive(item) ? "text-white after:scale-x-100" : "text-white/80 hover:text-white"
@@ -287,7 +288,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
                 >
                   {item.label}
                   {item.children.length > 0 && (
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="mt-0.5">
+                    <svg width="11" height="7" viewBox="0 0 10 6" fill="none" className="mt-0.5">
                       <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   )}
@@ -566,7 +567,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
           <nav
             id="site-mobile-nav"
             aria-label={t.mainNav}
-            className="max-h-[calc(100dvh-104px)] overflow-y-auto overscroll-contain border-t border-line bg-white px-5 pb-28 pt-3 lg:hidden"
+            className="max-h-[calc(100dvh-108px)] overflow-y-auto overscroll-contain border-t border-line bg-white px-5 pb-28 pt-3 lg:hidden"
           >
             <div className="flex flex-col gap-0.5">
             {navTree.primary.map((item) => (

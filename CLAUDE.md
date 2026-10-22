@@ -96,7 +96,12 @@ trường Claude Design** (cần runtime JSX đặc thù), nhưng đã được 
   - Logo đã chứa tên trường nên header/footer/sidebar KHÔNG ghép thêm chữ `SITE.name`/
     `SITE.tagline` cạnh logo nữa (tên vẫn ở `alt`). Header: ô trắng `px-3 py-1.5`, logo `h-8`
     mobile → `lg:h-10` (ô 139×44 → 168×52px) — đã đo 360–1440px: không tràn, menu 1 dòng ở
-    1024px, header giữ 72px.
+    1024px, header giữ 72px. **Đổi 22/10/2026**: máy tính (≥ lg) thanh menu cao **84px**, logo `lg:h-11`, chữ
+    menu `text-[15px]` (1024–1279px) / `xl:text-[16px]`; thanh thông báo trên cùng `text-[12px] lg:text-[13px]`
+    (`LanguageSwitcher` không tự đặt cỡ chữ, ăn theo thanh này), email chỉ hiện từ `xl` để dòng thông báo không bị
+    cắt ở 1024px. Đã đo VI + EN: menu 1 dòng, 1024px còn dư ~40px, **1280px chỉ còn dư ~28px** (VI) — thêm mục
+    menu chính là phải giảm chữ/khoảng cách lại. Header tổng máy tính ~120px, điện thoại ~106px (menu mobile
+    `max-h-[calc(100dvh-108px)]`). Điện thoại thanh menu vẫn 72px.
   - Logo cũ `logo-icon.png`/`logo-full.png` (icon gradient + chữ "HOP LUC") đã xoá. Site
     **chưa có favicon riêng** — có thể cắt phần biểu tượng từ `logo.png` khi cần.
 
@@ -1324,9 +1329,10 @@ duyệt desktop 1280px + mobile 375px:
   mở menu/tìm kiếm → hàng điều hướng trong suốt, chữ trắng; cuộn xuống → nền
   `brand-900/85` + blur. (Lượt này chỉ Trang chủ; **lượt 2 đã mở rộng ra mọi trang**
   nhờ `PageHero` — xem "Đợt VinUni lượt 2".) Link menu có gạch chân đỏ chạy ra khi hover/active; ☰ mobile biến
-  thành ✕. **Hợp đồng chiều cao**: hàng điều hướng cao đúng **72px**, thanh
-  thông báo ~33px — `HeroBanner` kéo `<section>` lên `-mt-[72px]` để ảnh nằm
-  dưới header. Margin âm phải đặt trên CHÍNH `<section>` (có `overflow-hidden`)
+  thành ✕. **Hợp đồng chiều cao**: hàng điều hướng cao đúng **72px** (máy tính **84px** từ 22/10/2026 —
+  `h-[72px] lg:h-[84px]`), thanh thông báo ~33px — `HeroBanner` và `PageHero` kéo `<section>` lên
+  `-mt-[72px] lg:-mt-[84px]` để nằm dưới header; khối dính ở trang con dùng `lg:top-32`, neo cuộn
+  `scroll-mt-28 lg:scroll-mt-32` (header tổng ~120px trên máy tính). Margin âm phải đặt trên CHÍNH `<section>` (có `overflow-hidden`)
   — đặt ở div con thì phần kéo lên bị cắt, dưới header lộ nền sáng + chữ trắng
   vô hình (đã gặp thật trên mobile). Đổi chiều cao header thì sửa cả 2 chỗ.
 - **Hero**: tiêu đề hiện **từng từ** (`.hero-word`; dấu cách phải nằm NGOÀI
@@ -1639,7 +1645,14 @@ Người dùng: banner là "bộ mặt" nhưng lớp phủ xanh đậm + chữ l
   đè thì mất 1/3 ảnh. Khoảng chừa này phải là `pt-[72px]` trên section: viết `mt-[72px]` cho khung ảnh
   thì margin gộp với `-mt-[72px]` của section thành 0 → menu chữ trắng nằm trên nền trắng (đã gặp thật).
 - `IMAGE_SPECS.hero` đã ghi lại: ảnh 16:9 hiện trọn, dùng được poster thiết kế sẵn chữ, tránh chữ quan
-  trọng sát mép trên (máy tính có menu đè ~70px).
+  trọng sát mép trên (máy tính có menu đè ~85px).
+- **Đổi 22/10/2026 — banner thấp xuống một chút** (người dùng: banner giữ như cũ, chỉ thu mép dưới lên một tí):
+  máy tính `lg:h-[min(calc(100svh-120px),50vw)]` (trước `min(100svh-33px, 56.25vw)` — VD 1440×860: 810 → 720px,
+  thấy luôn đầu dải chữ bên dưới); khung ≈ 2:1 nên ảnh 16:9 bị cắt bớt ít trên/dưới (`object-cover` giữa ảnh).
+  Vẫn tràn hết chiều ngang, menu trong suốt đè mép trên. Điện thoại giữ nguyên 16:9. (Đã thử và BỎ phương án
+  thẻ ảnh bo góc có lề 2 bên — người dùng không muốn đổi bố cục banner.)
+- **Đổi 22/10/2026 — tiêu đề Hero**: dòng 2 (`heroTitleLine2`, VD "y dược tận tâm và giỏi nghề") bỏ chữ nghiêng
+  và màu đỏ theo yêu cầu người dùng → `<span className="text-brand-700">` (xanh chủ đạo, cùng độ đậm dòng 1).
 
 ### Tìm giảng viên theo nhiều tiêu chí (19/10/2026)
 Người dùng: trang Đội ngũ giảng viên cần tìm theo nhiều tiêu chí cho dễ. `/doi-ngu-giang-vien` giờ là danh bạ:

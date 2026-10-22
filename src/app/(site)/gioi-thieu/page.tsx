@@ -52,7 +52,7 @@ export default async function AboutPage() {
       <PageHero crumbs={[{ label: "Giới thiệu" }]} eyebrow="Giới thiệu" title={page.title} imageUrl={page.coverImageUrl} />
 
       <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-12 lg:grid-cols-[260px_1fr] lg:gap-16">
-        <aside className="lg:sticky lg:top-28 lg:h-fit">
+        <aside className="lg:sticky lg:top-32 lg:h-fit">
           <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Trên trang này</div>
           <nav aria-label="Mục lục trang Giới thiệu" className="mt-4">
             <ol className="space-y-1 border-l-2 border-line">
@@ -67,7 +67,7 @@ export default async function AboutPage() {
             </ol>
           </nav>
         </aside>
-        <div id="gioi-thieu-chung" className="scroll-mt-28">
+        <div id="gioi-thieu-chung" className="scroll-mt-28 lg:scroll-mt-32">
           <Eyebrow tone="red" className="mb-5">
             Giới thiệu chung
           </Eyebrow>
@@ -76,7 +76,7 @@ export default async function AboutPage() {
       </DecorativeSection>
 
       {hasMission && (
-        <section id="su-menh-tam-nhin" className="scroll-mt-24 bg-paper-alt px-6 py-24 sm:px-8">
+        <section id="su-menh-tam-nhin" className="scroll-mt-28 lg:scroll-mt-32 bg-paper-alt px-6 py-24 sm:px-8">
           <div className="mx-auto max-w-[1180px]">
             <SectionHeading eyebrow="Định hướng" title="Sứ mệnh & Tầm nhìn" />
             <div className="grid gap-5 md:grid-cols-2">
@@ -104,7 +104,7 @@ export default async function AboutPage() {
       )}
 
       {content.stats.length > 0 && (
-        <section id="con-so" className="relative isolate scroll-mt-24 overflow-hidden bg-gradient-to-br from-brand-900 to-brand-800 px-6 py-20 text-white sm:px-8">
+        <section id="con-so" className="relative isolate scroll-mt-28 lg:scroll-mt-32 overflow-hidden bg-gradient-to-br from-brand-900 to-brand-800 px-6 py-20 text-white sm:px-8">
           <div className="bg-grid-dark pointer-events-none absolute inset-0" />
           <div className="relative mx-auto max-w-[1180px]">
             <SectionHeading eyebrow="Con số" eyebrowTone="onDark" title="Hợp Lực qua những con số" onDark className="mb-12" />
@@ -124,7 +124,7 @@ export default async function AboutPage() {
       )}
 
       {milestoneYears.length > 0 && (
-        <section id="cot-moc" className="scroll-mt-24 px-6 py-24 sm:px-8">
+        <section id="cot-moc" className="scroll-mt-28 lg:scroll-mt-32 px-6 py-24 sm:px-8">
           <div className="mx-auto max-w-[1180px]">
             <SectionHeading
               eyebrow="Lịch sử"

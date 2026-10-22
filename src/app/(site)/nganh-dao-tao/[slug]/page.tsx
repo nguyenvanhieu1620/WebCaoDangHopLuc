@@ -87,7 +87,7 @@ export default async function ProgramDetailPage({
           )}
         </div>
 
-        <aside className="h-fit overflow-clip rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-28">
+        <aside className="h-fit overflow-clip rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-32">
           {/* Ảnh nhỏ đầu khung — khung dính theo khi cuộn nên đọc tới đâu vẫn thấy ảnh ngành. */}
           {program.imageUrl && (
             <div className="relative -mx-6 -mt-6 mb-5 h-[150px]">

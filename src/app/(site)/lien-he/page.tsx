@@ -38,7 +38,7 @@ export default async function ContactPage() {
           </div>
         </div>
 
-        <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2 lg:sticky lg:top-28">
+        <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2 lg:sticky lg:top-32">
           <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
             Thông tin liên hệ
           </div>

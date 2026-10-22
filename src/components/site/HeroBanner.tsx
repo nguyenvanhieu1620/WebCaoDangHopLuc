@@ -214,17 +214,17 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
       <section
         aria-roledescription="carousel"
         aria-label="Banner giới thiệu nhà trường"
-        // -mt-[72px]: kéo lên dưới thanh menu trong suốt (SiteHeader cao 72px). Điện thoại: ảnh bắt đầu
+        // -mt-[72px] lg:-mt-[84px]: kéo lên dưới thanh menu trong suốt (SiteHeader cao 72px, máy tính 84px). Điện thoại: ảnh bắt đầu
         // NGAY DƯỚI menu (nền xanh đậm sau menu) vì ảnh 16:9 thấp, để menu đè thì mất 1/3 ảnh. Máy tính:
         // ảnh nằm dưới menu, chỉ phủ mờ nhẹ mép trên. Margin âm đặt trên CHÍNH section (xem CLAUDE.md);
         // khoảng chừa cho menu ở điện thoại phải là PADDING — margin của khung ảnh sẽ gộp (collapse) với
         // margin âm này thành 0 và section tụt xuống dưới menu, menu chữ trắng nằm trên nền trắng.
-        className="relative isolate -mt-[72px] bg-brand-900 pt-[72px] lg:pt-0"
+        className="relative isolate -mt-[72px] bg-brand-900 pt-[72px] lg:-mt-[84px] lg:pt-0"
       >
         <div
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="relative aspect-video w-full overflow-hidden lg:aspect-auto lg:h-[min(calc(100svh-33px),56.25vw)]"
+          className="relative aspect-video w-full overflow-hidden lg:aspect-auto lg:h-[min(calc(100svh-120px),50vw)]"
         >
           {slides.map((slide, i) => (
             <div
@@ -325,8 +325,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
           <Reveal className="max-w-[780px]">
             <Eyebrow tone="red">{badge}</Eyebrow>
             <h1 className="mt-5 text-balance font-display text-[32px] font-bold leading-[1.1] tracking-tight text-brand-900 sm:text-[44px] lg:text-[54px]">
-              {titleLine1}{" "}
-              <em className="font-medium italic text-accent-600">{titleLine2}</em>
+              {titleLine1} {titleLine2}
             </h1>
             <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-ink-soft sm:text-[16.5px]">{description}</p>
           </Reveal>

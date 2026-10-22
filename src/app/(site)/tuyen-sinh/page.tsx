@@ -246,8 +246,8 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
       </div>
 
       {/* Cột phải: form dính khi cuộn trên desktop */}
-      <aside className="lg:sticky lg:top-28 lg:h-fit">
-        <div id="dang-ky" className="scroll-mt-28 overflow-hidden rounded-[24px] border border-white/90 bg-white/90 shadow-lg2 backdrop-blur-xl">
+      <aside className="lg:sticky lg:top-32 lg:h-fit">
+        <div id="dang-ky" className="scroll-mt-28 lg:scroll-mt-32 overflow-hidden rounded-[24px] border border-white/90 bg-white/90 shadow-lg2 backdrop-blur-xl">
           <div className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-7 py-6 text-white">
             <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-accent-500/40 blur-[40px]" />
             <div className="relative font-display text-[22px] font-semibold">{t.formTitle}</div>

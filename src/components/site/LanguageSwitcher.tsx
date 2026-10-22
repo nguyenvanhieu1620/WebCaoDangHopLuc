@@ -26,7 +26,7 @@ export function LanguageSwitcher({
   };
 
   return (
-    <div className={cn("flex items-center gap-1 font-mono text-[11px] font-semibold", className)}>
+    <div className={cn("flex items-center gap-1 font-mono font-semibold", className)}>
       <button
         type="button"
         onClick={() => choose("vi")}

@@ -34,7 +34,7 @@ export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
   hero: {
     shape: "landscape", ratio: "16:9", minWidth: 1920, minHeight: 1080, ideal: "2560×1440",
     where: "Đầu Trang chủ, rộng hết màn hình, khung 16:9 — ảnh hiện RÕ, không phủ màu, không có chữ đè (tiêu đề và nút nằm bên dưới ảnh).",
-    tip: "Ảnh đúng 16:9 thì hiện trọn, không bị cắt (tỉ lệ khác sẽ bị cắt bớt mép). Dùng được cả ảnh/poster đã thiết kế sẵn chữ. Máy tính: ~70px trên cùng nằm dưới thanh menu (có phủ mờ nhẹ) → đừng đặt chữ quan trọng sát mép trên; góc dưới có nút chuyển ảnh. Nên nén dưới ~1MB.",
+    tip: "Điện thoại: ảnh 16:9 hiện trọn. Máy tính: khung thấp hơn 16:9 một chút (khoảng 2:1) nên cắt bớt ít ở trên/dưới, và ~85px trên cùng nằm dưới thanh menu (có phủ mờ nhẹ) → đừng đặt chữ quan trọng sát mép trên/dưới. Dùng được cả ảnh/poster đã thiết kế sẵn chữ; góc dưới có nút chuyển ảnh. Nên nén dưới ~1MB.",
   },
   pageBanner: {
     shape: "landscape", ratio: "3:1", minWidth: 1920, minHeight: 600, ideal: "2400×800",

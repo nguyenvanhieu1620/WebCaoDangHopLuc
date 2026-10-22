@@ -32,7 +32,7 @@ type PageHeroProps = {
 
 /**
  * Banner đầu MỌI trang con (kiểu VinUni): ảnh nền + lớp phủ xanh đậm, đường
- * dẫn "Trang chủ › …", tiêu đề lớn. Kéo lên `-mt-[72px]` (đặt trên CHÍNH
+ * dẫn "Trang chủ › …", tiêu đề lớn. Kéo lên `-mt-[72px] lg:-mt-[84px]` (đặt trên CHÍNH
  * section có overflow-hidden — xem bài học ở HeroBanner) để nằm dưới thanh
  * điều hướng trong suốt của SiteHeader; header chữ trắng nên trang con nào
  * cũng phải mở đầu bằng khối nền tối này (hoặc HeroBanner ở Trang chủ).
@@ -44,7 +44,7 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
   const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
 
   return (
-    <section className="relative isolate -mt-[72px] overflow-hidden bg-brand-900 text-white">
+    <section className="relative isolate -mt-[72px] overflow-hidden lg:-mt-[84px] bg-brand-900 text-white">
       {bg ? (
         <>
           {/* ≥ lg: ảnh phủ kín banner. < lg: cùng ảnh phóng to + làm mờ làm nền, ảnh rõ nét hiện TRỌN
@@ -66,7 +66,7 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
       <div
         className={cn(
           "relative mx-auto flex max-w-[1320px] flex-col justify-end px-6 pb-12 sm:px-8 lg:pb-16",
-          bg ? "pt-24 lg:pt-[140px]" : "pt-[140px]",
+          bg ? "pt-24 lg:pt-[152px]" : "pt-[140px] lg:pt-[152px]",
           variant === "article" ? "min-h-[380px] lg:min-h-[460px]" : "min-h-[360px] sm:min-h-[400px] lg:min-h-[440px]"
         )}
       >

@@ -57,7 +57,7 @@ export default async function EventDetailPage({
             <p className="text-[15px] text-ink-faint">Thông tin chi tiết về sự kiện đang được cập nhật.</p>
           )}
         </div>
-        <aside className="h-fit rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-28">
+        <aside className="h-fit rounded-[22px] border border-line bg-white p-6 shadow-sm2 lg:sticky lg:top-32">
           <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Thông tin sự kiện</div>
           <dl className="mt-4 divide-y divide-line border-y border-line text-[14px]">
             {facts.map((f) => (
