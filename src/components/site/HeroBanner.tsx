@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +32,20 @@ type HeroBannerProps = {
 const INTERVAL_MS = 6500;
 /** Banner có video: hiện lâu hơn để video kịp chạy hết 1 vòng ngắn (khuyến nghị 5–15 giây). */
 const VIDEO_INTERVAL_MS = 12000;
+/** Thời gian ảnh trượt nốt vào chỗ (hoặc trượt về) sau khi thả chuột/ngón tay. */
+const SETTLE_MS = 450;
+
+type DragState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  width: number;
+  dx: number;
+  /** Đã kéo ngang đủ xa để tính là kéo (chưa thì vẫn là 1 cú bấm bình thường). */
+  active: boolean;
+  /** Banner đang trượt vào từ cạnh (kéo sang trái → banner sau, sang phải → banner trước). */
+  neighbor: number | null;
+};
 
 /**
  * Video nền trong khung ảnh banner — CHỈ tạo trên máy tính (≥ lg) và khi không bật giảm chuyển động, nên
@@ -97,7 +112,11 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const touchX = useRef<number | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const drag = useRef<DragState | null>(null);
+  const [settling, setSettling] = useState(false);
+  const suppressClick = useRef(false);
   const count = slides.length;
   const current = slides[index] ?? slides[0];
   const hasVideo = slides.some((s) => s.videoUrl);
@@ -116,24 +135,111 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
 
   // Hẹn giờ theo từng lượt (gắn với `index`) — bấm chuyển tay thì đếm lại từ đầu.
   useEffect(() => {
-    if (count < 2 || paused || reducedMotion) return;
+    if (count < 2 || paused || reducedMotion || dragging) return;
     const id = window.setTimeout(() => setIndex((i) => (i + 1) % count), intervalMs);
     return () => window.clearTimeout(id);
-  }, [index, count, paused, reducedMotion, intervalMs]);
+  }, [index, count, paused, reducedMotion, dragging, intervalMs]);
 
-  const go = (next: number) => setIndex((next + count) % count);
-  const autoplay = count > 1 && !paused && !reducedMotion;
-
-  // Vuốt ngang trên màn hình cảm ứng để đổi banner (> 40px mới tính, tránh nhầm với cuộn dọc).
-  const onTouchStart = (e: TouchEvent) => {
-    touchX.current = e.touches[0]?.clientX ?? null;
+  const go = (next: number) => {
+    if (settling) return;
+    setIndex((next + count) % count);
   };
-  const onTouchEnd = (e: TouchEvent) => {
-    const start = touchX.current;
-    touchX.current = null;
-    const end = e.changedTouches[0]?.clientX;
-    if (count < 2 || start == null || end == null || Math.abs(end - start) < 40) return;
-    go(end < start ? index + 1 : index - 1);
+  const autoplay = count > 1 && !paused && !reducedMotion && !dragging;
+
+  // ── Kéo bằng chuột / vuốt bằng ngón tay để đổi banner ─────────────────────────────────────────
+  // Đặt style trực tiếp lên 2 lớp ảnh (không setState mỗi lần di chuột → không render lại cả banner):
+  // ảnh hiện tại chạy theo tay, banner kế bên trượt vào từ cạnh. Thả ra quá ~18% bề rộng (tối đa
+  // 120px) → trượt nốt sang banner mới; chưa đủ → trượt về chỗ cũ. Ngoài lúc kéo, đổi banner vẫn là
+  // hiệu ứng mờ dần (crossfade) như cũ. Nút ‹ › và thanh tiến trình giữ nguyên cho bàn phím.
+  const styleSlide = (i: number | null, style: Partial<CSSStyleDeclaration>) => {
+    const el = i == null ? null : slideRefs.current[i];
+    if (el) Object.assign(el.style, style);
+  };
+  const clearSlide = (i: number | null) => styleSlide(i, { transform: "", opacity: "", transition: "" });
+
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (count < 2 || settling || (e.pointerType === "mouse" && e.button !== 0)) return;
+    if ((e.target as Element).closest("button")) return; // nút điều khiển đè trên ảnh
+    drag.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      width: e.currentTarget.clientWidth,
+      dx: 0,
+      active: false,
+      neighbor: null,
+    };
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.active) {
+      // Di theo chiều dọc trước → không phải kéo banner (trên điện thoại là cuộn trang).
+      if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) drag.current = null;
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
+      d.active = true;
+      setDragging(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    d.dx = dx;
+    if (reducedMotion) return;
+    const neighbor = (index + (dx < 0 ? 1 : -1) + count) % count;
+    if (d.neighbor !== null && d.neighbor !== neighbor) clearSlide(d.neighbor);
+    d.neighbor = neighbor;
+    styleSlide(index, { transition: "none", transform: `translateX(${dx}px)` });
+    styleSlide(neighbor, {
+      transition: "none",
+      opacity: "1",
+      transform: `translateX(${dx + (dx < 0 ? d.width : -d.width)}px)`,
+    });
+  };
+
+  const settle = (d: DragState, commit: boolean, dir: 1 | -1) => {
+    const cur = index;
+    const neighbor = d.neighbor!;
+    const ease = `transform ${SETTLE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+    setSettling(true);
+    styleSlide(cur, { transition: ease, transform: `translateX(${commit ? -dir * d.width : 0}px)` });
+    styleSlide(neighbor, { transition: ease, transform: `translateX(${commit ? 0 : dir * d.width}px)` });
+    window.setTimeout(() => {
+      // Lớp vừa trượt ra ngoài: ẩn ngay (không chạy hiệu ứng mờ 1,2s), rồi mới trả về giữa khung.
+      const hidden = commit ? cur : neighbor;
+      styleSlide(hidden, { transition: "none", opacity: "0" });
+      if (commit) flushSync(() => setIndex(neighbor));
+      styleSlide(hidden, { transform: "" });
+      void slideRefs.current[hidden]?.offsetWidth;
+      clearSlide(hidden);
+      clearSlide(commit ? neighbor : cur);
+      setSettling(false);
+    }, SETTLE_MS);
+  };
+
+  const onPointerEnd = (e: PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    drag.current = null;
+    if (!d.active) return;
+    setDragging(false);
+    // Vừa kéo xong thì cú "click" đi kèm không được mở link của banner.
+    suppressClick.current = true;
+    window.setTimeout(() => (suppressClick.current = false), 0);
+    const commit = e.type === "pointerup" && Math.abs(d.dx) > Math.min(120, d.width * 0.18);
+    const dir = d.dx < 0 ? 1 : -1;
+    if (reducedMotion || d.neighbor === null) {
+      if (commit) go(index + dir);
+      return;
+    }
+    settle(d, commit, dir);
+  };
+
+  const onClickCapture = (e: MouseEvent<HTMLDivElement>) => {
+    if (!suppressClick.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    suppressClick.current = false;
   };
 
   const progressBars = (light: boolean) => (
@@ -222,13 +328,25 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
         className="relative isolate -mt-[72px] bg-brand-900 pt-[72px] lg:-mt-[84px] lg:pt-0"
       >
         <div
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          className="relative aspect-video w-full overflow-hidden lg:aspect-auto lg:h-[min(calc(100svh-120px),50vw)]"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerEnd}
+          onPointerCancel={onPointerEnd}
+          onClickCapture={onClickCapture}
+          // Chặn kéo ảnh/link kiểu "kéo-thả file" mặc định của trình duyệt (ra ảnh mờ dính theo chuột).
+          onDragStart={(e) => e.preventDefault()}
+          className={cn(
+            // touch-pan-y: trên cảm ứng, vuốt dọc vẫn cuộn trang, vuốt ngang để đổi banner.
+            "relative aspect-video w-full touch-pan-y touch-pinch-zoom select-none overflow-hidden lg:aspect-auto lg:h-[min(calc(100svh-120px),50vw)]",
+            count > 1 && (dragging ? "cursor-grabbing" : "cursor-grab")
+          )}
         >
           {slides.map((slide, i) => (
             <div
               key={slide.id}
+              ref={(el) => {
+                slideRefs.current[i] = el;
+              }}
               inert={i !== index}
               aria-hidden={i !== index}
               aria-roledescription="slide"
@@ -251,7 +369,8 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
                 <Link
                   href={slide.linkUrl}
                   aria-label={slide.caption ? `${slide.caption} — xem chi tiết` : "Xem chi tiết banner"}
-                  className="absolute inset-0"
+                  draggable={false}
+                  className={cn("absolute inset-0", dragging && "cursor-grabbing")}
                 />
               )}
             </div>

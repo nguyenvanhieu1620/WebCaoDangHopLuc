@@ -1652,7 +1652,13 @@ Người dùng: banner là "bộ mặt" nhưng lớp phủ xanh đậm + chữ l
   Vẫn tràn hết chiều ngang, menu trong suốt đè mép trên. Điện thoại giữ nguyên 16:9. (Đã thử và BỎ phương án
   thẻ ảnh bo góc có lề 2 bên — người dùng không muốn đổi bố cục banner.)
 - **Đổi 22/10/2026 — tiêu đề Hero**: dòng 2 (`heroTitleLine2`, VD "y dược tận tâm và giỏi nghề") bỏ chữ nghiêng
-  và màu đỏ theo yêu cầu người dùng → `<span className="text-brand-700">` (xanh chủ đạo, cùng độ đậm dòng 1).
+  và màu đỏ, rồi người dùng yêu cầu cùng màu dòng 1 → cả câu một màu `text-brand-900` (`{titleLine1} {titleLine2}`).
+- **Đổi 22/10/2026 — kéo bằng chuột để đổi banner** (trước chỉ có nút ‹ › và vuốt cảm ứng): Pointer Events chung cho
+  chuột + cảm ứng (`touch-pan-y` để vuốt dọc vẫn cuộn trang). Kéo ngang > 8px mới tính là kéo; ảnh hiện tại chạy theo
+  tay, banner kế bên trượt vào từ cạnh (style đặt thẳng lên DOM qua ref, không setState mỗi lần di chuột); thả quá
+  min(120px, 18% bề rộng) → trượt nốt 450ms sang banner mới, chưa đủ → trượt về. Đổi banner bằng nút/tự chạy vẫn là
+  crossfade. Kéo xong không mở link của banner (chặn click ở pha capture), bấm thường vẫn mở; đang kéo thì tạm dừng
+  tự chạy; giảm chuyển động → không chạy theo tay, chỉ đổi khi thả. Con trỏ `grab`/`grabbing`. Nút ‹ › giữ cho bàn phím.
 
 ### Tìm giảng viên theo nhiều tiêu chí (19/10/2026)
 Người dùng: trang Đội ngũ giảng viên cần tìm theo nhiều tiêu chí cho dễ. `/doi-ngu-giang-vien` giờ là danh bạ:
