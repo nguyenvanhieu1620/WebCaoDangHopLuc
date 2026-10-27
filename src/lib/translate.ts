@@ -6,7 +6,12 @@
  *    không cần thao tác thêm. Ô nào admin đã tự gõ/sửa tay thì KHÔNG bị ghi đè.
  */
 
+import { checkRateLimit } from "@/lib/rate-limit";
+import { canTranslate } from "@/lib/admin-permissions";
+
 const TRANSLATE_TIMEOUT_MS = 15_000;
+export const MAX_TRANSLATION_CHARACTERS = 20_000;
+const DAILY_CHARACTERS_PER_USER = 50_000;
 
 function endpointFor(apiKey: string): string {
   // Key DeepL Free có đuôi ":fx" — endpoint free/pro khác nhau, key nào endpoint đó.
@@ -28,6 +33,17 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
     .map((t, i) => (t.trim() ? i : -1))
     .filter((i) => i >= 0);
   if (nonEmptyIndexes.length === 0) return texts;
+
+  const characters = texts.reduce((total, text) => total + text.length, 0);
+  if (characters > MAX_TRANSLATION_CHARACTERS) throw new Error("Mỗi lần dịch tối đa 20.000 ký tự.");
+  // Cùng giới hạn cho cả nút dịch và tự dịch lúc Lưu. Script CLI không có phiên admin sẽ bỏ qua
+  // auto-fill qua nhánh catch, không tự tiêu quota của tài khoản DeepL.
+  const { getCurrentAdminUser } = await import("@/lib/admin-auth");
+  const user = await getCurrentAdminUser();
+  if (!user || !canTranslate(user)) throw new Error("Cần quyền chỉnh sửa nội dung để dịch tự động.");
+  if (!checkRateLimit(`translate-characters:${user.id}`, DAILY_CHARACTERS_PER_USER, 24 * 60 * 60 * 1000, characters)) {
+    throw new Error("Đã đạt giới hạn 50.000 ký tự dịch trong 24 giờ của tài khoản này.");
+  }
 
   const params = new URLSearchParams();
   for (const i of nonEmptyIndexes) params.append("text", texts[i]);

@@ -31,6 +31,7 @@ export default async function AdminQuickContactsPage({
         actions={<AdminNewButton href="/admin/lien-he-nhanh/them-moi" />}
       />
       <div className="p-5 sm:p-8">
+        <p className="mb-4 rounded-xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-900">Nút loại Hotline tự lấy số và tên hiển thị từ Cài đặt chung, giúp số gọi ở mọi trang luôn thống nhất.</p>
         <SavedNotice show={sp.saved === "1"} />
         <div className="rounded-2xl border border-line bg-white">
           <div className="border-b border-line px-6 py-4 text-sm font-semibold text-brand-900">Danh sách ({all.length})</div>

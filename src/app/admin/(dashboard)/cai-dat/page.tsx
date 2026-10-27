@@ -12,10 +12,10 @@ export const metadata: Metadata = { title: "Cài đặt chung" };
 export default async function AdminSiteSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; invalid?: string }>;
+  searchParams: Promise<{ saved?: string; invalid?: string; email?: string }>;
 }) {
   await requirePermission("site-settings");
-  const { saved, invalid } = await searchParams;
+  const { saved, invalid, email: emailProblem } = await searchParams;
   const settings = await db.query.siteSettings.findFirst({
     where: eq(schema.siteSettings.id, "main"),
   });
@@ -30,6 +30,7 @@ export default async function AdminSiteSettingsPage({
         description="Thông tin liên hệ & banner thông báo hiển thị ở Header/Footer toàn site"
       />
       <div className="p-8">
+        {!normalizeExternalUrl(settings.lmsUrl) && <p role="status" className="mb-5 max-w-2xl rounded-xl border border-accent-200 bg-accent-50 p-4 text-sm text-accent-700">Cổng LMS chưa có đường dẫn hợp lệ. Cập nhật URL LMS chính thức bên dưới để sinh viên có thể truy cập.</p>}
         {saved && (
           <div className="mb-5 max-w-2xl rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
             ✓ Đã lưu thay đổi thành công.
@@ -39,6 +40,14 @@ export default async function AdminSiteSettingsPage({
           <div role="alert" className="mb-5 max-w-2xl rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700">
             <b>⚠️ Link {invalid} không hợp lệ nên chưa được lưu</b> (vẫn giữ link cũ). Hãy dán
             nguyên địa chỉ trang, VD <code>https://www.facebook.com/ten-trang</code>.
+          </div>
+        )}
+        {(emailProblem === "locked" || emailProblem === "invalid") && (
+          <div role="alert" className="mb-5 max-w-2xl rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700">
+            <b>⚠️ Email chưa được đổi</b> (vẫn giữ email cũ).{" "}
+            {emailProblem === "locked"
+              ? "Email này nhận thông báo hồ sơ tuyển sinh (có CCCD, số điện thoại) nên chỉ tài khoản có quyền “Tuyển sinh & Liên hệ” mới đổi được."
+              : "Địa chỉ email không đúng định dạng."}
           </div>
         )}
         <form

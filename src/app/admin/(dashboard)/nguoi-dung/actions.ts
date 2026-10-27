@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
 import { requirePermission, getUserPermissions } from "@/lib/admin-auth";
+import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-credentials";
+import { isValidEmail } from "@/lib/validate";
 import { PERMISSION_MODULES } from "@/lib/constants";
 import { redirect } from "next/navigation";
 
@@ -22,8 +24,10 @@ export async function upsertAdminUserAction(formData: FormData) {
     .map((v) => String(v))
     .filter((key) => VALID_KEYS.has(key));
 
-  if (!name || !email) return;
+  if (!name || !isValidEmail(email)) return;
   if (!id && !password) return; // tạo mới bắt buộc có mật khẩu
+  // Ô mật khẩu có minLength ở trình duyệt, nhưng Server Action gọi thẳng được — kiểm tra lại ở đây.
+  if (password && (password.length < 8 || password.length > 256 || password === DEMO_ADMIN_PASSWORD)) return;
 
   // Không cho tự gỡ quyền "users" khỏi chính tài khoản đang đăng nhập —
   // tránh tự khoá mất quyền quản lý người dùng của chính mình.

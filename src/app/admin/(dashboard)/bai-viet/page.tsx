@@ -9,6 +9,7 @@ import { asc, desc } from "drizzle-orm";
 import { paginate } from "@/lib/pagination";
 import { togglePublishAction, deletePostAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
+import { normalizeSearch } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Quản lý bài viết" };
 
@@ -36,7 +37,7 @@ export default async function AdminPostsPage({
 
   const filteredPosts = allPosts.filter((post) => {
     if (activeStatus !== "all" && post.status !== activeStatus) return false;
-    if (q && !post.title.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q && !normalizeSearch(post.title).includes(normalizeSearch(q))) return false;
     return true;
   });
   const pg = paginate(filteredPosts, sp.page);

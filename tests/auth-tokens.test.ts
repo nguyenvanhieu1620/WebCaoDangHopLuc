@@ -14,7 +14,7 @@ test("session chỉ có hiệu lực với phiên bản mật khẩu đang dùng
 });
 
 test("token reset mất hiệu lực sau khi mật khẩu đổi, không dùng làm session", () => {
-  const token = signResetToken("test", "old-password-hash");
+  const token = signResetToken("test", "old-password-hash", "fixture@example.test");
   const payload = verifyResetToken(token);
   assert.ok(payload);
   assert.equal(isCredentialCurrent(payload, "old-password-hash"), true);
@@ -23,7 +23,7 @@ test("token reset mất hiệu lực sau khi mật khẩu đổi, không dùng l
 });
 
 test("token bị sửa hoặc hết hạn phải bị từ chối", (context) => {
-  const token = signResetToken("test", "hash");
+  const token = signResetToken("test", "hash", "fixture@example.test");
   assert.equal(verifyResetToken(token + "modified"), null);
   const now = Date.now();
   context.mock.method(Date, "now", () => now + 31 * 60 * 1000);

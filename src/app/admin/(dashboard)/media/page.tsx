@@ -19,12 +19,8 @@ const FILTERS = [
   { key: "all", label: "Tất cả" },
   { key: "image", label: "Ảnh" },
   { key: "video", label: "Video" },
+  { key: "document", label: "Tài liệu" },
 ] as const;
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default async function AdminMediaPage({
   searchParams,
@@ -33,7 +29,7 @@ export default async function AdminMediaPage({
 }) {
   await requirePermission("media");
   const { type, page, uploaded } = await searchParams;
-  const activeType = type === "image" || type === "video" ? type : "all";
+  const activeType = type === "image" || type === "video" || type === "document" ? type : "all";
 
   const allItems = await db.query.mediaItems.findMany({
     orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)],
@@ -47,7 +43,7 @@ export default async function AdminMediaPage({
     <div>
       <AdminTopbar
         title="Thư viện media"
-        description={`${allItems.length} tệp — ảnh/video dùng chung cho toàn site`}
+        description={`${allItems.length} tệp — ảnh, video và tài liệu dùng chung cho toàn site`}
         actions={<AdminNewButton href="/admin/media/tai-len" label="Tải lên" />}
       />
       <div className="p-5 sm:p-8">
@@ -57,7 +53,7 @@ export default async function AdminMediaPage({
           </div>
         )}
 
-        <div className="mb-5 flex items-center gap-2.5">
+        <div className="mb-5 flex flex-wrap items-center gap-2.5">
           {FILTERS.map((f) => (
             <Link
               key={f.key}
@@ -91,8 +87,13 @@ export default async function AdminMediaPage({
                 <div className="relative h-[110px] bg-paper-alt">
                   {item.type === "image" ? (
                     <Image src={item.url} alt={item.filename} fill sizes="200px" className="object-cover" />
+                  ) : item.type === "video" ? (
+                    <video src={item.url} className="h-full w-full object-cover" muted preload="metadata" />
                   ) : (
-                    <video src={item.url} className="h-full w-full object-cover" muted />
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`Mở tài liệu ${item.filename}`} className="flex h-full flex-col items-center justify-center gap-2 font-semibold text-brand-700 hover:bg-brand-100">
+                      <span aria-hidden="true" className="rounded-xl border-2 border-brand-300 px-3 py-2 text-xl">{item.filename.split(".").pop()?.toUpperCase() || "FILE"}</span>
+                      <span className="text-xs">Mở tài liệu ↗</span>
+                    </a>
                   )}
                   {item.type === "video" && (
                     <span className="absolute right-2 top-2 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-[9px] text-white">
@@ -101,7 +102,7 @@ export default async function AdminMediaPage({
                   )}
                 </div>
                 <div className="p-2.5">
-                  <div className="truncate text-[11.5px] font-semibold text-ink">
+                  <div title={item.filename} className="truncate text-[11.5px] font-semibold text-ink">
                     {item.filename}
                   </div>
                   <div className="mt-1 flex items-center justify-between">

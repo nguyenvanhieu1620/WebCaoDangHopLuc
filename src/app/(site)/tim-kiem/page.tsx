@@ -81,19 +81,19 @@ function Highlighted({ parts }: { parts: TextPart[] }) {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; loai?: string }>;
+  searchParams: Promise<{ q?: string | string[]; loai?: string | string[] }>;
 }) {
   const { q = "", loai } = await searchParams;
   const locale = await getLocale();
   const t = TEXT[locale];
-  const query = q.trim().slice(0, 100);
+  const query = (Array.isArray(q) ? q[0] ?? "" : q).trim().slice(0, 100);
   const results = query.length >= SEARCH_MIN_LENGTH ? await searchSite(query) : [];
 
   const counts = results.reduce<Partial<Record<SearchResultType, number>>>((acc, r) => {
     acc[r.type] = (acc[r.type] ?? 0) + 1;
     return acc;
   }, {});
-  const activeType = loai && loai in counts ? (loai as SearchResultType) : null;
+  const activeType = typeof loai === "string" && Object.hasOwn(counts, loai) ? (loai as SearchResultType) : null;
   const visible = activeType ? results.filter((r) => r.type === activeType) : results;
   const filterHref = (type: SearchResultType | null) =>
     `/tim-kiem?q=${encodeURIComponent(query)}${type ? `&loai=${type}` : ""}`;

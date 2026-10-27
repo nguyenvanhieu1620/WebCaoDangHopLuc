@@ -17,6 +17,7 @@ const buckets = new Map<string, Bucket>();
 
 /** Check without consuming an attempt; authentication records failures only. */
 export function isRateLimited(key: string, limit: number): boolean {
+  pruneExpired(Date.now());
   const bucket = buckets.get(key);
   return !!bucket && bucket.resetAt > Date.now() && bucket.count >= limit;
 }
@@ -34,26 +35,26 @@ function unknownIp(): string {
   return "unknown";
 }
 
-/** Dọn bớt bucket đã hết hạn khi Map phình to, tránh rò rỉ bộ nhớ dài hạn. */
+/** Dọn khoá hết hạn kể cả khi chỉ có ít khoá, tránh giữ email/IP cũ vô thời hạn. */
 function pruneExpired(now: number) {
-  if (buckets.size < 5000) return;
   for (const [key, bucket] of buckets) {
-    if (bucket.resetAt < now) buckets.delete(key);
+    if (bucket.resetAt <= now) buckets.delete(key);
   }
 }
 
 /** Trả về true nếu request được phép, false nếu đã vượt giới hạn trong khung thời gian. */
-export function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
+export function checkRateLimit(key: string, limit: number, windowMs: number, cost = 1): boolean {
+  if (!Number.isInteger(cost) || cost < 1 || cost > limit) return false;
   const now = Date.now();
   pruneExpired(now);
 
   const bucket = buckets.get(key);
-  if (!bucket || bucket.resetAt < now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
+  if (!bucket || bucket.resetAt <= now) {
+    buckets.set(key, { count: cost, resetAt: now + windowMs });
     return true;
   }
-  if (bucket.count >= limit) return false;
-  bucket.count += 1;
+  if (bucket.count + cost > limit) return false;
+  bucket.count += cost;
   return true;
 }
 

@@ -9,7 +9,7 @@ const inputClass =
 const labelClass = "mb-1.5 block text-xs font-semibold text-ink-soft";
 
 /** Form gửi câu hỏi công khai ở /lien-he — POST tới /api/contact (endpoint gọi từ bên ngoài). */
-export function ContactForm() {
+export function ContactForm({ initialMessage = "" }: { initialMessage?: string }) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -98,6 +98,7 @@ export function ContactForm() {
           rows={4}
           className={inputClass}
           placeholder="Câu hỏi hoặc nội dung cần trao đổi..."
+          defaultValue={initialMessage}
         />
       </div>
 

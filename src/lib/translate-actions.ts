@@ -1,6 +1,6 @@
 "use server";
 
-import { translateTexts } from "@/lib/translate";
+import { translateTexts, MAX_TRANSLATION_CHARACTERS } from "@/lib/translate";
 import { getCurrentAdminUser } from "@/lib/admin-auth";
 import { canTranslate } from "@/lib/admin-permissions";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -13,8 +13,8 @@ export async function translateFieldsAction(texts: string[]): Promise<TranslateR
   if (!user || !canTranslate(user)) {
     return { ok: false, error: "Bạn cần đăng nhập bằng tài khoản có quyền chỉnh sửa nội dung để sử dụng dịch tự động." };
   }
-  if (!Array.isArray(texts) || texts.length > 64 || texts.some((text) => typeof text !== "string") || texts.reduce((total, text) => total + text.length, 0) > 100_000) {
-    return { ok: false, error: "Nội dung dịch không hợp lệ hoặc quá dài (tối đa 100.000 ký tự)." };
+  if (!Array.isArray(texts) || texts.length > 64 || texts.some((text) => typeof text !== "string") || texts.reduce((total, text) => total + text.length, 0) > MAX_TRANSLATION_CHARACTERS) {
+    return { ok: false, error: "Nội dung dịch không hợp lệ hoặc quá dài (tối đa 20.000 ký tự)." };
   }
   if (!checkRateLimit(`translate:${user.id}`, 10, 60_000)) {
     return { ok: false, error: "Bạn dịch quá nhiều lần, vui lòng đợi một phút rồi thử lại." };

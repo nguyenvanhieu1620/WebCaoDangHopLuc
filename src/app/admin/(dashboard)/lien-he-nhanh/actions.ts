@@ -7,6 +7,7 @@ import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
 import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
+import { safeHref } from "@/lib/safe-href";
 
 const VALID_TYPES = ["hotline", "zalo", "facebook", "message", "chatbot", "custom"];
 
@@ -18,9 +19,9 @@ export async function upsertQuickContactAction(formData: FormData) {
   const rawHref = String(formData.get("href") || "").trim();
   // Zalo/Facebook: sửa link dán sai ("#https://…", thiếu https://, Zalo gõ số điện thoại);
   // link không hợp lệ thì giữ nguyên chữ admin gõ để họ thấy và sửa lại (web công khai tự ẩn nút).
-  const href =
+  const href = safeHref(
     (type === "zalo" ? normalizeZaloUrl(rawHref) : type === "facebook" ? normalizeExternalUrl(rawHref) : null) ??
-    rawHref;
+    rawHref);
   const sortOrder = Number(formData.get("sortOrder") || 0);
   const labelEn = String(formData.get("labelEn") || "").trim();
 

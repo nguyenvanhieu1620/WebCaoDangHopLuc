@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { unlink } from "node:fs/promises";
-import path from "node:path";
+import { uploadedFilePath } from "@/lib/upload-dir";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { saveUploadedFile } from "@/lib/media";
+import { purgeOptimizedImageCache } from "@/lib/image-cache";
 import { requirePermission } from "@/lib/admin-auth";
 
 export async function uploadMediaAction(formData: FormData) {
@@ -23,7 +24,12 @@ export async function deleteMediaAction(mediaId: string) {
   await requirePermission("media");
   const item = await db.query.mediaItems.findFirst({ where: eq(schema.mediaItems.id, mediaId) });
   if (item) {
-    await unlink(path.join(process.cwd(), "public", item.url)).catch(() => {});
+    const filePath = uploadedFilePath(item.url);
+    if (!filePath) throw new Error("Đường dẫn tệp không nằm trong thư mục uploads.");
+    await unlink(filePath).catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+    await purgeOptimizedImageCache();
     await db.delete(schema.mediaItems).where(eq(schema.mediaItems.id, mediaId));
   }
   revalidatePath("/admin/media");

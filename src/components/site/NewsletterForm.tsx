@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { TurnstileWidget } from "./TurnstileWidget";
+import type { Locale } from "@/lib/locale";
 
 /** Form đăng ký nhận bản tin ở Footer — POST tới /api/newsletter. */
-export function NewsletterForm() {
+export function NewsletterForm({ locale = "vi" }: { locale?: Locale }) {
+  const en = locale === "en";
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -30,20 +32,20 @@ export function NewsletterForm() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setErrorMessage(data.error || "Có lỗi xảy ra, vui lòng thử lại.");
+        setErrorMessage(en ? "Unable to subscribe. Check your email and try again." : data.error || "Có lỗi xảy ra, vui lòng thử lại.");
         setStatus("error");
         return;
       }
       setStatus("success");
       form.reset();
     } catch {
-      setErrorMessage("Không thể kết nối máy chủ, vui lòng thử lại.");
+      setErrorMessage(en ? "Unable to connect. Please try again." : "Không thể kết nối máy chủ, vui lòng thử lại.");
       setStatus("error");
     }
   }
 
   if (status === "success") {
-    return <p role="status" className="text-[13px] font-semibold text-white/90">Đã đăng ký nhận tin, cảm ơn bạn!</p>;
+    return <p role="status" className="text-[13px] font-semibold text-white/90">{en ? "You are subscribed. Thank you!" : "Đã đăng ký nhận tin, cảm ơn bạn!"}</p>;
   }
 
   return (
@@ -55,12 +57,12 @@ export function NewsletterForm() {
       <div className="flex gap-2">
         <input
           name="email"
-          aria-label="Email đăng ký nhận tin"
+          aria-label={en ? "Newsletter email" : "Email đăng ký nhận tin"}
           autoComplete="email"
           maxLength={254}
           type="email"
           required
-          placeholder="Email của bạn"
+          placeholder={en ? "Your email" : "Email của bạn"}
           className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-[13px] text-white placeholder:text-white/50 outline-none focus:border-white/50"
         />
         <button
@@ -71,7 +73,7 @@ export function NewsletterForm() {
             status === "submitting" && "opacity-60"
           )}
         >
-          {status === "submitting" ? "..." : "Đăng ký"}
+          {status === "submitting" ? "..." : (en ? "Subscribe" : "Đăng ký")}
         </button>
       </div>
       <TurnstileWidget compact />

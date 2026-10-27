@@ -30,7 +30,7 @@ export default async function ProgramsPage() {
             Chưa có ngành đào tạo nào — quản lý qua admin/nganh-dao-tao.
           </div>
         ) : (
-          <ProgramExplorer programs={programs.map(({ slug, code, name, summary, duration, intake, imageUrl }) => ({ slug, code, name, summary, duration, intake, imageUrl }))} locale={locale} />
+          <ProgramExplorer programs={programs} locale={locale} />
         )}
       </DecorativeSection>
     </>

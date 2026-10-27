@@ -7,7 +7,8 @@ import { and, eq } from "drizzle-orm";
 import { hashPassword, signResetToken, verifyResetToken, isCredentialCurrent } from "@/lib/auth";
 import { escapeHtml } from "@/lib/email";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { sendEmail } from "@/lib/email";
+import { sendEmailAfterResponse } from "@/lib/email";
+import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-credentials";
 import { SITE, SITE_URL } from "@/lib/constants";
 
 export type RequestResetState = { message?: string; error?: string };
@@ -30,6 +31,8 @@ export async function requestPasswordResetAction(
   if (!email) {
     return { error: "Vui lòng nhập email." };
   }
+  // Email dùng làm khoá đếm số lần gửi (bộ nhớ) — email thật ≤ 254 ký tự; trả đúng thông điệp chung.
+  if (email.length > 254) return { message: GENERIC_MESSAGE };
 
   const headerStore = await headers();
   const ip = getClientIp({ headers: headerStore });
@@ -42,9 +45,9 @@ export async function requestPasswordResetAction(
 
   const user = await db.query.adminUsers.findFirst({ where: eq(schema.adminUsers.email, email) });
   if (user) {
-    const token = signResetToken(user.id, user.passwordHash);
+    const token = signResetToken(user.id, user.passwordHash, user.email);
     const resetLink = `${SITE_URL}/admin/dat-lai-mat-khau?token=${token}`;
-    await sendEmail({
+    sendEmailAfterResponse({
       to: user.email,
       subject: `Đặt lại mật khẩu quản trị — ${SITE.name}`,
       html: `<p>Xin chào ${escapeHtml(user.name)},</p>
@@ -72,6 +75,10 @@ export async function resetPasswordAction(
   if (password.length < 8) {
     return { error: "Mật khẩu cần tối thiểu 8 ký tự." };
   }
+  if (password.length > 256) return { error: "Mật khẩu không được vượt quá 256 ký tự." };
+  if (password === DEMO_ADMIN_PASSWORD) {
+    return { error: "Không dùng lại mật khẩu mẫu — hãy chọn mật khẩu khác." };
+  }
   if (password !== confirmPassword) {
     return { error: "Xác nhận mật khẩu không khớp." };
   }
@@ -86,14 +93,14 @@ export async function resetPasswordAction(
     return { error: "Không tìm thấy tài khoản." };
   }
 
-  if (!isCredentialCurrent(payload, user.passwordHash)) {
+  if (payload.email !== user.email || !isCredentialCurrent(payload, user.passwordHash)) {
     return { error: "Liên kết đã được sử dụng hoặc mật khẩu đã thay đổi — yêu cầu liên kết mới." };
   }
 
   const changed = await db
     .update(schema.adminUsers)
     .set({ passwordHash: await hashPassword(password) })
-    .where(and(eq(schema.adminUsers.id, user.id), eq(schema.adminUsers.passwordHash, user.passwordHash)))
+    .where(and(eq(schema.adminUsers.id, user.id), eq(schema.adminUsers.passwordHash, user.passwordHash), eq(schema.adminUsers.email, payload.email)))
     .returning({ id: schema.adminUsers.id });
 
   if (!changed.length) return { error: "Mật khẩu đã thay đổi — vui lòng yêu cầu liên kết mới." };

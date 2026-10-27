@@ -2,6 +2,7 @@ import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
 import type { HeroBanner } from "@/lib/db/schema";
 import { getLocale, pickLocale } from "@/lib/locale";
+import { safeHref } from "@/lib/safe-href";
 
 /** Ảnh banner Hero Trang chủ (nhiều ảnh xoay vòng) — quản lý qua admin/banner-trang-chu. */
 export async function getHeroBanners(): Promise<HeroBanner[]> {
@@ -11,6 +12,7 @@ export async function getHeroBanners(): Promise<HeroBanner[]> {
   ]);
   return rows.map((b) => ({
     ...b,
+    linkUrl: b.linkUrl ? safeHref(b.linkUrl) : null,
     caption: b.caption ? pickLocale(b.caption, b.captionEn, locale) : b.caption,
   }));
 }

@@ -147,6 +147,13 @@ export function MarkdownEditor({
         defaultValue={defaultValue}
         rows={rows}
         required={required}
+        onInvalid={(event) => {
+          if (showPreview) {
+            event.preventDefault();
+            setShowPreview(false);
+            requestAnimationFrame(() => textareaRef.current?.focus());
+          }
+        }}
         placeholder={placeholder}
         className={`w-full rounded-b-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 ${
           showPreview ? "hidden" : ""

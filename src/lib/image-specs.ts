@@ -32,9 +32,9 @@ export type ImageSpec = {
 
 export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
   hero: {
-    shape: "landscape", ratio: "16:9", minWidth: 1920, minHeight: 1080, ideal: "2560×1440",
-    where: "Đầu Trang chủ, rộng hết màn hình, khung 16:9 — ảnh hiện RÕ, không phủ màu, không có chữ đè (tiêu đề và nút nằm bên dưới ảnh).",
-    tip: "Điện thoại: ảnh 16:9 hiện trọn. Máy tính: khung thấp hơn 16:9 một chút (khoảng 2:1) nên cắt bớt ít ở trên/dưới, và ~85px trên cùng nằm dưới thanh menu (có phủ mờ nhẹ) → đừng đặt chữ quan trọng sát mép trên/dưới. Dùng được cả ảnh/poster đã thiết kế sẵn chữ; góc dưới có nút chuyển ảnh. Nên nén dưới ~1MB.",
+    shape: "landscape", ratio: "≈2,11:1 (desktop đã đo)", minWidth: 1920, minHeight: 910, ideal: "2530×1200 (khung desktop 1265×600)",
+    where: "Đầu Trang chủ, rộng hết màn hình; tiêu đề và nút nằm bên dưới. Khung desktop thay đổi theo màn hình, khung điện thoại là 16:9.",
+    tip: "Tại cửa sổ desktop 1280×720, khung banner là 1265×600: dùng ảnh 2530×1200 hoặc gần tương đương 2560×1214. 2560×1440 cao hơn tỉ lệ khung này nên bị cắt trên/dưới. Đây không phải kích thước vừa khít mọi thiết bị: trên điện thoại, ảnh ngang theo tỉ lệ desktop có thể bị cắt hai bên. Giữ chữ/chủ thể quan trọng ở giữa, chừa mép trên cho thanh menu và góc dưới cho nút chuyển ảnh. Nên nén dưới ~1MB.",
   },
   pageBanner: {
     shape: "landscape", ratio: "3:1", minWidth: 1920, minHeight: 600, ideal: "2400×800",
@@ -53,8 +53,8 @@ export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
   },
   portrait: {
     shape: "portrait", ratio: "3:4", minWidth: 600, minHeight: 800, ideal: "900×1200",
-    where: "Thẻ giảng viên (máy tính: khung ngang giữ phần trên ảnh; điện thoại: hiện trọn ảnh) và khung vòm dọc ở trang chi tiết.",
-    tip: "Ảnh chân dung dọc, mặt nằm ở 1/3 phía trên, nền gọn.",
+    where: "Khung vòm dọc 4:5 ở thẻ giảng viên, khối đội ngũ Trang chủ (người đầu danh sách hiện lớn) và đầu trang hồ sơ — giữ phần trên ảnh.",
+    tip: "Ảnh chân dung dọc, mặt ở 1/3 phía trên, chừa khoảng trống trên đầu (đỉnh vòm bo tròn). Ảnh thẻ nền trắng dùng tốt — khung có phông xanh nhạt nên nền trắng trông như phông chụp.",
   },
   avatar: {
     shape: "portrait", ratio: "3:4", minWidth: 620, minHeight: 800, ideal: "900×1200",

@@ -16,7 +16,7 @@ export const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_HINTS: Record<string, string> = {
-  hotline: "tel:19006868",
+  hotline: "Tự đồng bộ số từ Cài đặt chung khi hiển thị công khai",
   zalo: "https://zalo.me/xxxxxxxxxxxx",
   facebook: "https://m.me/tenpagefacebook",
   message: "sms:0900000000 hoặc link ứng dụng nhắn tin",
@@ -37,6 +37,7 @@ export async function QuickContactFormPage({ id }: { id?: string }) {
       description="Các nút nổi góc màn hình ở mọi trang công khai — bấm nút + để xoè ra"
       backHref="/admin/lien-he-nhanh"
     >
+      <p className="mb-5 rounded-xl bg-brand-50 p-4 text-sm text-brand-900">Với loại Hotline, website dùng số trong Cài đặt chung thay cho tên/link nhập bên dưới. Các loại khác dùng tên và link riêng.</p>
       <form action={upsertQuickContactAction} className="space-y-5">
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div>

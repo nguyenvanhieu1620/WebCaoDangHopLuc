@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import Link from "next/link";
-import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
-import { FitImage } from "@/components/ui/FitImage";
-import { TiltCard } from "@/components/site/TiltCard";
-import { Reveal } from "@/components/site/Reveal";
+import { FacultyCard } from "@/components/site/FacultyCard";
 import {
   EMPTY_FILTERS,
   filterMembers,
@@ -194,9 +190,19 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
                 </h2>
                 <span className="font-mono text-[11px] text-ink-faint">{list.length} giảng viên</span>
               </div>
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
                 {list.map((m, i) => (
-                  <MemberCard key={m.id} member={m} index={i} />
+                  <FacultyCard
+                    key={m.id}
+                    delay={(i % 4) * 80}
+                    data={{
+                      href: m.slug ? `/doi-ngu-giang-vien/${m.slug}` : null,
+                      name: m.displayName,
+                      role: m.role,
+                      specialty: m.specialty,
+                      photoUrl: m.photoUrl,
+                    }}
+                  />
                 ))}
               </div>
             </section>
@@ -259,44 +265,5 @@ function Chip({ pressed, onClick, count, children }: { pressed: boolean; onClick
       {children}
       <span className={cn("rounded-full px-1.5 py-px font-mono text-[11px]", pressed ? "bg-white/20 text-white" : "bg-paper-alt text-ink-faint")}>{count}</span>
     </button>
-  );
-}
-
-function MemberCard({ member: m, index }: { member: DirectoryMember; index: number }) {
-  const card = (
-    <>
-      <div className="img-reveal img-shine relative h-[240px]">
-        {m.photoUrl ? (
-          <FitImage
-            src={m.photoUrl}
-            alt={m.displayName}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
-            anchorTop
-            className="transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <ImagePlaceholder label="Ảnh chân dung" />
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="font-display text-base font-semibold text-ink transition-colors group-hover:text-brand-700">{m.displayName}</h3>
-        <div className="mt-0.5 text-[12.5px] text-brand-700">{m.role}</div>
-        {m.specialty && <div className="mt-1.5 line-clamp-2 text-[12.5px] leading-snug text-ink-faint">{m.specialty}</div>}
-      </div>
-    </>
-  );
-  const className = "group block h-full overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
-  return (
-    <Reveal delay={(index % 4) * 80}>
-      <TiltCard className="h-full rounded-2xl">
-        {m.slug ? (
-          <Link href={`/doi-ngu-giang-vien/${m.slug}`} className={className}>
-            {card}
-          </Link>
-        ) : (
-          <div className={className}>{card}</div>
-        )}
-      </TiltCard>
-    </Reveal>
   );
 }

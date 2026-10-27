@@ -6,7 +6,7 @@ import { DailyBarChart, BreakdownBars, Sparkline, type DailyPoint } from "@/comp
 import { db, schema } from "@/lib/db";
 import { count, desc, eq } from "drizzle-orm";
 import { requireAdmin, hasPermission } from "@/lib/admin-auth";
-import { cn, dbTimestampToISO, formatDbDateTime, hasPlaceholder, vnDateKey } from "@/lib/utils";
+import { cn, dbTimestampToISO, formatDbDateTime, hasPlaceholder, vnDateKey, normalizeExternalUrl } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -73,6 +73,7 @@ export default async function AdminDashboardPage({
     programs,
     banners,
     events,
+    settings,
   ] = await Promise.all([
     canPosts ? db.select({ value: count() }).from(schema.posts).where(eq(schema.posts.status, "published")) : [],
     canPosts ? db.select({ value: count() }).from(schema.posts).where(eq(schema.posts.status, "draft")) : [],
@@ -90,6 +91,7 @@ export default async function AdminDashboardPage({
     can("programs") ? db.query.programs.findMany({ columns: { tuition: true, content: true, imageUrl: true } }) : [],
     can("homepage") ? db.select({ value: count() }).from(schema.heroBanners) : [],
     can("events") ? db.query.events.findMany({ columns: { startAt: true } }) : [],
+    can("site-settings") ? db.query.siteSettings.findFirst({ where: eq(schema.siteSettings.id, "main"), columns: { lmsUrl: true } }) : null,
   ]);
 
   const stats = buildAdmissionStats(admissions);
@@ -155,7 +157,8 @@ export default async function AdminDashboardPage({
     { show: canAdmissions && newAdmissionCount > 0, label: `${newAdmissionCount} hồ sơ tuyển sinh chưa xử lý`, href: "/admin/tuyen-sinh?status=new", tone: "accent" },
     { show: canAdmissions && newMessageCount > 0, label: `${newMessageCount} tin nhắn liên hệ chưa đọc`, href: "/admin/lien-he?status=new", tone: "accent" },
     { show: canPosts && (draftPosts[0]?.value ?? 0) > 0, label: `${draftPosts[0]?.value ?? 0} bài viết đang là bản nháp`, href: "/admin/bai-viet?status=draft", tone: "brand" },
-    { show: pagesNeedFill > 0, label: `${pagesNeedFill} trang tĩnh còn nội dung "[Trường điền…]"`, href: "/admin/trang-tinh", tone: "brand" },
+    { show: pagesNeedFill > 0, label: `${pagesNeedFill} trang tĩnh còn nội dung chưa hoàn thiện — khách đang thấy thông báo chờ cập nhật`, href: "/admin/trang-tinh", tone: "brand" },
+    { show: can("site-settings") && !normalizeExternalUrl(settings?.lmsUrl), label: "Cổng LMS chưa có đường dẫn chính thức", href: "/admin/cai-dat", tone: "accent" },
     { show: infoNeedFill > 0, label: `${infoNeedFill} mục thông tin tuyển sinh chưa điền`, href: "/admin/thong-tin-tuyen-sinh", tone: "brand" },
     { show: programs.some((p) => !p.tuition), label: `${programs.filter((p) => !p.tuition).length} ngành chưa nhập học phí (web đang hiện "Liên hệ")`, href: "/admin/nganh-dao-tao", tone: "brand" },
     { show: programs.some((p) => !p.imageUrl), label: `${programs.filter((p) => !p.imageUrl).length} ngành chưa có ảnh (thẻ ngành chỉ hiện khối màu)`, href: "/admin/nganh-dao-tao", tone: "brand" },

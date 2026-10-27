@@ -89,12 +89,14 @@ Postgres cùng máy, chỉ nghe `localhost` (mặc định) — không mở cổ
 
 **Chép dữ liệu đang có ở máy dev** (khuyến nghị):
 
-1. Trên máy dev: `npm run demo:clean` (gỡ ảnh/giảng viên demo — người mẫu Unsplash), rồi
+1. Trên máy dev: `npm run demo:clean` (gỡ ảnh/giảng viên demo — người mẫu Unsplash), **đổi mật khẩu
+   hoặc xoá tài khoản mẫu `admin@hopluc.edu.vn`** ở admin/nguoi-dung (mật khẩu mẫu ai cũng biết; bản
+   production cũng từ chối đăng nhập bằng mật khẩu đó, nhưng đừng để tài khoản này lên máy thật), rồi
    `docker compose exec -T postgres pg_dump -U hopluc -Fc hopluc > hopluc.dump` và nén thư mục `public/uploads`.
 2. Chép lên VPS (`scp`), rồi:
 
 ```bash
-pg_restore --no-owner --role=hopluc -d "postgres://hopluc:<mật-khẩu>@localhost:5432/hopluc" hopluc.dump
+pg_restore --no-owner -h localhost -U hopluc -d hopluc hopluc.dump
 sudo tar -xzf uploads.tar.gz -C /srv/hopluc/shared && sudo chown -R hopluc:hopluc /srv/hopluc/shared/uploads
 ```
 
@@ -179,18 +181,45 @@ age-keygen -o hopluc-backup-key.txt
 
 - Cất `hopluc-backup-key.txt` ở 2 nơi an toàn (VD USB + trình quản lý mật khẩu). **Mất khoá = không đọc được
   bản sao lưu nào.**
-- Chép dòng `# public key: age1…` (chỉ phần `age1…`) vào `/srv/hopluc/backup-recipients.txt` trên VPS.
+- Chép dòng `# public key: age1…` (chỉ phần `age1…`) vào `recipients.txt`, cài theo bước dưới.
 
-Bật sao lưu hằng ngày và chạy thử 1 lần:
+Tách tài khoản sao lưu khỏi user web. Script, env DB và khoá nhận thuộc root; web không được sửa khoá nhận,
+credential rclone hoặc script cron. Các lệnh sau chỉ là hướng dẫn cài trên VPS, không chạy từ web:
 
 ```bash
+sudo useradd --system --create-home --home-dir /var/lib/hopluc-backup --shell /usr/sbin/nologin hopluc-backup
+sudo install -d -o hopluc-backup -g hopluc-backup -m 700 /var/lib/hopluc-backup
+sudo install -d -o root -g hopluc-backup -m 750 /etc/hopluc-backup
+sudo install -d -o hopluc-backup -g hopluc-backup -m 700 /var/backups/hopluc
+sudo install -d -o root -g root -m 755 /usr/local/libexec
+sudo install -o root -g root -m 755 /srv/hopluc/repo/deploy/scripts/backup.sh /usr/local/libexec/hopluc-backup.sh
+sudo install -o root -g hopluc-backup -m 640 recipients.txt /etc/hopluc-backup/recipients.txt
+# File riêng chỉ có DATABASE_URL="postgres://…", không chép SESSION_SECRET hay API key của web.
+sudo install -o root -g hopluc-backup -m 640 /dev/null /etc/hopluc-backup/database.env
+sudoedit /etc/hopluc-backup/database.env
+# Chỉ cấp quyền đọc/traverse dữ liệu upload cho backup, gồm tệp mới tạo sau này.
+sudo apt install -y acl
+sudo setfacl -m u:hopluc-backup:rx /srv/hopluc /srv/hopluc/shared
+sudo setfacl -R -m u:hopluc-backup:rX /srv/hopluc/shared/uploads
+sudo setfacl -d -m u:hopluc-backup:rx /srv/hopluc/shared/uploads
 sudo install -m 644 /srv/hopluc/repo/deploy/cron/hopluc-backup /etc/cron.d/hopluc-backup
-sudo -u hopluc bash /srv/hopluc/current/deploy/scripts/backup.sh
+sudo -u hopluc-backup env BACKUP_ENV_FILE=/etc/hopluc-backup/database.env BACKUP_DIR=/var/backups/hopluc \
+  AGE_RECIPIENTS=/etc/hopluc-backup/recipients.txt bash /usr/local/libexec/hopluc-backup.sh
 ```
 
-**Đẩy ra ngoài VPS** (nên có — VPS hỏng là mất cả bản sao lưu nằm trên nó): `sudo -u hopluc rclone config`
-tạo remote (Google Drive, OneDrive, S3…), rồi bỏ `#` ở dòng `RCLONE_REMOTE=` trong `/etc/cron.d/hopluc-backup`.
-Chỉ bản đã mã hoá mới được đẩy đi.
+**Đẩy ra ngoài VPS:** tạo remote bằng `sudo -u hopluc-backup rclone --config /var/lib/hopluc-backup/rclone.conf config`, rồi
+`sudo chmod 600 /var/lib/hopluc-backup/rclone.conf`. Chỉ tài khoản backup được sửa file này để rclone có thể
+lưu token refresh; user web không được đọc/ghi thư mục đó. Ưu tiên credential chỉ cho thêm bản mới.
+Bỏ `#` ở dòng `RCLONE_REMOTE=` trong cron. Chỉ bản đã mã hoá
+mới được đẩy đi. Script không xoá remote; cài lifecycle tại nhà cung cấp: daily 7 ngày, weekly 28 ngày.
+Khả năng chỉ-ghi-thêm và lifecycle phải kiểm tra theo backend thực tế, không suy ra từ cấu hình repo.
+
+Mỗi lần cập nhật script backup trong repo, root phải cài lại vào `/usr/local/libexec/`; cron không chạy
+script từ `current` vì thư mục release có thể ghi được bởi user web/deploy.
+
+**Sau cập nhật bảo mật 27/10/2026:** cookie production và khoá ký token đổi định dạng; đăng nhập lại và
+yêu cầu link reset mới nếu cần. Thời gian cache media mới là 60 giây; xoá media dọn cache tối ưu ảnh trên
+server, nhưng không thu hồi được ảnh đã tải xuống hoặc cache trình duyệt một năm từ phiên bản cũ.
 
 ## 10. Khôi phục từ bản sao lưu
 
@@ -199,13 +228,17 @@ Trên máy có khoá bí mật: `age -d -i hopluc-backup-key.txt hopluc-<ngày>.
 
 ```bash
 sudo systemctl stop hopluc-web
-pg_restore --clean --if-exists --no-owner --role=hopluc -d "postgres://hopluc:<mật-khẩu>@localhost:5432/hopluc" db.dump
+pg_restore --clean --if-exists --no-owner -h localhost -U hopluc -d hopluc db.dump
 sudo -u hopluc tar -xzf uploads.tar.gz -C /srv/hopluc/shared
 sudo systemctl start hopluc-web && curl -s http://127.0.0.1:3000/api/health
 ```
 
 **Mỗi tháng thử khôi phục 1 lần** vào DB nháp (`createdb hopluc_thu` → `pg_restore` → xem số dòng → `dropdb`)
 — bản sao lưu chưa từng khôi phục thử thì chưa chắc dùng được.
+
+Trước khi mở lại web sau khôi phục: đổi `SESSION_SECRET` để vô hiệu các phiên/token cũ, kiểm tra
+lại tài khoản quản trị và áp dụng lại việc đổi mật khẩu, gỡ quyền hoặc xoá tài khoản đã phát sinh
+sau thời điểm bản sao lưu. Bản sao lưu có thể khôi phục cả tài khoản/mật khẩu cũ.
 
 ## 11. Theo dõi
 
@@ -214,4 +247,4 @@ sudo systemctl start hopluc-web && curl -s http://127.0.0.1:3000/api/health
   còn dưới 1GB (`HEALTH_MIN_FREE_MB`).
 - **Log web:** `journalctl -u hopluc-web -f` (cảnh báo cấu hình in ngay lúc khởi động).
 - **Log Nginx:** `/var/log/nginx/hopluc.access.log`, `hopluc.error.log` (logrotate có sẵn tự xoay vòng).
-- **Log sao lưu:** `/srv/hopluc/backups/backup.log`.
+- **Log sao lưu:** `/var/backups/hopluc/backup.log` (user `hopluc-backup`).

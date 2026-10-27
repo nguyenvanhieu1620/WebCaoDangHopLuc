@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm";
 import { closeDb, db } from "./client";
 import { slugify } from "../utils";
 import { autoFillTranslations } from "../translate";
-import { looksLikeProduction, refuseInProduction } from "./script-guard";
+import { isProductionSeed, refuseInProduction } from "./script-guard";
+import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "../demo-credentials";
 import {
   adminUsers,
   posts,
@@ -27,18 +28,20 @@ import {
 } from "./schema";
 
 /**
- * Script tạo dữ liệu mẫu ban đầu — chạy 1 lần sau khi `npm run db:push`.
+ * Script tạo dữ liệu mẫu ban đầu — chạy 1 lần sau khi `npm run db:migrate`.
  * Dùng: npm run db:seed
  */
 async function main() {
   // Môi trường thật: dừng hẳn, trừ khi cố ý thêm cờ --allow-production (xem script-guard.ts).
   refuseInProduction("db:seed", "--allow-production");
-  const production = looksLikeProduction();
+  // Cờ --allow-production hay SEED_ADMIN_PASSWORD cũng là dấu hiệu người vận hành đang chạy trên
+  // máy thật — kể cả khi NEXT_PUBLIC_SITE_URL chưa đặt/còn localhost.
+  const production = isProductionSeed();
   // Máy dev: mật khẩu mẫu ghi trong CLAUDE.md. Môi trường thật: KHÔNG BAO GIỜ dùng mật khẩu mẫu —
   // lấy từ SEED_ADMIN_PASSWORD (chỉ đặt tạm khi chạy lệnh, không lưu vào .env).
-  const adminPassword = production ? (process.env.SEED_ADMIN_PASSWORD ?? "") : "HopLuc@2026";
-  if (production && adminPassword.length < 12) {
-    console.error("✋ Môi trường thật: đặt SEED_ADMIN_PASSWORD (ít nhất 12 ký tự) cho tài khoản admin đầu tiên rồi chạy lại.");
+  const adminPassword = production ? (process.env.SEED_ADMIN_PASSWORD ?? "") : DEMO_ADMIN_PASSWORD;
+  if (production && (adminPassword.length < 12 || adminPassword.length > 256 || adminPassword === DEMO_ADMIN_PASSWORD)) {
+    console.error("✋ Môi trường thật: đặt SEED_ADMIN_PASSWORD (12–256 ký tự, không dùng mật khẩu mẫu) cho tài khoản admin đầu tiên rồi chạy lại.");
     process.exitCode = 1;
     return;
   }
@@ -47,16 +50,16 @@ async function main() {
 
   // Tài khoản admin đầu tiên
   const existingAdmin = await db.query.adminUsers.findFirst({
-    where: (u, { eq }) => eq(u.email, "admin@hopluc.edu.vn"),
+    where: (u, { eq }) => eq(u.email, DEMO_ADMIN_EMAIL),
   });
   if (!existingAdmin) {
     const passwordHash = await bcrypt.hash(adminPassword, 10);
     await db.insert(adminUsers).values({
-      email: "admin@hopluc.edu.vn",
+      email: DEMO_ADMIN_EMAIL,
       passwordHash,
       name: "Admin Hợp Lực",
     });
-    console.log(production ? "✓ Tạo tài khoản admin: admin@hopluc.edu.vn (mật khẩu = SEED_ADMIN_PASSWORD)" : "✓ Tạo tài khoản admin: admin@hopluc.edu.vn / HopLuc@2026");
+    console.log(production ? `✓ Tạo tài khoản admin: ${DEMO_ADMIN_EMAIL} (mật khẩu = SEED_ADMIN_PASSWORD)` : `✓ Tạo tài khoản admin: ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}`);
   } else {
     console.log("• Tài khoản admin đã tồn tại, bỏ qua.");
   }

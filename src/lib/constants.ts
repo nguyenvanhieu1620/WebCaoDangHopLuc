@@ -142,7 +142,7 @@ export const PAGE_BANNER_SLOTS = [
   { key: "tra-cuu-ket-qua", label: "Tra cứu kết quả", path: "/tra-cuu-ket-qua" },
   { key: "tin-tuc", label: "Tin tức", path: "/tin-tuc", note: "Cả bài viết không có ảnh bìa" },
   { key: "su-kien", label: "Sự kiện", path: "/su-kien", note: "Cả sự kiện không có ảnh bìa" },
-  { key: "doi-ngu-giang-vien", label: "Đội ngũ giảng viên", path: "/doi-ngu-giang-vien", note: "Cả trang chi tiết từng giảng viên" },
+  { key: "doi-ngu-giang-vien", label: "Đội ngũ giảng viên", path: "/doi-ngu-giang-vien", note: "Chỉ trang danh sách — trang hồ sơ từng người dùng ảnh chân dung của chính người đó" },
   { key: "thu-vien", label: "Thư viện ảnh & video", path: "/thu-vien" },
   { key: "faq", label: "Câu hỏi thường gặp", path: "/faq" },
   { key: "cong-khai", label: "Công khai (mục lục)", path: "/cong-khai", note: "Cả trang công khai chưa có ảnh bìa riêng" },

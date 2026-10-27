@@ -21,6 +21,10 @@ import { getPartners } from "@/lib/data/partners";
 import { getGalleryItems } from "@/lib/data/gallery";
 import { GalleryMedia } from "@/components/site/GalleryMedia";
 import { getFacultyList, facultyDisplayName } from "@/lib/data/faculty";
+import { getDepartments } from "@/lib/data/departments";
+import { degreeLevel } from "@/lib/faculty-directory";
+import { FacultyCard, FacultySpotlight, type FacultyCardData } from "@/components/site/FacultyCard";
+import type { Faculty } from "@/lib/db/schema";
 import { getTestimonials } from "@/lib/data/testimonials";
 import { getLatestPublishedPosts, getPinnedPosts } from "@/lib/data/posts";
 import { getSiteSettings } from "@/lib/data/site-settings";
@@ -136,6 +140,7 @@ export default async function HomePage() {
     settings,
     heroBanners,
     allEvents,
+    departments,
   ] = await Promise.all([
     getPrograms(),
     getHomepageContent(),
@@ -148,8 +153,34 @@ export default async function HomePage() {
     getSiteSettings(),
     getHeroBanners(),
     getEvents(),
+    getDepartments(),
   ]);
   const { stats, features, steps } = content;
+  const missionBlocks = [
+    { text: content.missionText, label: "Sứ mệnh", tone: "blue" as const },
+    { text: content.visionText, label: "Tầm nhìn", tone: "red" as const },
+  ].filter((b) => b.text);
+  // Khối đội ngũ: người đầu danh sách (thứ tự trong admin/giang-vien) nổi bật, tối đa 3 người tiếp theo dạng thẻ.
+  const facultyCard = (f: Faculty): FacultyCardData => ({
+    href: f.slug ? `/doi-ngu-giang-vien/${f.slug}` : null,
+    name: facultyDisplayName(f),
+    role: f.role,
+    department: departments.find((d) => d.id === f.departmentId)?.name ?? null,
+    specialty: f.specialty,
+    photoUrl: f.photoUrl,
+  });
+  const [featuredFaculty, ...otherFaculty] = facultyList.slice(0, 4);
+  // Số liệu chỉ hiện khi đội ngũ đã nhập tương đối đủ — con số quá nhỏ (VD "4 giảng viên") phản tác dụng.
+  const postgraduateCount = facultyList.filter((f) => ["tien-si", "ck2", "thac-si", "ck1"].includes(degreeLevel(f.degree)?.key ?? "")).length;
+  const departmentCount = new Set(facultyList.map((f) => f.departmentId).filter(Boolean)).size;
+  const facultyStats =
+    facultyList.length >= 8
+      ? [
+          { value: String(facultyList.length), label: "Giảng viên & cán bộ" },
+          ...(departmentCount > 1 ? [{ value: String(departmentCount), label: "Khoa / phòng ban" }] : []),
+          ...(postgraduateCount > 0 ? [{ value: String(postgraduateCount), label: "Trình độ sau đại học" }] : []),
+        ]
+      : [];
   const nextEvents = upcomingEvents(allEvents);
   // Dải đối tác chạy vô tận: lặp danh sách đủ dài (≥ 8 mục mỗi nửa) để lấp kín
   // màn hình rộng, rồi nhân đôi — CSS dịch -50% là khớp liền mạch.
@@ -534,89 +565,114 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ============ 5. SỨ MỆNH - TẦM NHÌN ============ */}
-      {(content.missionText || content.visionText) && (
-        <section className="px-6 pt-24 sm:px-8">
-          <div className="mx-auto grid max-w-[1320px] gap-5 md:grid-cols-2">
-            {[
-              { text: content.missionText, label: "Sứ mệnh", tone: "blue" as const },
-              { text: content.visionText, label: "Tầm nhìn", tone: "red" as const },
-            ]
-              .filter((b) => b.text)
-              .map((b, i) => (
-                <Reveal key={b.label} delay={i * 120} className="h-full">
-                  <TiltCard max={4} className="h-full rounded-[24px] border border-line bg-white p-9 shadow-sm2">
-                    <Eyebrow tone={b.tone} className="mb-5">
-                      {b.label}
-                    </Eyebrow>
-                    <p className="font-display text-[19px] leading-relaxed text-brand-900 sm:text-[21px]">
-                      <span className="mr-1 font-display text-[40px] leading-none text-accent-500/50">“</span>
-                      {b.text}
-                    </p>
-                  </TiltCard>
-                </Reveal>
-              ))}
+      {/* ============ 5. SỨ MỆNH - TẦM NHÌN ============
+          Đệm trên/dưới bằng nhau: khối kế tiếp (đội ngũ giảng viên) nền xanh đậm, thiếu đệm dưới thì thẻ dính sát mép
+          khối tối. Nội dung căn giữa theo chiều dọc → 2 đoạn dài ngắn khác nhau vẫn cân; chỉ có 1 đoạn thì 1 thẻ giữa trang.
+          2 cột chỉ từ lg — ở 768px mỗi thẻ ~330px, đoạn chữ cỡ 21px kéo dài 7–8 dòng. */}
+      {missionBlocks.length > 0 && (
+        <section className="px-6 py-24 sm:px-8">
+          <div className={cn("mx-auto grid gap-5", missionBlocks.length > 1 ? "max-w-[1320px] lg:grid-cols-2" : "max-w-3xl")}>
+            {missionBlocks.map((b, i) => (
+              <Reveal key={b.label} delay={i * 120} className="h-full">
+                <TiltCard
+                  max={4}
+                  className="flex h-full flex-col justify-center overflow-clip rounded-[24px] border border-line bg-white px-8 py-10 shadow-sm2 sm:px-11 sm:py-12"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r",
+                      b.tone === "red" ? "from-accent-600 to-accent-500" : "from-brand-700 to-brand-500"
+                    )}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute -top-4 right-6 select-none font-display text-[140px] font-bold leading-none",
+                      b.tone === "red" ? "text-accent-500/10" : "text-brand-500/10"
+                    )}
+                  >
+                    “
+                  </span>
+                  <Eyebrow tone={b.tone} className="mb-5 self-start">
+                    {b.label}
+                  </Eyebrow>
+                  <p className="relative text-pretty font-display text-[19px] leading-relaxed text-brand-900 sm:text-[21px]">{b.text}</p>
+                </TiltCard>
+              </Reveal>
+            ))}
           </div>
         </section>
       )}
 
-      {/* ============ 6. GIẢNG VIÊN ============ */}
-      {facultyList.length > 0 && (
-        <section className="px-6 py-24 sm:px-8">
-          <div className="mx-auto max-w-[1320px]">
-            <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
-              <SectionHeading
-                eyebrow="Đội ngũ giảng viên"
-                title="Giảng viên giàu kinh nghiệm lâm sàng"
-                align="left"
-                className="mb-0"
-              />
-              <Reveal delay={180}>
-                <MoreLink href="/doi-ngu-giang-vien">Xem tất cả đội ngũ</MoreLink>
-              </Reveal>
+      {/* ============ 6. ĐỘI NGŨ GIẢNG VIÊN — khối nền xanh đậm ============
+          Lưới 2 cột (từ xl — 1024px thì 3 thẻ bên phải chỉ rộng ~160px): trái = chân dung lớn người đầu danh sách (cao 2 hàng), phải = tiêu đề + số liệu (hàng 1)
+          và tối đa 3 thẻ trong mờ (hàng 2). Điện thoại theo thứ tự DOM: tiêu đề → người nổi bật → dải vuốt ngang. */}
+      {featuredFaculty && (
+        <section className="relative isolate overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 py-24 text-white sm:px-8 lg:py-28">
+          <div className="bg-grid-dark pointer-events-none absolute inset-0" />
+          <ParallaxBlur
+            speed={0.1}
+            className="pointer-events-none absolute -left-32 top-1/4 h-[440px] w-[440px] rounded-full bg-brand-500/25 blur-[90px]"
+          />
+          <ParallaxBlur
+            speed={-0.1}
+            className="pointer-events-none absolute -bottom-10 -right-24 h-[380px] w-[380px] rounded-full bg-accent-500/15 blur-[90px]"
+          />
+          <div className="relative mx-auto grid max-w-[1320px] gap-12 xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:gap-x-14 xl:gap-y-10">
+            <div className="xl:col-start-2 xl:row-start-1">
+              <div className="flex flex-wrap items-end justify-between gap-6">
+                <SectionHeading
+                  onDark
+                  eyebrowTone="onDark"
+                  eyebrow="Đội ngũ giảng viên"
+                  title="Giảng viên giàu kinh nghiệm lâm sàng"
+                  align="left"
+                  className="mb-0"
+                />
+                <Reveal delay={180}>
+                  <MoreLink href="/doi-ngu-giang-vien" onDark>
+                    Xem toàn bộ đội ngũ
+                  </MoreLink>
+                </Reveal>
+              </div>
+              {facultyStats.length > 0 && (
+                <Reveal delay={240}>
+                  <dl
+                    className={cn(
+                      "mt-9 grid divide-x divide-white/10 border-y border-white/10",
+                      facultyStats.length === 3 ? "grid-cols-3" : facultyStats.length === 2 ? "grid-cols-2" : "grid-cols-1"
+                    )}
+                  >
+                    {facultyStats.map((st) => (
+                      <div key={st.label} className="flex flex-col-reverse px-4 py-5 first:pl-0">
+                        <dt className="mt-2 text-[11.5px] uppercase tracking-wider text-brand-200">{st.label}</dt>
+                        <dd className="font-mono text-[30px] font-semibold leading-none text-white sm:text-[36px]">
+                          <CountUp value={st.value} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Reveal>
+              )}
             </div>
-            <div className={cn(MOBILE_SWIPE_ROW, "sm:grid-cols-2 sm:gap-5 lg:grid-cols-4")}>
-              {facultyList.slice(0, 4).map((f, i) => {
-                const card = (
-                  <>
-                    <div className="img-reveal img-shine relative h-[220px]">
-                      {f.photoUrl ? (
-                        <FitImage
-                          src={f.photoUrl}
-                          alt={facultyDisplayName(f)}
-                          sizes="(max-width: 640px) 68vw, (max-width: 1024px) 50vw, 320px"
-                          anchorTop
-                          className="transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <ImagePlaceholder label="Ảnh chân dung" />
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-display text-base font-semibold text-ink transition-colors group-hover:text-brand-700">
-                        {facultyDisplayName(f)}
-                      </h4>
-                      <div className="mt-0.5 text-[12.5px] text-brand-700">{f.role}</div>
-                    </div>
-                  </>
-                );
-                const className =
-                  "group block h-full overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2";
-                return (
-                  <Reveal key={f.id} delay={i * 90} className={MOBILE_SWIPE_ITEM_NARROW}>
-                    <TiltCard className="h-full rounded-2xl">
-                      {f.slug ? (
-                        <Link href={`/doi-ngu-giang-vien/${f.slug}`} className={className}>
-                          {card}
-                        </Link>
-                      ) : (
-                        <div className={className}>{card}</div>
-                      )}
-                    </TiltCard>
-                  </Reveal>
-                );
-              })}
-            </div>
+            <Reveal className="xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:self-center">
+              <FacultySpotlight data={facultyCard(featuredFaculty)} />
+            </Reveal>
+            {otherFaculty.length > 0 && (
+              <div className={cn(MOBILE_SWIPE_ROW, "sm:grid-cols-3 sm:gap-5 xl:col-start-2 xl:row-start-2")}>
+                {otherFaculty.map((f, i) => (
+                  <FacultyCard
+                    key={f.id}
+                    tone="glass"
+                    delay={i * 90}
+                    className={MOBILE_SWIPE_ITEM_NARROW}
+                    sizes="(max-width: 640px) 68vw, 260px"
+                    data={facultyCard(f)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}

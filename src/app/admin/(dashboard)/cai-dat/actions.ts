@@ -6,10 +6,12 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
+import { hasPermission } from "@/lib/admin-permissions";
+import { isValidEmail } from "@/lib/validate";
 import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
 
 export async function updateSiteSettingsAction(formData: FormData) {
-  await requirePermission("site-settings");
+  const user = await requirePermission("site-settings");
   const hotline = String(formData.get("hotline") || "").trim();
   const email = String(formData.get("email") || "").trim();
   const address = String(formData.get("address") || "").trim();
@@ -32,6 +34,15 @@ export async function updateSiteSettingsAction(formData: FormData) {
 
   if (!hotline || !email || !address || !announcement) return;
 
+  // Email này cũng nhận thông báo hồ sơ tuyển sinh/liên hệ (có CCCD, SĐT) — chỉ người được xem
+  // dữ liệu đó (quyền "Tuyển sinh & Liên hệ") mới được đổi. Sai định dạng → giữ email cũ.
+  const current = await db.query.siteSettings.findFirst({ where: eq(schema.siteSettings.id, "main") });
+  let emailProblem: "locked" | "invalid" | null = null;
+  if (!current || email !== current.email) {
+    if (!hasPermission(user, "admissions-contact")) emailProblem = "locked";
+    else if (!isValidEmail(email)) emailProblem = "invalid";
+  }
+
   const [announcementEnFinal] = await autoFillTranslations([
     { vi: announcement, en: announcementEn },
   ]);
@@ -40,7 +51,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
     .update(schema.siteSettings)
     .set({
       hotline,
-      email,
+      email: emailProblem ? undefined : email, // undefined = không cập nhật cột này
       address,
       announcement,
       announcementEn: announcementEnFinal || null,
@@ -57,9 +68,8 @@ export async function updateSiteSettingsAction(formData: FormData) {
   revalidatePath("/lms");
   revalidatePath("/admin/cai-dat");
 
-  redirect(
-    invalidLinks.length
-      ? `/admin/cai-dat?saved=1&invalid=${encodeURIComponent(invalidLinks.join(", "))}`
-      : "/admin/cai-dat?saved=1"
-  );
+  const params = new URLSearchParams({ saved: "1" });
+  if (invalidLinks.length) params.set("invalid", invalidLinks.join(", "));
+  if (emailProblem) params.set("email", emailProblem);
+  redirect(`/admin/cai-dat?${params.toString()}`);
 }

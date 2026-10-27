@@ -1,3 +1,3 @@
 # /etc/sudoers.d/hopluc — cho user "hopluc" (chạy deploy.sh) khởi động lại web và xem log mà không cần
 # quyền root đầy đủ. Cài: sudo install -m 440 deploy/sudoers/hopluc /etc/sudoers.d/hopluc && sudo visudo -c
-hopluc ALL=(root) NOPASSWD: /usr/bin/systemctl restart hopluc-web, /usr/bin/systemctl status hopluc-web, /usr/bin/journalctl -u hopluc-web *
+hopluc ALL=(root) NOPASSWD: /usr/bin/systemctl restart hopluc-web, /usr/bin/systemctl status hopluc-web, /usr/bin/journalctl -u hopluc-web -n 40 --no-pager

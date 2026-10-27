@@ -22,6 +22,9 @@ export async function GET(request: Request) {
   const rows = filterAdmissions(all, {
     q: url.searchParams.get("q") ?? undefined,
     status: parseStatusFilter(url.searchParams.get("status") ?? undefined),
+    program: url.searchParams.get("program") ?? undefined,
+    from: url.searchParams.get("from") ?? undefined,
+    to: url.searchParams.get("to") ?? undefined,
   });
 
   const csv = toCsv(

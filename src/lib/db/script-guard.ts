@@ -18,8 +18,17 @@ export function looksLikeProduction(env: Record<string, string | undefined> = pr
     const host = new URL(site).hostname.toLowerCase();
     return !(LOCAL_HOSTS.has(host) || host.endsWith(".localhost") || host.endsWith(".test"));
   } catch {
-    return false;
+    // URL viết sai (VD thiếu https://) → coi là môi trường thật, an toàn hơn coi là máy dev.
+    return true;
   }
+}
+
+/** Ý định chạy seed thật phải giữ nguyên cả khi URL còn trống/localhost. */
+export function isProductionSeed(
+  env: Record<string, string | undefined> = process.env,
+  argv: readonly string[] = process.argv
+): boolean {
+  return looksLikeProduction(env) || argv.includes("--allow-production") || Boolean(env.SEED_ADMIN_PASSWORD);
 }
 
 /**

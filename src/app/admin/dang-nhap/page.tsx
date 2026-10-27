@@ -6,6 +6,7 @@ import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SITE } from "@/lib/constants";
 import { loginAction, type LoginState } from "@/lib/actions/auth-actions";
+import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-credentials";
 
 /** Trang đăng nhập admin — cố ý KHÔNG dùng layout sidebar (đứng độc lập). */
 export default function AdminLoginPage() {
@@ -110,9 +111,11 @@ export default function AdminLoginPage() {
           >
             {pending ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
-          <p className="text-center text-[11px] text-ink-faint">
-            Tài khoản demo: admin@hopluc.edu.vn / HopLuc@2026
-          </p>
+          {process.env.NODE_ENV !== "production" && (
+            <p className="text-center text-[11px] text-ink-faint">
+              Tài khoản demo (chỉ máy dev): {DEMO_ADMIN_EMAIL} / {DEMO_ADMIN_PASSWORD}
+            </p>
+          )}
         </form>
       </div>
     </div>

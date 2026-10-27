@@ -10,6 +10,7 @@ export async function updateAdmissionStatusAction(
   status: "new" | "reviewed" | "contacted"
 ) {
   await requirePermission("admissions-contact");
+  if (!["new", "reviewed", "contacted"].includes(status)) return;
   await db
     .update(schema.admissionSubmissions)
     .set({ status })

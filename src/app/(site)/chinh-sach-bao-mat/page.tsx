@@ -22,7 +22,7 @@ export default async function PrivacyPolicyPage() {
 
   return (
     <>
-      <PageHero crumbs={[{ label: "Chính sách bảo mật" }]} eyebrow="Chính sách" title={page.title} imageUrl={page.coverImageUrl} />
+      <PageHero useDefaultImage={false} crumbs={[{ label: "Chính sách bảo mật" }]} eyebrow="Chính sách" title={page.title} imageUrl={page.coverImageUrl} />
       <DecorativeSection contentClassName="mx-auto max-w-3xl">
         <MarkdownContent content={page.content} />
       </DecorativeSection>

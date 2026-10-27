@@ -99,9 +99,9 @@ function HeroVideo({ src, play, enabled }: { src: string; play: boolean; enabled
 /**
  * Banner chính Trang chủ — "bộ mặt" của website (đổi 19/10/2026 theo yêu cầu người dùng: ảnh phải RÕ
  * và TRỌN, không bị lớp phủ tối + chữ đè làm mờ):
- * - **Ảnh sạch**: khung đúng tỉ lệ 16:9 (máy tính: tối đa cao bằng màn hình) nên ảnh 16:9 hiện trọn,
- *   không phủ màu, không chữ đè, không Ken Burns. Chỉ máy tính có dải mờ nhẹ ở mép trên cho chữ trắng
- *   của thanh menu trong suốt đọc được. Banner có link → bấm vào ảnh là đi tới link đó.
+ * - **Ảnh sạch**: desktop giới hạn khung theo chiều cao màn hình, mobile dùng khung 16:9.
+ *   Ảnh phủ kín khung; phần thừa bị cắt. Máy tính có dải mờ nhẹ ở mép trên cho menu trong suốt.
+ *   Banner có link → bấm vào ảnh là đi tới link đó.
  * - **Chữ xuống dưới ảnh**: nhãn + tiêu đề + mô tả + 2 nút + 2 số liệu (Nội dung Trang chủ) nằm trên
  *   dải nền sáng ngay dưới ảnh.
  * - Nhiều banner: crossfade, thanh tiến trình, ‹ ›, tạm dừng (WCAG 2.2.2), vuốt trên điện thoại. Nút
@@ -320,11 +320,8 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
       <section
         aria-roledescription="carousel"
         aria-label="Banner giới thiệu nhà trường"
-        // -mt-[72px] lg:-mt-[84px]: kéo lên dưới thanh menu trong suốt (SiteHeader cao 72px, máy tính 84px). Điện thoại: ảnh bắt đầu
-        // NGAY DƯỚI menu (nền xanh đậm sau menu) vì ảnh 16:9 thấp, để menu đè thì mất 1/3 ảnh. Máy tính:
-        // ảnh nằm dưới menu, chỉ phủ mờ nhẹ mép trên. Margin âm đặt trên CHÍNH section (xem CLAUDE.md);
-        // khoảng chừa cho menu ở điện thoại phải là PADDING — margin của khung ảnh sẽ gộp (collapse) với
-        // margin âm này thành 0 và section tụt xuống dưới menu, menu chữ trắng nằm trên nền trắng.
+        // Desktop: banner nằm sau menu trong suốt; mobile: ảnh bắt đầu dưới menu.
+        // Margin âm đặt trên chính section, tránh collapse.
         className="relative isolate -mt-[72px] bg-brand-900 pt-[72px] lg:-mt-[84px] lg:pt-0"
       >
         <div
@@ -376,7 +373,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
             </div>
           ))}
 
-          {/* Chỉ máy tính: dải mờ nhẹ mép trên cho chữ trắng của thanh menu trong suốt — không phủ phần còn lại. */}
+          {/* Chỉ máy tính: dải mờ nhẹ mép trên cho menu trong suốt. */}
           <div className="pointer-events-none absolute inset-x-0 top-0 hidden h-36 bg-gradient-to-b from-brand-900/55 to-transparent lg:block" />
 
           {/* ≥ sm: chú thích + điều khiển gọn ở góc dưới ảnh */}

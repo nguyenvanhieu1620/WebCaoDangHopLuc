@@ -6,6 +6,8 @@ type DecorativeSectionProps = {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  /** Tắt chuyển động của lớp bọc khi chứa form/neo cuộn cần vị trí ổn định. */
+  reveal?: boolean;
 };
 
 /**
@@ -26,7 +28,7 @@ type DecorativeSectionProps = {
  * 2 khối blur trang trí giờ có `ParallaxBlur` (di chuyển lệch tốc độ nhẹ so
  * với nội dung khi cuộn, tạo chiều sâu) — xem CLAUDE.md mục 5.
  */
-export function DecorativeSection({ children, className, contentClassName }: DecorativeSectionProps) {
+export function DecorativeSection({ children, className, contentClassName, reveal = true }: DecorativeSectionProps) {
   return (
     // `overflow-clip` (không phải overflow-hidden): vẫn cắt khối blur tràn ra
     // ngoài nhưng KHÔNG tạo vùng cuộn riêng — nhờ vậy phần tử `sticky` bên trong
@@ -40,7 +42,7 @@ export function DecorativeSection({ children, className, contentClassName }: Dec
         speed={-0.12}
         className="pointer-events-none absolute -bottom-40 -right-28 h-[420px] w-[420px] rounded-full bg-accent-500/10 blur-[60px]"
       />
-      <Reveal className={cn("relative", contentClassName)}>{children}</Reveal>
+      {reveal ? <Reveal className={cn("relative", contentClassName)}>{children}</Reveal> : <div className={cn("relative", contentClassName)}>{children}</div>}
     </section>
   );
 }

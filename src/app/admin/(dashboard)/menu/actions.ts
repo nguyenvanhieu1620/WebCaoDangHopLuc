@@ -6,12 +6,13 @@ import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
+import { safeHref } from "@/lib/safe-href";
 
 export async function upsertNavItemAction(formData: FormData) {
   await requirePermission("menu");
   const id = String(formData.get("id") || "").trim();
   const label = String(formData.get("label") || "").trim();
-  const href = String(formData.get("href") || "").trim();
+  const href = safeHref(String(formData.get("href") || ""));
   const parentId = String(formData.get("parentId") || "").trim() || null;
   const isPrimary = formData.get("isPrimary") === "on" ? 1 : 0;
   const sortOrder = Number(formData.get("sortOrder") || 0);

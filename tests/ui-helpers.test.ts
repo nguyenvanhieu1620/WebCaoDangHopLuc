@@ -111,8 +111,8 @@ test("checkUpload chặn sai định dạng, HEIC, quá dung lượng — cùng 
 });
 
 test("assessImage cảnh báo ảnh nhỏ, sai hướng, logo JPG; đạt chuẩn thì báo ok", () => {
-  assert.deepEqual(assessImage(IMAGE_SPECS.hero, 2560, 1440).map((n) => n.level), ["ok"]);
-  assert.ok(assessImage(IMAGE_SPECS.hero, 800, 450)[0].text.includes("Ảnh 800×450 nhỏ hơn khuyến nghị (tối thiểu 1920×1080)"));
+  assert.deepEqual(assessImage(IMAGE_SPECS.hero, 2530, 1200).map((n) => n.level), ["ok"]);
+  assert.ok(assessImage(IMAGE_SPECS.hero, 800, 450)[0].text.includes("Ảnh 800×450 nhỏ hơn khuyến nghị (tối thiểu 1920×910)"));
   assert.ok(assessImage(IMAGE_SPECS.hero, 2000, 3000).some((n) => /Ảnh dọc/.test(n.text)), "ảnh dọc cho banner ngang");
   assert.ok(assessImage(IMAGE_SPECS.portrait, 1600, 1200).some((n) => /Ảnh ngang/.test(n.text)), "ảnh ngang cho chân dung");
   assert.deepEqual(assessImage(IMAGE_SPECS.logo, 300, 120).map((n) => n.level), ["ok"], "logo chỉ xét chiều cao");

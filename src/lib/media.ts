@@ -1,5 +1,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { db, schema } from "@/lib/db";
 import { normalizeExternalUrl, slugify, videoSource } from "@/lib/utils";
 import { checkUpload, uploadKindOf } from "@/lib/upload-rules";
@@ -30,11 +31,11 @@ export async function saveUploadedFile(file: File): Promise<SavedMedia> {
 
   await mkdir(UPLOAD_DIR, { recursive: true });
 
-  // Đuôi lưu trên đĩa theo loại đã kiểm tra, KHÔNG theo tên gốc (tên "x.html" khai là ảnh PNG → "x.png").
+  // Đuôi theo MIME đã kiểm tra; UUID + wx ngăn hai upload cùng tên/thời điểm ghi đè nhau.
   const originalExt = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
   const base = slugify(file.name.slice(0, file.name.length - originalExt.length)) || "file";
-  const filename = `${Date.now()}-${base}${EXTENSION_BY_MIME[file.type]}`;
-  await writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  const filename = `${Date.now()}-${randomUUID()}-${base}${EXTENSION_BY_MIME[file.type]}`;
+  await writeFile(path.join(UPLOAD_DIR, filename), buffer, { flag: "wx" });
 
   const url = `/uploads/${filename}`;
   const type = kind;
@@ -87,6 +88,11 @@ export async function resolveVideoUrl(
   return videoSource(link)?.kind === "file" ? link : normalizeExternalUrl(link);
 }
 
+/** Đường dẫn ảnh hợp lệ trong thư viện media: /uploads/<tên tệp>.<đuôi ảnh>, không query/hash. */
+export function isLibraryImageUrl(url: string): boolean {
+  return /^\/uploads\/[^/\\?#\s%]+\.(jpe?g|png|webp|gif|avif)$/i.test(url);
+}
+
 export async function resolveImageUrl(
   formData: FormData,
   fileFieldName: string,
@@ -98,7 +104,10 @@ export async function resolveImageUrl(
     const saved = await saveUploadedFile(file);
     return saved.url;
   }
+  // Ảnh "chọn từ thư viện" là ô ẩn trong form — Server Action gọi thẳng được nên phải kiểm tra:
+  // chỉ nhận đúng đường dẫn tệp ảnh trong /uploads (không query/hash). Giá trị lạ (VD có "?")
+  // từng làm next/image lỗi khi dựng trang → giữ ảnh cũ.
   const picked = String(formData.get(pickedFieldName) || "").trim();
-  if (picked) return picked;
+  if (picked && isLibraryImageUrl(picked)) return picked;
   return fallbackUrl;
 }

@@ -67,6 +67,7 @@ export default async function EventDetailPage({
               </div>
             ))}
           </dl>
+          <Button href={`/lien-he?chuDe=${encodeURIComponent(event.title)}`} className="mt-6 w-full justify-center">Liên hệ về sự kiện →</Button>
           <Button href="/su-kien" variant="outline" className="mt-6 w-full justify-center">
             ← Tất cả sự kiện
           </Button>

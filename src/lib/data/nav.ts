@@ -1,6 +1,7 @@
 import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
 import { getLocale, pickLocale } from "@/lib/locale";
+import { safeHref } from "@/lib/safe-href";
 
 export type NavNode = {
   id: string;
@@ -28,11 +29,11 @@ export async function getNavTree(): Promise<{ primary: NavNode[]; secondary: Nav
   const toNode = (row: Row): NavNode => ({
     id: row.id,
     label: label(row),
-    href: row.href,
+    href: safeHref(row.href) ?? "#",
     description: description(row),
     children: rows
       .filter((r) => r.parentId === row.id)
-      .map((r) => ({ id: r.id, label: label(r), href: r.href, description: description(r), children: [] })),
+      .map((r) => ({ id: r.id, label: label(r), href: safeHref(r.href) ?? "#", description: description(r), children: [] })),
   });
 
   const topLevel = rows.filter((r) => !r.parentId);

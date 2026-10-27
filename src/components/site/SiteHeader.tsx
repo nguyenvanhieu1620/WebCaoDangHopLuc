@@ -223,10 +223,10 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
   return (
     <div className="sticky top-0 z-50 font-sans" style={{ viewTransitionName: "site-header" }}>
       {/* Thanh thông báo */}
-      <div className="bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 text-white">
-        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-6 py-2 font-mono text-[12px] uppercase tracking-wider sm:px-8 lg:text-[13px]">
-          <span className="truncate">{settings.announcement}</span>
-          <div className="flex shrink-0 items-center gap-5 opacity-90">
+      <div className="hidden bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 text-white lg:block">
+        <div className="mx-auto flex max-w-[1320px] items-start justify-between gap-4 px-6 py-2 font-mono text-[12px] uppercase tracking-wider sm:px-8 lg:items-center lg:text-[13px]">
+          <span className="min-w-0 flex-1 whitespace-normal break-words leading-relaxed lg:truncate lg:leading-normal">{settings.announcement}</span>
+          <div className="flex shrink-0 items-center gap-5 pt-0.5 opacity-90 lg:pt-0">
             <span className="hidden md:inline">Hotline: {settings.hotline}</span>
             <span className="hidden xl:inline">{settings.email}</span>
             <LanguageSwitcher locale={locale} />
@@ -502,7 +502,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
             </button>
             {/* Ẩn ở 1024–1279px (không đủ chỗ cạnh menu ngang); mobile đã có MobileActionBar, Hero có nút riêng. */}
             <Button href="/tuyen-sinh" className="hidden sm:inline-flex lg:hidden xl:inline-flex">
-              Đăng ký xét tuyển
+                {t.promoCta}
             </Button>
             <button
               ref={mobileButtonRef}
@@ -567,8 +567,15 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
           <nav
             id="site-mobile-nav"
             aria-label={t.mainNav}
-            className="max-h-[calc(100dvh-108px)] overflow-y-auto overscroll-contain border-t border-line bg-white px-5 pb-28 pt-3 lg:hidden"
+            className="max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-line bg-white px-5 pb-28 pt-3 lg:hidden"
           >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-100 bg-brand-50 p-3">
+              <a href={`tel:${settings.hotline.replace(/[^+\d]/g, "")}`} className="min-w-0 rounded-md py-1 text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500">
+                <span className="block text-[10.5px] font-semibold text-ink-soft">{t.hotlineLabel}</span>
+                <span className="block text-base font-bold">{settings.hotline}</span>
+              </a>
+              <LanguageSwitcher locale={locale} className="rounded-lg bg-white px-1 text-brand-900 [&_button]:min-h-10 [&_button]:min-w-9" />
+            </div>
             <div className="flex flex-col gap-0.5">
             {navTree.primary.map((item) => (
               <div key={item.id}>
@@ -648,20 +655,7 @@ export function SiteHeader({ settings, navTree, locale }: SiteHeaderProps) {
               </div>
             )}
 
-            <a
-              href={`tel:${settings.hotline.replace(/\s+/g, "")}`}
-              className="mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-br from-brand-900 to-brand-700 px-5 py-4 text-white"
-            >
-              <span>
-                <span className="block font-mono text-[10.5px] uppercase tracking-wider text-brand-200">{t.hotlineLabel}</span>
-                <span className="block font-display text-[20px] font-semibold">{settings.hotline}</span>
-              </span>
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </a>
+
           </nav>
         )}
       </div>

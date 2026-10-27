@@ -8,3 +8,10 @@ import path from "node:path";
  * (trên VPS public/uploads là symlink ra ngoài dự án, Turbopack lần theo sẽ báo lỗi và build hỏng).
  */
 export const UPLOAD_DIR = path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads");
+
+/** Chỉ cho xoá tệp trực tiếp trong uploads; không giải mã hay lần theo đường dẫn từ DB. */
+export function uploadedFilePath(url: string): string | null {
+  if (!/^\/uploads\/[^/\\?#\s%]+\.[a-z0-9]+$/i.test(url)) return null;
+  const target = path.resolve(UPLOAD_DIR, url.slice("/uploads/".length));
+  return path.dirname(target) === path.resolve(UPLOAD_DIR) ? target : null;
+}

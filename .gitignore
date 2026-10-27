@@ -15,6 +15,18 @@ drizzle/*.db-shm
 # Ghi chú dữ liệu demo (npm run demo:load) — chỉ có ý nghĩa với DB dev trên máy này
 drizzle/*.local.json
 .env
+.env.production
+.env.development
+.env.*
+!.env.example
+
+# Bản sao lưu / dump DB / khoá — có dữ liệu thí sinh hoặc bí mật, tuyệt đối không commit
+*.dump
+*.tar.gz
+*.tar
+*.age
+*.pem
+*.key
 
 # File upload thật qua admin (public/uploads/) — dữ liệu runtime, không commit
 public/uploads/*

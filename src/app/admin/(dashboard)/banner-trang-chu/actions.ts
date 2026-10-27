@@ -7,12 +7,15 @@ import { resolveImageUrl, resolveVideoUrl } from "@/lib/media";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
+import { safeHref } from "@/lib/safe-href";
 
 export async function upsertHeroBannerAction(formData: FormData) {
   await requirePermission("homepage");
   const id = String(formData.get("id") || "").trim();
   const caption = String(formData.get("caption") || "").trim();
-  const linkUrl = String(formData.get("linkUrl") || "").trim();
+  const rawLink = String(formData.get("linkUrl") || "").trim();
+  const linkUrl = rawLink ? safeHref(rawLink) : null;
+  if (rawLink && !linkUrl) return;
   const sortOrder = Number(formData.get("sortOrder") || 0);
   const captionEn = String(formData.get("captionEn") || "").trim();
 

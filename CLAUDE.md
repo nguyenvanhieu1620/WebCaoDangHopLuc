@@ -1728,6 +1728,40 @@ Người dùng hỏi video hiện được ở đâu, rồi đồng ý làm cả
   được, điện thoại 0 thẻ video/0 lượt tải; bản production: file thêm sau khi khởi động → 200, `/_next/image` 200,
   Range 206, lách thư mục 404; tải ảnh thật qua admin hiện ngay. Đã xoá hết dữ liệu thử.
 
+### Đội ngũ giảng viên "thanh lịch nền xanh đậm" (23/10/2026)
+Người dùng hỏi có nên làm phần giảng viên sang trọng hơn → chọn: làm lại khuôn chung từng giảng viên (thẻ + trang
+hồ sơ) và khối đội ngũ ở Trang chủ, phong cách "Thanh lịch nền xanh đậm" (bỏ: khối Ban Giám hiệu riêng, kiểu tạp
+chí sáng, thẻ kính gradient). Dữ liệu thật là ẢNH THẺ NỀN TRẮNG và chưa có tiểu sử → thiết kế phải đẹp với dữ liệu đó.
+- **`FacultyPortrait`** (`src/components/site/FacultyPortrait.tsx`): khung vòm (`rounded-t-[999px]`) phông
+  `from-brand-100 to-white` — nền trắng của ảnh thẻ trông như phông chụp; `object-cover object-top`; chưa có ảnh →
+  chữ cái đầu tên (`nameInitial`) trên nền xanh. Dùng chung cho thẻ, Trang chủ, đầu trang hồ sơ, danh sách "Cùng khoa"
+  (thêm `rounded-b-[999px]` = hình tròn). Không dùng `FitImage` ở đây (khung 4:5 ≈ ảnh dọc, không cắt mặt).
+- **`FacultyCard`** (`src/components/site/FacultyCard.tsx`): thẻ xanh đậm (`tone="solid"`, trên nền sáng) hoặc
+  trong mờ `bg-white/[0.06]` (`tone="glass"`, trên khối xanh đậm); chức vụ chữ đỏ in hoa `accent-400`, tên trắng,
+  khoa `brand-200`, chuyên môn (ẩn dưới sm), dòng "Xem hồ sơ →"; bọc `Reveal` + `TiltCard`. `FacultySpotlight`:
+  chân dung lớn + vòm viền mảnh lệch phía sau + thẻ tên đè mép dưới (kính mờ chỉ từ lg).
+- `/doi-ngu-giang-vien` (FacultyDirectory) dùng `FacultyCard`; lưới **2 thẻ/hàng trên điện thoại** (`grid-cols-2`,
+  thẻ ~158px — 1 thẻ/hàng dài ~560px/người), 4 thẻ từ lg.
+- **Trang chủ**: khối nền xanh đậm (như "Vì sao chọn"); người đầu danh sách (thứ tự admin/giang-vien, thường Hiệu
+  trưởng) là `FacultySpotlight`, tối đa 3 người tiếp theo là thẻ glass. Lưới 2 cột chỉ **từ xl** (`4fr/8fr`) — ở 1024px
+  3 thẻ chỉ rộng ~158px; dưới xl xếp chồng (tiêu đề → người nổi bật → thẻ; điện thoại vuốt ngang). Hàng số liệu
+  (tổng giảng viên & cán bộ, số khoa/phòng ban, số "sau đại học" theo `degreeLevel`) **chỉ hiện khi ≥ 8 người** — số
+  quá nhỏ phản tác dụng.
+- **Trang hồ sơ** `/doi-ngu-giang-vien/[slug]`: KHÔNG dùng `PageHero` nữa — khối đầu trang riêng (vẫn giữ hợp đồng
+  header `-mt-[72px] lg:-mt-[84px]` + padding trên, bg-grid-dark + vệt sáng + hạt nhiễu + vạch đỏ đáy như PageHero):
+  breadcrumb, khoa (Eyebrow), học hàm/học vị nhỏ phía trên, tên lớn, chức vụ đỏ, chuyên môn; chân dung vòm 380px đáy
+  chạm mép khối (điện thoại: ảnh trên, chữ dưới). Thân: "Giới thiệu" (chưa có bio → câu dựng từ chức vụ/khoa + "Hồ sơ
+  chi tiết đang được nhà trường cập nhật"), "Trình độ & chuyên môn" (thẻ có icon, chỉ hiện mục có dữ liệu), cột phải
+  dính "Cùng <khoa>" (không có ai cùng khoa → "Đội ngũ nhà trường", tối đa 4). Banner trang con `doi-ngu-giang-vien`
+  giờ chỉ áp dụng trang danh sách. `IMAGE_SPECS.portrait` đã cập nhật.
+- Đã kiểm: 375/1024/1280/1440px không tràn ngang; thẻ Trang chủ 302px (1024), 241px (1280), 268px (1440); trang hồ
+  sơ 200, slug lạ 404; Console sạch; lint, tsc, `npm test` 62/62.
+- **Sứ mệnh – Tầm nhìn (Trang chủ, cùng đợt)**: người dùng thấy "không cân đối" — section chỉ có `pt-24` nên thẻ dính sát
+  khối giảng viên nền tối mới; 2 đoạn dài ngắn khác nhau dồn lên trên. Giờ `py-24` (96px trên = dưới), nội dung mỗi thẻ
+  căn giữa dọc (`flex flex-col justify-center`), vạch màu mép trên (xanh/đỏ), dấu “ lớn chìm góc phải thay dấu nhỏ đầu
+  dòng; 2 cột chỉ từ lg (768px thẻ quá hẹp), chỉ có 1 đoạn → 1 thẻ `max-w-3xl` giữa trang. **Khối nào nằm ngay trước
+  khối nền tối phải có đệm dưới.**
+
 ### DevOps lượt 2 — CI, Node 24, index DB, bộ triển khai VPS (22/10/2026)
 Làm tiếp các mục còn lại của đợt rà soát (không cần chọn VPS/tên miền trước):
 - **CI** `.github/workflows/ci.yml` (push `main`/`feat/**` + PR): `npm ci` → `npm audit --omit=dev --audit-level=high`
@@ -1902,7 +1936,7 @@ Người dùng: "giờ chuyển db sang postgreSQL" — chọn qua `AskUserQuest
     đầu tiên trong thân **cả `page.tsx` lẫn mọi hàm trong `actions.ts`**
     tương ứng (2 lớp — chặn cả lúc render trang lẫn lúc gọi thẳng Server
     Action) — xem mục 5 "Phân quyền admin theo module".
-12. **Trang công khai mới trong `(site)` (trừ Trang chủ) BẮT BUỘC mở đầu bằng
+12. **Trang công khai mới trong `(site)` (trừ Trang chủ; trang hồ sơ giảng viên có khối đầu trang riêng cùng hợp đồng header) BẮT BUỘC mở đầu bằng
     `<PageHero crumbs=… title=…>`** (`src/components/site/PageHero.tsx`) rồi mới
     tới nội dung bọc trong `<DecorativeSection>` — header chữ trắng trong suốt ở
     mọi trang, thiếu khối nền tối đầu trang thì logo/menu vô hình trên nền sáng.
@@ -2098,6 +2132,45 @@ thêm.
 
 ## 10. Cập nhật chức năng và giao diện tháng 10/2026
 
+### Tiếp nối bản vá bảo mật 27/10/2026
+
+- Codex đối chiếu báo cáo run-1 với diff đang có của Claude; giữ các thay đổi giao diện có sẵn.
+- Claude đã bắt đầu vá tài khoản/mật khẩu demo trên production, seed production, quyền đổi email nhận
+  thông báo tuyển sinh, độ dài SESSION_SECRET/mật khẩu, gợi ý đăng nhập, sudoers và sao lưu qua pgpass.
+  Bản dở dang có regex sai cú pháp ở `src/lib/media.ts`; Codex đã sửa và bổ sung kiểm thử hồi quy.
+- Codex hoàn thiện: kiểm tra đường dẫn ảnh, UUID + ghi độc quyền khi upload, giới hạn đường dẫn xoá tệp,
+  dọn rate-limit hết hạn kể cả ít khoá, giới hạn mật khẩu reset, kiểm tra trạng thái action ở runtime,
+  chuẩn hoá tham số tìm kiếm lặp, chuyển Analytics sang layout `(site)` và liên kết vào admin tải tài liệu mới.
+- Nginx mặc định nhận 1MB; `/admin` và `/admin/` nhận 60MB, tối đa 4 kết nối mỗi IP. Đây là cấu hình
+  trong repo, chưa áp dụng lên VPS. Sao lưu bỏ cả mật khẩu trong userinfo lẫn query URI khỏi argv pg_dump.
+- Lượt tiếp tục: khi xoá media, dọn `.next/cache/images` (chỉ cache dựng lại được, chặn parent symlink).
+  Upload và Nginx đổi Cache-Control sang 60 giây + must-revalidate, Next images.minimumCacheTTL=60.
+  Không thể thu hồi bản ảnh người dùng đã tải/lưu; cache một năm từ phiên bản cũ có thể còn ở trình duyệt.
+- Login đếm theo IP + email; cookie production đổi sang `__Host-hopluc_admin_session`, có Secure/Path=/
+  cả lúc xoá. Session và reset dùng khoá HMAC con riêng. Reset gắn thêm email và kiểm tra email trong
+  điều kiện UPDATE để tránh race. Gửi mail sau phản hồi. Phiên/link reset cũ mất hiệu lực, cần đăng nhập
+  lại/yêu cầu link mới sau cập nhật. Logout vẫn chỉ xoá cookie, chưa có thu hồi phía server qua session_version.
+- `safeHref` kiểm tra ở action và lớp đọc menu/banner/liên hệ: chỉ internal/anchor/http(s)/tel/mailto/sms,
+  chặn javascript/data, control character, backslash, URL protocol-relative và userinfo.
+- Tự dịch lúc Lưu và nút dịch dùng cùng giới hạn: 20.000 ký tự/lần, 50.000 ký tự/tài khoản/24 giờ.
+  Bộ đếm trong bộ nhớ (reset khi restart, không phải giới hạn thanh toán của nhà cung cấp). Hết quota
+  không chặn lưu tiếng Việt. Script CLI không có phiên admin sẽ bỏ qua auto-fill, không tự dùng quota.
+- Sao lưu production có hướng dẫn tài khoản `hopluc-backup`, script root-owned ở `/usr/local/libexec`,
+  env DB/recipient root-owned trong `/etc/hopluc-backup`, rclone config riêng trong home backup (để refresh
+  token), bản sao lưu ở `/var/backups/hopluc`. Cron không chạy script từ release web có thể ghi.
+  Không xoá remote bằng credential trên VPS; remote lifecycle và quyền chỉ-thêm cần cài theo nhà cung cấp.
+- Kiểm tra trong Docker không mạng, nguồn/toolchain chỉ đọc, môi trường giả allowlist, scratch giới hạn
+  và không có `.env`/DB thật: TypeScript và ESLint qua; 81/81 test qua (19 test hồi quy mới).
+  Vì node_modules là bản Windows, test TS được transpile bằng TypeScript sang CommonJS trong scratch,
+  không chạy qua tsx/esbuild Linux. Bash `-n` qua; fixture pg_dump giả qua cho 2 dạng URL. Nginx 1.24
+  kiểm tra cú pháp bằng bản cấu hình thử bỏ TLS và đổi đường dẫn log/temp; chưa xác minh TLS/VPS.
+- Chưa chạy production build/browser sau vá (thiếu native toolchain Linux và font offline). Chưa xác
+  minh cache `/_next/image` sau xoá, tải multipart qua Next thật, sudoers/quyền backup/rclone trên VPS.
+  Chưa đổi kiến trúc session_version hoặc quy trình CI/deploy theo commit đã được CI duyệt; chưa ghim
+  GitHub Actions theo SHA. Các mục này còn là việc gia cố riêng, không được coi là đã hoàn tất.
+- Đã gọi Claude CLI review chỉ đọc theo AGENTS.md nhưng CLI trả hết hạn mức; không có review Claude mới
+  trong lượt này. Không chạy seed/migration, không sửa tài khoản hoặc dữ liệu dev/production, chưa commit.
+
 - Codex điều phối và tích hợp; Claude triển khai bộ kiểm tra đầu vào cho bốn API công khai, test helper, rồi review chéo chỉ đọc qua CLI.
 - Dashboard dùng requireAdmin() và chỉ query/hiện KPI, bản nháp, liên kết thuộc module được cấp quyền. Layout chặn tài khoản đã bị xoá; parser quyền từ chối JSON sai cấu trúc.
 - Session và token reset có phiên bản mật khẩu SHA-256 từ hash bcrypt. Đổi mật khẩu làm mất hiệu lực phiên/token cũ; reset có điều kiện cập nhật theo hash hiện tại để chống dùng lại đồng thời. Cookie cũ trước cập nhật cần đăng nhập lại. Quyền users vẫn là quyền quản trị cấp cao.
@@ -2110,3 +2183,20 @@ thêm.
 - npm test chạy test helper, API với PostgreSQL trong bộ nhớ (PGlite — trước 06/10/2026 là SQLite), quyền, token và rate limit. Không đọc/ghi DB thật hoặc gửi email. TypeScript, lint và build là các kiểm tra riêng.
 - Ghi chú upload cũ ở mục 4.1c đã lỗi thời: ImagePicker và resolveImageUrl cho phép chọn ảnh từ thư viện, ưu tiên file mới, rồi ảnh được chọn, rồi ảnh cũ.
 - Còn cần cho production: PostgreSQL/storage bền vững theo quyết định dự án, cấu hình email/Turnstile/proxy, duyệt nội dung và ảnh thật. Chưa xác minh hiệu ứng 3D bằng trình duyệt thật trong phiên này.
+
+### Bàn giao 27/10/2026 — nâng UX sau rà soát preview
+
+- Người dùng đã cho sửa giao diện/admin và tạo dữ liệu thử rồi xoá. Codex triển khai; Claude CLI review chỉ đọc bị lỗi API/DNS ENOTFOUND, không có kết quả review mới.
+- Chi tiết phạm vi/file, kiểm tra và giới hạn: `docs/upgrade-2026-10-27/README.md`. Banner desktop chuyển ảnh/chữ cạnh nhau, giữ ảnh trọn và màu/logo/font cũ. Thêm học phí khi so sánh ngành, checklist giấy tờ, liên hệ từ sự kiện; dịch nhãn form tuyển sinh/footer/newsletter/header CTA. Các trang tĩnh ẩn hướng dẫn nội bộ bằng thông báo cập nhật nhưng giữ nguyên nội dung CMS để trường điền.
+- Admin: tìm bài không dấu; bộ lọc ngành/ngày hồ sơ dùng chung CSV và giữ qua phân trang; thao tác dưới tên; thư viện phân biệt tài liệu/PDF, form upload nhận tài liệu theo luật hiện có; validation Markdown đang xem trước mở lại ô trống. Hotline công khai đồng bộ Cài đặt chung; dashboard/cài đặt cảnh báo LMS thiếu URL.
+- DB local sửa đúng chú thích 2 ảnh `demo-gallery-2` (Workshop giáo dục giới tính), `demo-gallery-3` (Hoạt động tập thể của sinh viên), có đối chiếu ảnh thật. Không thay số liệu chính thức, không seed/migrate lại. Nội dung/URL LMS và bản dịch nội dung CMS thiếu còn cần trường cung cấp.
+- TypeScript/lint đạt, 85/85 tests đạt. Production build đạt bằng `npm run build -- --webpack` ngoài sandbox; Turbopack mặc định gặp lỗi tiến trình PostCSS trên môi trường này. Chưa deploy.
+- Đã thử bài nháp, đăng ký → admin → lọc/ngày → đổi trạng thái → tra cứu; liên hệ và newsletter lưu thành công. Đã xoá toàn bộ dữ liệu `HLTEST20261027UX`, kiểm tra DB còn 0 ở cả 5 bảng liên quan; fixture PDF cũng xoá. Không xoá demo sẵn có. Local email/Turnstile chưa bật nên không gửi email thử ra ngoài.
+- Không ghi nhận kiểm thử mobile: viewport API nhận 375px nhưng trang vẫn 1280px, đã reset. File chooser không xác nhận được thao tác chọn PDF nên upload qua UI còn chưa kiểm chứng; hiển thị/lọc PDF hiện có đã kiểm chứng.
+
+- Điều chỉnh theo phản hồi người dùng sau lượt nâng UX: **khôi phục banner trang chủ như cũ** — ảnh lớn phía trên, chữ/nút/số liệu ở dải phía dưới; không chia hai cột ảnh/chữ. `HeroBanner.tsx` trở lại bản trước nâng UX, đồng thời khôi phục vị trí thanh công cụ nhanh. Giữ các sửa đổi khác. Không đề xuất áp dụng lại bố cục banner hai cột nếu người dùng chưa yêu cầu.
+- Người dùng làm rõ: **chỉ cần báo kích thước ảnh phù hợp với khung banner cũ, không thu ảnh/đổi khung để hiện đủ**. Đã hoàn tác thử nghiệm contain/chừa menu/bỏ lớp phủ, trả ảnh/video về cover và hình học cũ. Desktop khung đo 1265×600 tại viewport 1280×720: ảnh đúng tỉ lệ là 2530×1200 (2×) hoặc xấp xỉ 2560×1214. Khung thay đổi theo viewport (`min(100svh - 120px, 50vw)`), mobile 16:9 nên không có một kích thước ảnh cố định vừa khít mọi màn hình. Không thay đổi giao diện banner khi người dùng chỉ hỏi thông số ảnh.
+- Sửa tiếp mobile theo ảnh người dùng: thông báo trong SiteHeader xuống dòng dưới lg, không truncate; VI/EN vẫn hiển thị. ResizeObserver đo chiều cao thanh thông báo vào `--site-announcement-height` để menu mobile và neo form không bị che. Trang Tuyển sinh đưa aside chứa form lên trước thông tin trong DOM; desktop đặt rõ cột 2/hàng 1, thông tin cột 1/hàng 1. DecorativeSection thêm `reveal` mặc định true; riêng grid tuyển sinh tắt lớp Reveal ngoài vì transform 64px làm neo form lệch vào dưới header (Reveal trong từng mục vẫn giữ).
+- Lượt này đã kiểm tra responsive thật ở 320/375/390/768/1024/1280px: không tràn ngang; thông báo đủ chiều cao, form trước thông tin trên mobile, desktop vẫn hai cột. CUA viewport áp dụng lên tab đang hoạt động; không tạo tab mới cho mỗi kích thước vì tab mới có thể về 1280px. Mobile 390px: header đáy 146,5px, form sau bấm nút ở y=163px; menu đáy 842,5/844px. VI và EN đều đạt; đã trả VI và reset viewport. TS/lint đạt. Claude CLI đã gọi review thật nhưng lỗi ENOTFOUND, không có review mới. Bằng chứng trong `docs/upgrade-2026-10-27/mobile-admissions-layout-checks.json` và các ảnh mobile.
+- Yêu cầu mới nhất thay thế cách xuống dòng trên mobile: **ẩn hẳn thanh thông báo dưới lg**; hotline + VI/EN nằm ở đầu menu ba sọc khi mở. Hotline cũ cuối menu đã bỏ để không trùng. Desktop vẫn có thanh thông báo/hotline/ngôn ngữ như trước. Bỏ ResizeObserver/biến chiều cao thông báo vì mobile giờ cố định header 72px, menu max-height `100dvh - 72px`, neo form 88px. Form vẫn đứng trước thông tin trên mobile. Kiểm tra thật 320px: menu không tràn ngang, chỉ 1 hotline, đổi EN/VI được và menu vẫn mở. 390px: header 72px, neo form y≈88px; reset về 1280px xác nhận thanh thông báo desktop hiện. TS/lint đạt. Ảnh mới: `docs/upgrade-2026-10-27/mobile-menu-hotline-language.png`.
+- Theo yêu cầu tiếp theo, LanguageSwitcher dùng **hai cờ Việt Nam/Anh dạng SVG** thay chữ VI/EN, áp dụng desktop và đầu menu mobile. Có aria-label/title “Tiếng Việt”/“English”, aria-pressed và viền cho ngôn ngữ đang chọn; logic cookie/server action giữ nguyên. Không dùng emoji vì Windows có thể không hiện hình cờ. Mobile giữ vùng bấm cao 40px; desktop vẫn tổng header 120px. Đã bấm cờ Anh chuyển EN rồi cờ Việt trả VI, kiểm tra 320/390px không tràn ngang và desktop có đủ hai cờ. TS/lint đạt. Ảnh `docs/upgrade-2026-10-27/language-flags-mobile.png`.

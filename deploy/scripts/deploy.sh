@@ -40,7 +40,10 @@ flock -n 9 || fail "Đang có 1 lần triển khai khác chạy."
 
 [[ -f "$SHARED/.env" ]] || fail "Thiếu $SHARED/.env (xem deploy/README.md mục 5)."
 [[ -d "$SHARED/uploads" ]] || fail "Thiếu thư mục $SHARED/uploads (xem deploy/README.md mục 3)."
-grep -Eq '^TRUST_PROXY_HOPS="?[1-9]' "$SHARED/.env" || fail 'Chạy sau Nginx: .env phải có TRUST_PROXY_HOPS="1" (xem .env.example).'
+# Đúng 1 lớp Nginx phía trước → phải là "1" (giá trị lớn hơn cho phép giả mạo IP qua X-Forwarded-For).
+grep -Eq '^TRUST_PROXY_HOPS=(1|"1")[[:space:]]*$' "$SHARED/.env" || fail 'Chạy sau 1 lớp Nginx: .env phải có đúng TRUST_PROXY_HOPS="1" (xem .env.example).'
+# Tên miền thật có https:// — sitemap/Open Graph/link đặt lại mật khẩu cần, và script seed dựa vào nó để nhận ra máy thật.
+grep -Eq '^NEXT_PUBLIC_SITE_URL="?https://' "$SHARED/.env" && ! grep -Eq '^NEXT_PUBLIC_SITE_URL="?https://(localhost|127.0.0.1)' "$SHARED/.env"   || fail 'NEXT_PUBLIC_SITE_URL trong .env phải là tên miền thật dạng https://… (xem .env.example).'
 
 log "Lấy code mới nhất (origin/$BRANCH)"
 git -C "$REPO" fetch --prune origin

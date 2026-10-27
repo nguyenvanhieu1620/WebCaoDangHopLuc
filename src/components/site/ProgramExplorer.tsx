@@ -7,7 +7,7 @@ import { programGradient } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { FitImage } from "@/components/ui/FitImage";
 
-type ProgramOption = { slug: string; code: string; name: string; summary: string; duration: string; intake: number; imageUrl: string | null };
+type ProgramOption = { slug: string; code: string; name: string; summary: string; duration: string; intake: number; imageUrl: string | null; tuition: string | null };
 
 const text = {
   vi: { search: "Tìm ngành học", placeholder: "Tên ngành hoặc lĩnh vực bạn quan tâm…", compare: "So sánh", selected: "ngành đã chọn", hint: "Chọn tối đa 3 ngành để so sánh thời gian học và chỉ tiêu.", clear: "Bỏ chọn tất cả", empty: "Không tìm thấy ngành phù hợp. Hãy thử từ khóa khác.", duration: "Thời gian học", intake: "Chỉ tiêu", details: "Khám phá ngành", apply: "Đăng ký ngành này", count: "ngành phù hợp", comparison: "So sánh ngành đã chọn", remove: "Bỏ chọn" },
@@ -47,7 +47,12 @@ export function ProgramExplorer({ programs, locale = "vi" }: { programs: Program
             {comparison.map(p => (
               <div key={p.slug} className="rounded-xl border border-line bg-white p-4">
                 <div className="flex items-start justify-between gap-2"><h3 className="font-bold text-brand-900">{p.name}</h3><button type="button" aria-label={`${t.remove} ${p.name}`} onClick={() => toggle(p.slug)} className="rounded px-2 text-ink-soft hover:bg-paper-alt">×</button></div>
-                <dl className="my-4 space-y-2 text-sm"><div className="flex justify-between gap-2"><dt className="text-ink-soft">{t.duration}</dt><dd className="font-semibold">{p.duration}</dd></div><div className="flex justify-between gap-2"><dt className="text-ink-soft">{t.intake}</dt><dd className="font-semibold">{p.intake}</dd></div></dl>
+                <dl className="my-4 space-y-3 text-sm">
+                  <div className="flex justify-between gap-2"><dt className="text-ink-soft">{t.duration}</dt><dd className="font-semibold">{p.duration}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-ink-soft">{t.intake}</dt><dd className="font-semibold">{p.intake}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-ink-soft">{locale === "en" ? "Tuition" : "Học phí"}</dt><dd className="max-w-[65%] text-right font-semibold">{p.tuition || (locale === "en" ? "Contact us" : "Liên hệ")}</dd></div>
+                </dl>
+                <p className="mb-4 border-t border-line pt-3 text-sm leading-relaxed text-ink-soft">{p.summary}</p>
                 <Link href={`/tuyen-sinh?nganh=${encodeURIComponent(p.slug)}#dang-ky`} className="block rounded-lg bg-brand-700 px-3 py-2.5 text-center text-xs font-bold text-white">{t.apply}</Link>
               </div>
             ))}

@@ -54,7 +54,7 @@ export default async function AdminPagesPage({
                       </Link>
                       {hasPlaceholder(p.content) && (
                         <span
-                          title="Nội dung còn chỗ [...] chưa điền — khách xem sẽ thấy nguyên văn"
+                          title="Nội dung còn ghi chú nội bộ [...] — trang công khai hiện thông báo chờ cập nhật. Cần nhập nội dung chính thức."
                           className="shrink-0 rounded-full bg-accent-100 px-1.5 py-0.5 text-[10px] font-semibold text-accent-700"
                         >
                           ⚠️ Chưa điền

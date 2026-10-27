@@ -8,6 +8,7 @@ import { getNavTree } from "@/lib/data/nav";
 import { getLocale } from "@/lib/locale";
 import { getQuickContacts } from "@/lib/data/quick-contacts";
 import { getPrograms } from "@/lib/data/programs";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 /**
  * Layout dùng chung cho mọi trang công khai (route group "(site)").
@@ -31,10 +32,13 @@ export default async function SiteGroupLayout({
     <div className="bg-paper pb-[76px] lg:pb-0">
       <SiteHeader settings={settings} navTree={navTree} locale={locale} />
       <main>{children}</main>
-      <SiteFooter settings={settings} programs={programs} />
+      <SiteFooter settings={settings} programs={programs} locale={locale} />
       <QuickContactWidget contacts={contacts} locale={locale} />
       <BackToTop />
       <MobileActionBar settings={settings} locale={locale} />
+      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+        <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+      )}
     </div>
   );
 }

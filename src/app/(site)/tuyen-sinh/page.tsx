@@ -13,6 +13,7 @@ import { TiltCard } from "@/components/site/TiltCard";
 import { getPrograms } from "@/lib/data/programs";
 import { getAdmissionInfo } from "@/lib/data/admission-info";
 import { getLocale } from "@/lib/locale";
+import { DocumentChecklist } from "@/components/site/DocumentChecklist";
 
 export const metadata: Metadata = { title: "Tuyển sinh" };
 
@@ -125,8 +126,42 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
         </a>
       </div>
     </PageHero>
-    <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[1fr_420px] lg:gap-12">
-      <div className="min-w-0">
+    <DecorativeSection reveal={false} contentClassName="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[1fr_420px] lg:gap-12">
+      {/* Mobile: form trước thông tin tuyển sinh; desktop: cột phải, dính khi cuộn. */}
+      <aside className="min-w-0 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-32 lg:h-fit">
+        <div id="dang-ky" className="scroll-mt-[88px] lg:scroll-mt-32 overflow-hidden rounded-[24px] border border-white/90 bg-white/90 shadow-lg2 backdrop-blur-xl">
+          <div className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-7 py-6 text-white">
+            <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-accent-500/40 blur-[40px]" />
+            <div className="relative font-display text-[22px] font-semibold">{t.formTitle}</div>
+            <div className="relative mt-1 text-[12.5px] text-brand-100">{t.formHint}</div>
+          </div>
+          <div className="p-7">
+            <AdmissionForm key={`${locale}-${selectedProgram}`} programs={programs} selectedProgram={selectedProgram} locale={locale} />
+          </div>
+        </div>
+
+        <Link
+          href="/nganh-dao-tao"
+          className="group mt-5 flex items-center gap-4 overflow-hidden rounded-2xl border border-line bg-white p-3 shadow-sm2 transition-shadow hover:shadow-md2"
+        >
+          <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl">
+            <Image
+              src="/images/3d/admissions-care.webp"
+              alt=""
+              fill
+              sizes="112px"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[14px] font-semibold text-brand-900">{t.exploreTitle}</div>
+            <div className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">{t.exploreText}</div>
+            <div className="mt-1 text-[12.5px] font-bold text-brand-700">{t.explore}</div>
+          </div>
+        </Link>
+      </aside>
+
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
         {/* Mốc thời gian */}
         {info.timeline.length > 0 && (
           <section aria-labelledby="ts-timeline">
@@ -183,21 +218,7 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
           <section className="mt-14" aria-labelledby="ts-documents">
             <SectionTitle index={sectionNo("documents")}><span id="ts-documents">{t.documents}</span></SectionTitle>
             <div className="rounded-2xl border border-line bg-white p-6 shadow-sm2">
-              <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                {info.documents.map((d) => (
-                  <li key={d.id} className="flex items-start gap-3 text-[14px] text-ink">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand-700 text-white">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
-                        <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span>
-                      {d.title}
-                      {d.detail && <span className="block text-[12.5px] text-ink-faint">{d.detail}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <DocumentChecklist items={info.documents} locale={locale} />
               <p className="mt-5 border-t border-line pt-4 text-[12.5px] text-ink-faint">{t.documentsNote}</p>
             </div>
           </section>
@@ -245,39 +266,7 @@ export default async function AdmissionsPage({ searchParams }: { searchParams: P
         )}
       </div>
 
-      {/* Cột phải: form dính khi cuộn trên desktop */}
-      <aside className="lg:sticky lg:top-32 lg:h-fit">
-        <div id="dang-ky" className="scroll-mt-28 lg:scroll-mt-32 overflow-hidden rounded-[24px] border border-white/90 bg-white/90 shadow-lg2 backdrop-blur-xl">
-          <div className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-7 py-6 text-white">
-            <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-accent-500/40 blur-[40px]" />
-            <div className="relative font-display text-[22px] font-semibold">{t.formTitle}</div>
-            <div className="relative mt-1 text-[12.5px] text-brand-100">{t.formHint}</div>
-          </div>
-          <div className="p-7">
-            <AdmissionForm key={selectedProgram} programs={programs} selectedProgram={selectedProgram} />
-          </div>
-        </div>
 
-        <Link
-          href="/nganh-dao-tao"
-          className="group mt-5 flex items-center gap-4 overflow-hidden rounded-2xl border border-line bg-white p-3 shadow-sm2 transition-shadow hover:shadow-md2"
-        >
-          <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl">
-            <Image
-              src="/images/3d/admissions-care.webp"
-              alt=""
-              fill
-              sizes="112px"
-              className="object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[14px] font-semibold text-brand-900">{t.exploreTitle}</div>
-            <div className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">{t.exploreText}</div>
-            <div className="mt-1 text-[12.5px] font-bold text-brand-700">{t.explore}</div>
-          </div>
-        </Link>
-      </aside>
     </DecorativeSection>
 
     {/* Câu hỏi thường gặp — kiểu trang tuyển sinh VinUni, lấy từ admin/faq */}

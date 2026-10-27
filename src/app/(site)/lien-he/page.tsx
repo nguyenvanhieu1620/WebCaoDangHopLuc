@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Liên hệ" };
 
-export default async function ContactPage() {
+export default async function ContactPage({ searchParams }: { searchParams: Promise<{ chuDe?: string }> }) {
   const [page, settings] = await Promise.all([getPageBySlug("lien-he"), getSiteSettings()]);
+  const subject = (await searchParams).chuDe?.trim().slice(0, 300) || "";
 
   const socials = socialLinks(settings);
 
@@ -34,7 +35,7 @@ export default async function ContactPage() {
             <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
               Gửi câu hỏi cho nhà trường
             </div>
-            <ContactForm />
+            <ContactForm key={subject} initialMessage={subject ? `Tôi muốn được tư vấn: ${subject}` : ""} />
           </div>
         </div>
 

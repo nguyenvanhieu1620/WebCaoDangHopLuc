@@ -5,6 +5,7 @@ import { NewsletterForm } from "./NewsletterForm";
 import { SOCIAL_BG, SocialIcon, socialLinks } from "@/components/ui/SocialIcon";
 import { cn } from "@/lib/utils";
 import type { Program, SiteSettings } from "@/lib/db/schema";
+import type { Locale } from "@/lib/locale";
 
 const QUICK_LINKS = [
   { label: "Giới thiệu", href: "/gioi-thieu" },
@@ -22,6 +23,7 @@ const ADMISSION_LINKS = [
 ];
 
 type SiteFooterProps = {
+  locale?: Locale;
   settings: Pick<
     SiteSettings,
     "hotline" | "email" | "address" | "facebookUrl" | "zaloUrl" | "youtubeUrl"
@@ -34,7 +36,10 @@ type SiteFooterProps = {
  * Footer dùng chung cho mọi trang công khai — 4 cột liên kết + thông tin
  * liên hệ. `settings` lấy từ DB ở layout cha, quản lý qua admin/cai-dat.
  */
-export function SiteFooter({ settings, programs }: SiteFooterProps) {
+export function SiteFooter({ settings, programs, locale = "vi" }: SiteFooterProps) {
+  const en = locale === "en";
+  const quickLinks = QUICK_LINKS.map((link, i) => ({ ...link, label: en ? ["About", "Programs", "News", "Photo & video library", "VNPT LMS"][i] : link.label }));
+  const admissionLinks = ADMISSION_LINKS.map((link, i) => ({ ...link, label: en ? ["Intake & eligibility", "Apply for admission", "Application status", "Contact admissions"][i] : link.label }));
   const programLinks = programs
     .slice(0, 6)
     .map((p) => ({ label: p.name, href: `/nganh-dao-tao/${p.slug}` }));
@@ -57,8 +62,7 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
               />
             </div>
             <p className="max-w-xs text-[13px] leading-relaxed text-white/55">
-              Đào tạo nguồn nhân lực y dược chất lượng cao, gắn lý thuyết với
-              thực hành lâm sàng thực tế ngay từ năm nhất.
+              {en ? "Healthcare education connecting theory with clinical practice from the first year." : "Đào tạo nguồn nhân lực y dược chất lượng cao, gắn lý thuyết với thực hành lâm sàng thực tế ngay từ năm nhất."}
             </p>
             {socials.length > 0 && (
               <div className="mt-5 flex gap-3">
@@ -68,7 +72,7 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
                     href={s.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`${s.label} của ${SITE.fullName}`}
+                    aria-label={`${s.label} ${en ? "of" : "của"} ${SITE.fullName}`}
                     title={s.label}
                     className={cn(
                       "flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_6px_16px_rgba(0,0,0,0.25)] ring-1 ring-white/15 transition duration-200 hover:-translate-y-0.5 hover:ring-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
@@ -82,20 +86,20 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
             )}
             <div className="mt-6 max-w-xs">
               <div className="mb-2 font-mono text-[11px] uppercase tracking-wider text-white/45">
-                Đăng ký nhận tin
+                {en ? "Newsletter" : "Đăng ký nhận tin"}
               </div>
-              <NewsletterForm />
+              <NewsletterForm locale={locale} />
             </div>
           </div>
 
-          <FooterColumn title="Liên kết nhanh" links={QUICK_LINKS} />
-          <FooterColumn title="Ngành đào tạo" links={programLinks} />
+          <FooterColumn title={en ? "Quick links" : "Liên kết nhanh"} links={quickLinks} />
+          <FooterColumn title={en ? "Programs" : "Ngành đào tạo"} links={programLinks} />
 
           <div>
-            <FooterColumn title="Tuyển sinh" links={ADMISSION_LINKS} />
+            <FooterColumn title={en ? "Admissions" : "Tuyển sinh"} links={admissionLinks} />
             <div className="mt-6">
               <div className="mb-3 font-mono text-[11px] uppercase tracking-wider text-white/45">
-                Liên hệ
+                {en ? "Contact" : "Liên hệ"}
               </div>
               <p className="break-words text-[13.5px] leading-relaxed text-white/80 [overflow-wrap:anywhere]">
                 {settings.address}
@@ -110,14 +114,15 @@ export function SiteFooter({ settings, programs }: SiteFooterProps) {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <span>
-            © {new Date().getFullYear()} {SITE.fullName}. Bảo lưu mọi quyền.
+            © {new Date().getFullYear()} {SITE.fullName}. {en ? "All rights reserved." : "Bảo lưu mọi quyền."}
           </span>
           <div className="flex gap-5">
-            <Link href="/admin" className="hover:text-white">
-              Quản trị
-            </Link>
+            {/* Đổi tài liệu khi vào admin để không mang theo script Analytics của trang công khai. */}
+            <a href="/admin" className="hover:text-white">
+              {en ? "Administration" : "Quản trị"}
+            </a>
             <Link href="/chinh-sach-bao-mat" className="hover:text-white">
-              Chính sách bảo mật
+              {en ? "Privacy policy" : "Chính sách bảo mật"}
             </Link>
           </div>
         </div>

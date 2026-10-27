@@ -13,7 +13,7 @@ import crypto from "crypto";
  * và các nơi gọi `getSession()` không cần đổi nhiều vì đã tách riêng file này.
  */
 
-const SESSION_COOKIE_NAME = "hopluc_admin_session";
+const SESSION_COOKIE_NAME = process.env.NODE_ENV === "production" ? "__Host-hopluc_admin_session" : "hopluc_admin_session";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 ngày
 
 const PLACEHOLDER_SECRET = "doi-chuoi-nay-thanh-ngau-nhien-that-dai-khi-deploy";
@@ -28,7 +28,17 @@ function getSecret(): string {
       "SESSION_SECRET vẫn là giá trị mẫu trong .env.example — đổi thành chuỗi ngẫu nhiên thật trước khi chạy production, nếu không session admin có thể bị giả mạo."
     );
   }
+  if (process.env.NODE_ENV === "production" && secret.length < 32) {
+    throw new Error(
+      "SESSION_SECRET quá ngắn (cần ít nhất 32 ký tự) — tạo chuỗi ngẫu nhiên bằng: openssl rand -base64 48"
+    );
+  }
   return secret;
+}
+
+/** Khoá con riêng theo mục đích; đổi SESSION_SECRET vô hiệu cả hai loại token. */
+function signingKey(purpose: "session" | "reset"): Buffer {
+  return crypto.createHmac("sha256", getSecret()).update(`hopluc:${purpose}:v1`).digest();
 }
 
 export type SessionPayload = {
@@ -60,18 +70,19 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 export function signSession(payload: Omit<SessionPayload, "exp">): string {
   const full: SessionPayload = { ...payload, exp: Date.now() + SESSION_TTL_MS };
   const json = Buffer.from(JSON.stringify(full)).toString("base64url");
-  const signature = crypto.createHmac("sha256", getSecret()).update(json).digest("hex");
+  const signature = crypto.createHmac("sha256", signingKey("session")).update(json).digest("hex");
   return `${json}.${signature}`;
 }
 
 /** Xác minh + giải mã cookie session. Trả về null nếu không hợp lệ hoặc hết hạn. */
 export function verifySession(cookieValue: string | undefined): SessionPayload | null {
   if (!cookieValue) return null;
+  if (cookieValue.length > 4096) return null;
   const [json, signature] = cookieValue.split(".");
   if (!json || !signature) return null;
 
   const expectedSignature = crypto
-    .createHmac("sha256", getSecret())
+    .createHmac("sha256", signingKey("session"))
     .update(json)
     .digest("hex");
 
@@ -84,7 +95,8 @@ export function verifySession(cookieValue: string | undefined): SessionPayload |
 
   try {
     const payload = JSON.parse(Buffer.from(json, "base64url").toString()) as SessionPayload;
-    if (payload.exp < Date.now()) return null;
+    if (!payload || typeof payload.userId !== "string" || typeof payload.email !== "string" ||
+        typeof payload.exp !== "number" || !Number.isFinite(payload.exp) || payload.exp <= Date.now()) return null;
     return payload;
   } catch {
     return null;
@@ -93,26 +105,27 @@ export function verifySession(cookieValue: string | undefined): SessionPayload |
 
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 phút — đủ dùng, không để link reset sống quá lâu
 
-export type ResetTokenPayload = { userId: string; exp: number; credentialVersion: string };
+export type ResetTokenPayload = { userId: string; email: string; exp: number; credentialVersion: string };
 
 /**
  * Token đặt lại mật khẩu — cùng cơ chế HMAC như session nhưng KHÔNG dùng
- * chung với session (namespace riêng qua tiền tố "reset:" khi ký) để 1 token
+ * chung với session (khoá con riêng và tiền tố "reset:" khi ký) để 1 token
  * loại này không thể bị hiểu nhầm/dùng thay session hay ngược lại.
  */
-export function signResetToken(userId: string, passwordHash: string): string {
-  const payload: ResetTokenPayload = { userId, exp: Date.now() + RESET_TOKEN_TTL_MS, credentialVersion: credentialVersion(passwordHash) };
+export function signResetToken(userId: string, passwordHash: string, email: string): string {
+  const payload: ResetTokenPayload = { userId, email, exp: Date.now() + RESET_TOKEN_TTL_MS, credentialVersion: credentialVersion(passwordHash) };
   const json = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = crypto.createHmac("sha256", getSecret()).update(`reset:${json}`).digest("hex");
+  const signature = crypto.createHmac("sha256", signingKey("reset")).update(`reset:${json}`).digest("hex");
   return `${json}.${signature}`;
 }
 
 export function verifyResetToken(token: string): ResetTokenPayload | null {
+  if (token.length > 4096) return null;
   const [json, signature] = token.split(".");
   if (!json || !signature) return null;
 
   const expectedSignature = crypto
-    .createHmac("sha256", getSecret())
+    .createHmac("sha256", signingKey("reset"))
     .update(`reset:${json}`)
     .digest("hex");
 
@@ -124,7 +137,9 @@ export function verifyResetToken(token: string): ResetTokenPayload | null {
 
   try {
     const payload = JSON.parse(Buffer.from(json, "base64url").toString()) as ResetTokenPayload;
-    if (typeof payload.credentialVersion !== "string" || payload.exp < Date.now()) return null;
+    if (!payload || typeof payload.userId !== "string" || typeof payload.email !== "string" ||
+        typeof payload.credentialVersion !== "string" || typeof payload.exp !== "number" ||
+        !Number.isFinite(payload.exp) || payload.exp <= Date.now()) return null;
     return payload;
   } catch {
     return null;

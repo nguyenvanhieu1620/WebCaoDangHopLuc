@@ -50,8 +50,8 @@ async function serve(request: Request, params: Promise<{ path: string[] }>, head
     "Content-Type": type,
     "Accept-Ranges": "bytes",
     "Last-Modified": info.mtime.toUTCString(),
-    // Tên file có tiền tố thời gian (saveUploadedFile) — không bao giờ ghi đè nội dung cũ.
-    "Cache-Control": "public, max-age=31536000, immutable",
+    // Media có thể bị admin xoá; không yêu cầu trình duyệt giữ bản sao một năm.
+    "Cache-Control": "public, max-age=60, must-revalidate",
   });
   const body = (start: number, end: number) =>
     headOnly ? null : (Readable.toWeb(createReadStream(/* turbopackIgnore: true */ full, { start, end })) as unknown as ReadableStream);

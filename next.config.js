@@ -63,6 +63,7 @@ const nextConfig = {
   reactStrictMode: true,
   // Không gửi header "X-Powered-By: Next.js" — bớt lộ công nghệ/phiên bản cho kẻ dò lỗ hổng.
   poweredByHeader: false,
+  images: { minimumCacheTTL: 60 },
   allowedDevOrigins: lanDevOrigins,
   experimental: {
     // Form admin tải ảnh/video/tài liệu qua Server Action. Mặc định Next chỉ nhận

@@ -45,6 +45,7 @@ test("script dev nhận ra môi trường thật qua NODE_ENV hoặc tên miền
   assert.equal(looksLikeProduction({}), false);
   assert.equal(looksLikeProduction({ NODE_ENV: "production" }), true);
   assert.equal(looksLikeProduction({ NEXT_PUBLIC_SITE_URL: "https://hopluc.edu.vn" }), true);
+  assert.equal(looksLikeProduction({ NEXT_PUBLIC_SITE_URL: "hopluc.edu.vn" }), true); // thiếu https:// → coi là thật
 });
 
 test("cảnh báo cấu hình production", () => {

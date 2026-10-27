@@ -4,4 +4,8 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # RCLONE_REMOTE=gdrive:hopluc-backups
-15 2 * * * hopluc bash /srv/hopluc/current/deploy/scripts/backup.sh >> /srv/hopluc/backups/backup.log 2>&1
+BACKUP_ENV_FILE=/etc/hopluc-backup/database.env
+BACKUP_DIR=/var/backups/hopluc
+AGE_RECIPIENTS=/etc/hopluc-backup/recipients.txt
+RCLONE_CONFIG=/var/lib/hopluc-backup/rclone.conf
+15 2 * * * hopluc-backup bash /usr/local/libexec/hopluc-backup.sh >> /var/backups/hopluc/backup.log 2>&1

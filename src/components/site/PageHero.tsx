@@ -7,6 +7,7 @@ import { getPageBanner } from "@/lib/data/page-banners";
 import type { PageBannerKey } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { SIZES_DESKTOP_ONLY, SIZES_MOBILE_ONLY } from "@/lib/image-specs";
+import { getLocale } from "@/lib/locale";
 
 export type Crumb = { label: string; href?: string };
 
@@ -24,6 +25,8 @@ type PageHeroProps = {
    * định chung → nền gradient xanh.
    */
   bannerKey?: PageBannerKey;
+  /** Trang pháp lý có thể dùng nền thương hiệu khi chưa có ảnh riêng. */
+  useDefaultImage?: boolean;
   /** "article": tiêu đề nhỏ hơn cho trang chi tiết có tiêu đề dài (bài viết, sự kiện). */
   variant?: "default" | "article";
   /** Dòng phụ dưới tiêu đề (VD ngày đăng, chuyên mục, nút). */
@@ -37,11 +40,15 @@ type PageHeroProps = {
  * điều hướng trong suốt của SiteHeader; header chữ trắng nên trang con nào
  * cũng phải mở đầu bằng khối nền tối này (hoặc HeroBanner ở Trang chủ).
  */
-export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, bannerKey, variant = "default", children }: PageHeroProps) {
+export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, bannerKey, useDefaultImage = true, variant = "default", children }: PageHeroProps) {
   const sectionBanner = !imageUrl && bannerKey ? await getPageBanner(bannerKey) : null;
-  const fallback = imageUrl || sectionBanner ? null : (await getSiteSettings()).pageBannerUrl;
+  // Trang pháp lý/hỗ trợ dùng nền thương hiệu nếu chưa có banner riêng, tránh
+  // lặp ảnh giường bệnh không liên quan. Banner CMS/ảnh riêng luôn ưu tiên.
+  const neutral = !useDefaultImage || (bannerKey && ["cong-khai", "lms", "faq", "tim-kiem"].includes(bannerKey));
+  const fallback = imageUrl || sectionBanner || neutral ? null : (await getSiteSettings()).pageBannerUrl;
   const bg = imageUrl || sectionBanner || fallback || null;
   const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
+  const en = (await getLocale()) === "en";
 
   return (
     <section className="relative isolate -mt-[72px] overflow-hidden lg:-mt-[84px] bg-brand-900 text-white">
@@ -89,7 +96,7 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-white/65">
             <li>
               <Link href="/" className="transition-colors hover:text-white">
-                Trang chủ
+                {en ? "Home" : "Trang chủ"}
               </Link>
             </li>
             {crumbs.map((c, i) => {

@@ -2,12 +2,13 @@ import { db, schema } from "@/lib/db";
 import { asc, eq, like } from "drizzle-orm";
 import type { Page } from "@/lib/db/schema";
 import { getLocale, pickLocale } from "@/lib/locale";
+import { publicPageContent } from "@/lib/public-content";
 
 function localize(p: Page, locale: "vi" | "en"): Page {
   return {
     ...p,
     title: pickLocale(p.title, p.titleEn, locale),
-    content: pickLocale(p.content, p.contentEn, locale),
+    content: publicPageContent(pickLocale(p.content, p.contentEn, locale), p.slug, locale),
   };
 }
 

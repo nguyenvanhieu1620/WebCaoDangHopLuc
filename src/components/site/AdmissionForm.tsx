@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { TurnstileWidget } from "./TurnstileWidget";
+import type { Locale } from "@/lib/locale";
 
 type AdmissionFormProps = {
   programs: { slug: string; name: string }[];
   selectedProgram?: string;
+  locale?: Locale;
 };
 
 const inputClass =
@@ -14,7 +16,8 @@ const inputClass =
 const labelClass = "mb-1.5 block text-xs font-semibold text-ink-soft";
 
 /** Form đăng ký xét tuyển công khai — POST tới /api/admissions (endpoint gọi từ bên ngoài, xem CLAUDE.md mục 6.4). */
-export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormProps) {
+export function AdmissionForm({ programs, selectedProgram = "", locale = "vi" }: AdmissionFormProps) {
+  const en = locale === "en";
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -45,14 +48,14 @@ export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormP
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setErrorMessage(data.error || "Có lỗi xảy ra, vui lòng thử lại.");
+        setErrorMessage(en ? "Unable to submit. Check your details and try again, or contact the college." : data.error || "Có lỗi xảy ra, vui lòng thử lại.");
         setStatus("error");
         return;
       }
       setStatus("success");
       form.reset();
     } catch {
-      setErrorMessage("Không thể kết nối máy chủ, vui lòng thử lại.");
+      setErrorMessage(en ? "Unable to connect. Please try again." : "Không thể kết nối máy chủ, vui lòng thử lại.");
       setStatus("error");
     }
   }
@@ -61,13 +64,12 @@ export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormP
     return (
       <div role="status" className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
         <div className="font-display text-lg font-semibold text-brand-900">
-          Đã nhận hồ sơ đăng ký!
+          {en ? "Application received!" : "Đã nhận hồ sơ đăng ký!"}
         </div>
         <p className="mt-2 text-[14px] text-ink-soft">
-          Đội ngũ tư vấn tuyển sinh sẽ liên hệ với bạn trong thời gian sớm nhất.
-          Bạn có thể dùng số CCCD vừa nhập để tra cứu trạng thái hồ sơ tại trang{" "}
+          {en ? "Our admissions team will contact you. Use your citizen ID to check your application at " : "Đội ngũ tư vấn tuyển sinh sẽ liên hệ với bạn. Dùng số CCCD vừa nhập để tra cứu trạng thái hồ sơ tại trang "}
           <a href="/tra-cuu-ket-qua" className="font-semibold text-brand-700 underline">
-            Tra cứu kết quả
+            {en ? "Application status" : "Tra cứu kết quả"}
           </a>
           .
         </p>
@@ -76,7 +78,7 @@ export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormP
           onClick={() => setStatus("idle")}
           className="mt-5 text-sm font-semibold text-brand-700 hover:text-accent-600"
         >
-          Đăng ký hồ sơ khác
+          {en ? "Submit another application" : "Đăng ký hồ sơ khác"}
         </button>
       </div>
     );
@@ -90,28 +92,28 @@ export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormP
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
       <div>
-        <label htmlFor="admission-name" className={labelClass}>Họ và tên *</label>
+        <label htmlFor="admission-name" className={labelClass}>{en ? "Full name *" : "Họ và tên *"}</label>
         <input id="admission-name" name="fullName" autoComplete="name" maxLength={200} required className={inputClass} placeholder="Nguyễn Văn A" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="admission-phone" className={labelClass}>Số điện thoại *</label>
+          <label htmlFor="admission-phone" className={labelClass}>{en ? "Phone number *" : "Số điện thoại *"}</label>
           <input id="admission-phone" name="phone" type="tel" autoComplete="tel" maxLength={30} required className={inputClass} placeholder="09xxxxxxxx" />
         </div>
         <div>
-          <label htmlFor="admission-cccd" className={labelClass}>Số CCCD *</label>
-          <input id="admission-cccd" name="idNumber" inputMode="numeric" pattern="[0-9]{12}" maxLength={12} title="Số CCCD gồm 12 chữ số" required className={inputClass} placeholder="12 chữ số" />
+          <label htmlFor="admission-cccd" className={labelClass}>{en ? "Citizen ID *" : "Số CCCD *"}</label>
+          <input id="admission-cccd" name="idNumber" inputMode="numeric" pattern="[0-9]{12}" maxLength={12} title={en ? "12-digit citizen ID" : "Số CCCD gồm 12 chữ số"} required className={inputClass} placeholder={en ? "12 digits" : "12 chữ số"} />
         </div>
       </div>
       <div>
-        <label htmlFor="admission-email" className={labelClass}>Email (tuỳ chọn)</label>
+        <label htmlFor="admission-email" className={labelClass}>{en ? "Email (optional)" : "Email (tuỳ chọn)"}</label>
         <input id="admission-email" name="email" type="email" autoComplete="email" maxLength={254} className={inputClass} placeholder="ban@email.com" />
       </div>
       <div>
-        <label htmlFor="admission-program" className={labelClass}>Ngành đăng ký *</label>
+        <label htmlFor="admission-program" className={labelClass}>{en ? "Program *" : "Ngành đăng ký *"}</label>
         <select id="admission-program" name="program" required className={inputClass} defaultValue={selectedProgram}>
           <option value="" disabled>
-            — Chọn ngành —
+            {en ? "— Select a program —" : "— Chọn ngành —"}
           </option>
           {programs.map((p) => (
             <option key={p.slug} value={p.slug}>
@@ -121,8 +123,8 @@ export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormP
         </select>
       </div>
       <div>
-        <label htmlFor="admission-note" className={labelClass}>Ghi chú (tuỳ chọn)</label>
-        <textarea id="admission-note" name="note" maxLength={3000} rows={3} className={inputClass} placeholder="Câu hỏi thêm nếu có..." />
+        <label htmlFor="admission-note" className={labelClass}>{en ? "Notes (optional)" : "Ghi chú (tuỳ chọn)"}</label>
+        <textarea id="admission-note" name="note" maxLength={3000} rows={3} className={inputClass} placeholder={en ? "Any additional questions…" : "Câu hỏi thêm nếu có..."} />
       </div>
 
       <TurnstileWidget />
@@ -141,7 +143,7 @@ export function AdmissionForm({ programs, selectedProgram = "" }: AdmissionFormP
           status === "submitting" && "opacity-60"
         )}
       >
-        {status === "submitting" ? "Đang gửi..." : "Gửi hồ sơ đăng ký"}
+        {status === "submitting" ? (en ? "Submitting…" : "Đang gửi...") : (en ? "Submit application" : "Gửi hồ sơ đăng ký")}
       </button>
     </form>
   );

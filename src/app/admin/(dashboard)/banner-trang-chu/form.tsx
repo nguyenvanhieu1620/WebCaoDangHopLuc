@@ -23,7 +23,7 @@ export async function HeroBannerFormPage({ id }: { id?: string }) {
   return (
     <AdminFormLayout
       title={editing ? "Sửa banner" : "Thêm banner"}
-      description="Ảnh hiện rõ nguyên vẹn ở đầu Trang chủ (không phủ màu, không chữ đè), tự chuyển 6,5 giây/ảnh"
+      description="Ảnh phủ kín khung banner, có thể cắt theo màn hình; tự chuyển 6,5 giây/ảnh. Xem khuyến nghị kích thước dưới ô chọn ảnh."
       backHref="/admin/banner-trang-chu"
     >
       <form action={upsertHeroBannerAction} className="space-y-5">
