@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { saveUploadedFile } from "@/lib/media";
 import { purgeOptimizedImageCache } from "@/lib/image-cache";
 import { requirePermission } from "@/lib/admin-auth";
+import { getMediaUsage } from "@/lib/media-usage";
 
 export async function uploadMediaAction(formData: FormData) {
   await requirePermission("media");
@@ -24,6 +25,10 @@ export async function deleteMediaAction(mediaId: string) {
   await requirePermission("media");
   const item = await db.query.mediaItems.findFirst({ where: eq(schema.mediaItems.id, mediaId) });
   if (item) {
+    const usages = (await getMediaUsage([item.url])).get(item.url) ?? [];
+    if (usages.length) {
+      redirect(`/admin/media?blocked=${encodeURIComponent(item.id)}`);
+    }
     const filePath = uploadedFilePath(item.url);
     if (!filePath) throw new Error("Đường dẫn tệp không nằm trong thư mục uploads.");
     await unlink(filePath).catch((error: NodeJS.ErrnoException) => {

@@ -1,15 +1,18 @@
 "use client";
 
+import { pageText } from "@/lib/page-copy";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { TurnstileWidget } from "./TurnstileWidget";
+import type { Locale } from "@/lib/locale";
 
 const inputClass =
   "w-full rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand-500";
 const labelClass = "mb-1.5 block text-xs font-semibold text-ink-soft";
 
 /** Form gửi câu hỏi công khai ở /lien-he — POST tới /api/contact (endpoint gọi từ bên ngoài). */
-export function ContactForm({ initialMessage = "" }: { initialMessage?: string }) {
+export function ContactForm({ initialMessage = "", locale = "vi" }: { initialMessage?: string; locale?: Locale }) {
+  const copy = pageText(locale);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -38,14 +41,14 @@ export function ContactForm({ initialMessage = "" }: { initialMessage?: string }
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setErrorMessage(data.error || "Có lỗi xảy ra, vui lòng thử lại.");
+        setErrorMessage(locale === "en" ? data.errorEn || copy("Có lỗi xảy ra, vui lòng thử lại.") : data.error || copy("Có lỗi xảy ra, vui lòng thử lại."));
         setStatus("error");
         return;
       }
       setStatus("success");
       form.reset();
     } catch {
-      setErrorMessage("Không thể kết nối máy chủ, vui lòng thử lại.");
+      setErrorMessage(copy("Không thể kết nối máy chủ, vui lòng thử lại."));
       setStatus("error");
     }
   }
@@ -53,16 +56,16 @@ export function ContactForm({ initialMessage = "" }: { initialMessage?: string }
   if (status === "success") {
     return (
       <div role="status" className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
-        <div className="font-display text-lg font-semibold text-brand-900">Đã gửi câu hỏi!</div>
+        <div className="font-display text-lg font-semibold text-brand-900">{copy("Đã gửi câu hỏi!")}</div>
         <p className="mt-2 text-[14px] text-ink-soft">
-          Đội ngũ nhà trường sẽ phản hồi bạn trong thời gian sớm nhất.
+          {copy("Đội ngũ nhà trường sẽ phản hồi bạn trong thời gian sớm nhất.")}
         </p>
         <button
           type="button"
           onClick={() => setStatus("idle")}
           className="mt-5 text-sm font-semibold text-brand-700 hover:text-accent-600"
         >
-          Gửi câu hỏi khác
+          {copy("Gửi câu hỏi khác")}
         </button>
       </div>
     );
@@ -71,25 +74,25 @@ export function ContactForm({ initialMessage = "" }: { initialMessage?: string }
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden" aria-hidden="true">
-        <label htmlFor="contact-website">Để trống trường này</label>
+        <label htmlFor="contact-website">{copy("Để trống trường này")}</label>
         <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
       <div>
-        <label htmlFor="contact-name" className={labelClass}>Họ và tên *</label>
-        <input id="contact-name" name="name" autoComplete="name" maxLength={200} required className={inputClass} placeholder="Nguyễn Văn A" />
+        <label htmlFor="contact-name" className={labelClass}>{copy("Họ và tên *")}</label>
+        <input id="contact-name" name="name" autoComplete="name" maxLength={200} required className={inputClass} placeholder={locale === "en" ? "Your full name" : "Nguyễn Văn A"} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="contact-phone" className={labelClass}>Số điện thoại (tuỳ chọn)</label>
+          <label htmlFor="contact-phone" className={labelClass}>{copy("Số điện thoại (tuỳ chọn)")}</label>
           <input id="contact-phone" name="phone" type="tel" autoComplete="tel" maxLength={30} className={inputClass} placeholder="09xxxxxxxx" />
         </div>
         <div>
-          <label htmlFor="contact-email" className={labelClass}>Email (tuỳ chọn)</label>
+          <label htmlFor="contact-email" className={labelClass}>{copy("Email (tuỳ chọn)")}</label>
           <input id="contact-email" name="email" type="email" autoComplete="email" maxLength={254} className={inputClass} placeholder="ban@email.com" />
         </div>
       </div>
       <div>
-        <label htmlFor="contact-message" className={labelClass}>Nội dung *</label>
+        <label htmlFor="contact-message" className={labelClass}>{copy("Nội dung *")}</label>
         <textarea
           name="message"
           id="contact-message"
@@ -97,7 +100,7 @@ export function ContactForm({ initialMessage = "" }: { initialMessage?: string }
           required
           rows={4}
           className={inputClass}
-          placeholder="Câu hỏi hoặc nội dung cần trao đổi..."
+          placeholder={copy("Câu hỏi hoặc nội dung cần trao đổi...")}
           defaultValue={initialMessage}
         />
       </div>
@@ -118,7 +121,7 @@ export function ContactForm({ initialMessage = "" }: { initialMessage?: string }
           status === "submitting" && "opacity-60"
         )}
       >
-        {status === "submitting" ? "Đang gửi..." : "Gửi liên hệ"}
+        {status === "submitting" ? copy("Đang gửi...") : copy("Gửi liên hệ")}
       </button>
     </form>
   );

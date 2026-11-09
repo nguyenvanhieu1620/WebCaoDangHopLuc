@@ -2,6 +2,8 @@
 
 import { Children, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/locale";
+import { siteCopy } from "@/lib/site-copy";
 
 /**
  * Slider thẻ nằm GỌN trong khung nội dung 1320px như các khối khác của Trang chủ (19/10/2026: người
@@ -16,6 +18,7 @@ export function EdgeSlider({
   label,
   itemClassName,
   onDark,
+  locale = "vi",
 }: {
   children: ReactNode;
   /** Tên vùng cho trình đọc màn hình, VD "Danh sách ngành đào tạo". */
@@ -23,7 +26,9 @@ export function EdgeSlider({
   /** Độ rộng mỗi thẻ, VD "w-[82%] sm:w-[46%] lg:w-[31%]". */
   itemClassName: string;
   onDark?: boolean;
+  locale?: Locale;
 }) {
+  const t = siteCopy(locale);
   const track = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null);
   const [progress, setProgress] = useState(0);
@@ -129,10 +134,10 @@ export function EdgeSlider({
           />
         </div>
         <div className="flex shrink-0 gap-2.5">
-          <button type="button" aria-label="Trước" onClick={() => step(-1)} disabled={edges.start} className={btn}>
+          <button type="button" aria-label={t.previous} onClick={() => step(-1)} disabled={edges.start} className={btn}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <button type="button" aria-label="Tiếp theo" onClick={() => step(1)} disabled={edges.end} className={btn}>
+          <button type="button" aria-label={t.next} onClick={() => step(1)} disabled={edges.end} className={btn}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>

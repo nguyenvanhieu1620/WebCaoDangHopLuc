@@ -1,5 +1,6 @@
 "use client";
 
+import { pageText } from "@/lib/page-copy";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { FacultyCard } from "@/components/site/FacultyCard";
 import {
@@ -10,6 +11,7 @@ import {
   type DirectoryOption,
 } from "@/lib/faculty-directory";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/locale";
 
 /** Tên tham số trên URL cho từng tiêu chí — link chia sẻ / nút Quay lại giữ đúng bộ lọc. */
 const PARAM: Record<keyof DirectoryFilters, string> = {
@@ -21,6 +23,7 @@ const PARAM: Record<keyof DirectoryFilters, string> = {
 };
 
 type Props = {
+  locale?: Locale;
   members: DirectoryMember[];
   departmentOptions: DirectoryOption[];
   degreeOptions: DirectoryOption[];
@@ -35,7 +38,8 @@ type Props = {
  * Chức vụ, Học hàm (chỉ hiện khi có dữ liệu). Lọc ngay trên trình duyệt (vài chục–vài trăm người),
  * ghi bộ lọc lên URL bằng `history.replaceState` (không tải lại trang). Kết quả vẫn nhóm theo khoa.
  */
-export function FacultyDirectory({ members, departmentOptions, degreeOptions, rankOptions, roleOptions, initial }: Props) {
+export function FacultyDirectory({ members, departmentOptions, degreeOptions, rankOptions, roleOptions, initial, locale = "vi" }: Props) {
+  const copy = pageText(locale);
   const [filters, setFilters] = useState<DirectoryFilters>(initial);
   const set = (key: keyof DirectoryFilters, value: string) => setFilters((f) => ({ ...f, [key]: value }));
 
@@ -89,7 +93,7 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
         >
           <div className="relative sm:col-span-2 lg:col-span-1">
             <label htmlFor="faculty-q" className="sr-only">
-              Tìm giảng viên
+              {copy("Tìm giảng viên")}
             </label>
             <svg className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
@@ -101,26 +105,26 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
               type="search"
               value={filters.q}
               onChange={(e) => set("q", e.target.value)}
-              placeholder="Tên, chuyên môn, chức vụ…"
+              placeholder={copy("Tên, chuyên môn, chức vụ…")}
               autoComplete="off"
               className={cn(fieldBase, "pl-11 pr-4", filters.q ? "border-brand-500 bg-white text-ink" : "border-line bg-paper text-ink")}
             />
           </div>
-          <FilterSelect id="faculty-trinh-do" label="Trình độ" value={filters.trinhDo} onChange={(v) => set("trinhDo", v)} options={degreeOptions} allLabel="Mọi trình độ" fieldBase={fieldBase} />
-          <FilterSelect id="faculty-chuc-vu" label="Chức vụ" value={filters.chucVu} onChange={(v) => set("chucVu", v)} options={roleOptions} allLabel="Mọi chức vụ" fieldBase={fieldBase} />
+          <FilterSelect id="faculty-trinh-do" label={copy("Trình độ")} value={filters.trinhDo} onChange={(v) => set("trinhDo", v)} options={degreeOptions} allLabel={copy("Mọi trình độ")} fieldBase={fieldBase} />
+          <FilterSelect id="faculty-chuc-vu" label={copy("Chức vụ")} value={filters.chucVu} onChange={(v) => set("chucVu", v)} options={roleOptions} allLabel={copy("Mọi chức vụ")} fieldBase={fieldBase} />
           {rankOptions.length > 0 && (
-            <FilterSelect id="faculty-hoc-ham" label="Học hàm" value={filters.hocHam} onChange={(v) => set("hocHam", v)} options={rankOptions} allLabel="Mọi học hàm" fieldBase={fieldBase} />
+            <FilterSelect id="faculty-hoc-ham" label={copy("Học hàm")} value={filters.hocHam} onChange={(v) => set("hocHam", v)} options={rankOptions} allLabel={copy("Mọi học hàm")} fieldBase={fieldBase} />
           )}
         </div>
 
         {departmentOptions.length > 1 && (
           <div className="mt-4 border-t border-line pt-4">
             <div id="faculty-khoa-label" className="mb-2.5 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
-              Khoa / Bộ môn
+              {copy("Khoa / Bộ môn")}
             </div>
             <div role="group" aria-labelledby="faculty-khoa-label" className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap">
               <Chip pressed={!filters.khoa} onClick={() => set("khoa", "")} count={totalForChips}>
-                Tất cả
+                {copy("Tất cả")}
               </Chip>
               {departmentOptions.map((d) => (
                 <Chip key={d.key} pressed={filters.khoa === d.key} onClick={() => set("khoa", filters.khoa === d.key ? "" : d.key)} count={deptCounts.get(d.key) ?? 0}>
@@ -135,8 +139,8 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
       {/* Số kết quả + bộ lọc đang áp dụng */}
       <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
         <p className="text-[14px] text-ink-soft" aria-live="polite">
-          {active.length ? "Tìm thấy " : "Tất cả "}
-          <strong className="text-brand-900">{results.length}</strong> giảng viên
+          {active.length ? copy("Tìm thấy") : copy("Tất cả")}{" "}
+          <strong className="text-brand-900">{results.length}</strong>{" "}{locale === "en" && results.length === 1 ? "faculty member" : copy("giảng viên")}
         </p>
         {active.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
@@ -145,7 +149,7 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
                 key={k}
                 type="button"
                 onClick={() => set(k, "")}
-                aria-label={`Bỏ lọc ${labelOf(k)}`}
+                aria-label={`${locale === "en" ? "Remove filter" : "Bỏ lọc"}: ${labelOf(k)}`}
                 className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-[12.5px] font-semibold text-brand-800 transition-colors hover:bg-brand-100"
               >
                 {labelOf(k)}
@@ -153,7 +157,7 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
               </button>
             ))}
             <button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="text-[12.5px] font-semibold text-accent-600 hover:underline">
-              Xoá bộ lọc
+              {copy("Xoá bộ lọc")}
             </button>
           </div>
         )}
@@ -168,14 +172,14 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
               <path d="M20 20l-3.5-3.5M8.5 11h5" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="mt-4 font-display text-[18px] font-semibold text-brand-900">Không tìm thấy giảng viên phù hợp</p>
-          <p className="mt-1.5 text-[14px] text-ink-soft">Thử bớt điều kiện lọc hoặc tìm bằng từ khoá ngắn hơn.</p>
+          <p className="mt-4 font-display text-[18px] font-semibold text-brand-900">{copy("Không tìm thấy giảng viên phù hợp")}</p>
+          <p className="mt-1.5 text-[14px] text-ink-soft">{copy("Thử bớt điều kiện lọc hoặc tìm bằng từ khoá ngắn hơn.")}</p>
           <button
             type="button"
             onClick={() => setFilters(EMPTY_FILTERS)}
             className="mt-5 rounded-xl border-[1.5px] border-brand-700 px-5 py-2.5 text-[14px] font-bold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white"
           >
-            Xoá bộ lọc
+            {copy("Xoá bộ lọc")}
           </button>
         </div>
       ) : (
@@ -188,11 +192,12 @@ export function FacultyDirectory({ members, departmentOptions, degreeOptions, ra
                 <h2 id={`khoa-${dept.key}`} className="font-display text-[22px] font-semibold text-brand-900">
                   {dept.label}
                 </h2>
-                <span className="font-mono text-[11px] text-ink-faint">{list.length} giảng viên</span>
+                <span className="font-mono text-[11px] text-ink-faint">{list.length} {locale === "en" && list.length === 1 ? "faculty member" : copy("giảng viên")}</span>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
                 {list.map((m, i) => (
                   <FacultyCard
+                    locale={locale}
                     key={m.id}
                     delay={(i % 4) * 80}
                     data={{

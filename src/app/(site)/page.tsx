@@ -30,7 +30,9 @@ import { getLatestPublishedPosts, getPinnedPosts } from "@/lib/data/posts";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getHeroBanners } from "@/lib/data/hero-banners";
 import { getEvents } from "@/lib/data/events";
-import { cn, formatVNDate, formatVNDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/locale";
+import { siteCopy, siteDayMonth, formatSiteDate, programCountLabel, admissionStepsLabel } from "@/lib/site-copy";
 import type { Event } from "@/lib/db/schema";
 import { FitImage } from "@/components/ui/FitImage";
 
@@ -45,22 +47,13 @@ function DarkStat({ value, label, accent }: { value: string; label: string; acce
   return (
     // Không dùng backdrop-blur: thẻ nằm trên nền xanh trơn (không còn đè lên mô hình 3D), mờ hay không
     // trông như nhau, mà kính mờ lại tốn GPU khi cuộn. `h-full` để 4 thẻ cùng hàng cao bằng nhau.
-    <div className="h-full rounded-2xl border border-white/15 bg-white/[0.07] px-5 py-4 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] lg:px-4">
-      <div className={cn("font-mono text-[30px] font-semibold leading-none lg:text-[26px]", accent ? "text-accent-400" : "text-white")}>
+    <div className="h-full rounded-2xl border border-white/15 bg-white/[0.07] px-3 py-4 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] sm:px-5 lg:px-4">
+      <div className={cn("font-mono text-[26px] font-semibold leading-none sm:text-[30px] lg:text-[26px]", accent ? "text-accent-400" : "text-white")}>
         <CountUp value={value} />
       </div>
       <div className="mt-1.5 text-[12.5px] leading-snug text-brand-100/75">{label}</div>
     </div>
   );
-}
-
-/** Ngày/tháng theo giờ Việt Nam cho ô lịch nhỏ ở bảng Thông báo, VD { day: "05", month: "Th10" }. */
-function vnDayMonth(iso: string | null): { day: string; month: string } | null {
-  if (!iso) return null;
-  const parts = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "numeric", timeZone: "Asia/Ho_Chi_Minh" }).formatToParts(new Date(iso));
-  const day = parts.find((p) => p.type === "day")?.value;
-  const month = parts.find((p) => p.type === "month")?.value;
-  return day && month ? { day, month: `Th${month}` } : null;
 }
 
 /**
@@ -141,6 +134,7 @@ export default async function HomePage() {
     heroBanners,
     allEvents,
     departments,
+    locale,
   ] = await Promise.all([
     getPrograms(),
     getHomepageContent(),
@@ -154,11 +148,13 @@ export default async function HomePage() {
     getHeroBanners(),
     getEvents(),
     getDepartments(),
+    getLocale(),
   ]);
+  const t = siteCopy(locale);
   const { stats, features, steps } = content;
   const missionBlocks = [
-    { text: content.missionText, label: "Sứ mệnh", tone: "blue" as const },
-    { text: content.visionText, label: "Tầm nhìn", tone: "red" as const },
+    { text: content.missionText, label: t.mission, tone: "blue" as const },
+    { text: content.visionText, label: t.vision, tone: "red" as const },
   ].filter((b) => b.text);
   // Khối đội ngũ: người đầu danh sách (thứ tự trong admin/giang-vien) nổi bật, tối đa 3 người tiếp theo dạng thẻ.
   const facultyCard = (f: Faculty): FacultyCardData => ({
@@ -176,9 +172,9 @@ export default async function HomePage() {
   const facultyStats =
     facultyList.length >= 8
       ? [
-          { value: String(facultyList.length), label: "Giảng viên & cán bộ" },
-          ...(departmentCount > 1 ? [{ value: String(departmentCount), label: "Khoa / phòng ban" }] : []),
-          ...(postgraduateCount > 0 ? [{ value: String(postgraduateCount), label: "Trình độ sau đại học" }] : []),
+          { value: String(facultyList.length), label: t.facultyStaff },
+          ...(departmentCount > 1 ? [{ value: String(departmentCount), label: t.departments }] : []),
+          ...(postgraduateCount > 0 ? [{ value: String(postgraduateCount), label: t.postgraduate }] : []),
         ]
       : [];
   const nextEvents = upcomingEvents(allEvents);
@@ -195,29 +191,29 @@ export default async function HomePage() {
   const quickTools = [
     {
       href: "/tuyen-sinh",
-      label: "Đăng ký xét tuyển",
-      desc: "Nộp hồ sơ trực tuyến",
+      label: t.apply,
+      desc: t.onlineApplication,
       icon: QUICK_TOOL_ICONS.admission,
       iconBg: "bg-brand-700/10 text-brand-700",
     },
     {
       href: "/tra-cuu-ket-qua",
-      label: "Tra cứu kết quả",
-      desc: "Xem kết quả xét tuyển",
+      label: t.results,
+      desc: t.admissionResults,
       icon: QUICK_TOOL_ICONS.lookup,
       iconBg: "bg-accent-600/10 text-accent-600",
     },
     {
       href: "/thu-vien",
-      label: "Thư viện",
-      desc: "Ảnh & tư liệu nhà trường",
+      label: t.library,
+      desc: t.libraryDescription,
       icon: QUICK_TOOL_ICONS.library,
       iconBg: "bg-brand-700/10 text-brand-700",
     },
     {
       href: settings.lmsUrl && settings.lmsUrl !== "#" ? settings.lmsUrl : "/lms",
-      label: "Cổng học tập LMS",
-      desc: "Học liệu điện tử VNPT",
+      label: t.lms,
+      desc: t.lmsDescription,
       icon: QUICK_TOOL_ICONS.lms,
       iconBg: "bg-accent-600/10 text-accent-600",
       external: !!settings.lmsUrl && settings.lmsUrl !== "#",
@@ -227,10 +223,11 @@ export default async function HomePage() {
   return (
     <>
       {/* ============ 1. BANNER (ảnh rõ 16:9, chữ bên dưới) + CÔNG CỤ NHANH ============
-          Thứ tự 10 khối Trang chủ (gọn theo kiểu VinUni, xem CLAUDE.md mục 5 "Đợt VinUni lượt 2"):
+          Thứ tự các khối Trang chủ (xem CLAUDE.md mục 5 "Đợt VinUni lượt 2"):
           Banner → Vì sao chọn → Tin tức·Thông báo·Sự kiện → Ngành → Sứ mệnh → Giảng viên →
           Câu chuyện thành công → Trải nghiệm (thư viện) → Đối tác → Tuyển sinh (4 bước + CTA). */}
       <HeroBanner
+        locale={locale}
         slides={heroSlides(heroBanners, content.heroImageUrl)}
         badge={content.heroBadge}
         titleLine1={content.heroTitleLine1}
@@ -277,35 +274,35 @@ export default async function HomePage() {
           3D dùng để tạo không khí cho 1 khối kể chuyện giữa trang, còn banner
           đầu trang dành cho ảnh thật của trường. Từng phần hiện lệch nhịp
           (nhãn → tiêu đề → từng điểm mạnh) kiểu WOW fadeInUp của VinUni. */}
-      <section className="relative isolate mt-16 overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 py-24 text-white sm:px-8 lg:py-28">
-        <div className="bg-grid-dark pointer-events-none absolute inset-0" />
+      <section className="relative isolate mt-16 overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 py-20 text-white sm:px-8 sm:py-24">
+        <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-40" />
         <ParallaxBlur
-          speed={0.12}
-          className="pointer-events-none absolute -left-40 top-10 h-[480px] w-[480px] rounded-full bg-brand-500/25 blur-[90px]"
+          speed={0.08}
+          className="pointer-events-none absolute -left-40 top-10 h-[440px] w-[440px] rounded-full bg-brand-500/10 blur-[90px]"
         />
         <ParallaxBlur
-          speed={-0.12}
-          className="pointer-events-none absolute -right-32 bottom-0 h-[420px] w-[420px] rounded-full bg-accent-500/20 blur-[90px]"
+          speed={-0.08}
+          className="pointer-events-none absolute -right-32 bottom-0 h-[360px] w-[360px] rounded-full bg-accent-500/5 blur-[90px]"
         />
-        <div className="relative mx-auto grid max-w-[1320px] items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-4">
-          <div>
+        <div className="relative mx-auto grid max-w-[1320px] items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start xl:gap-16">
+          <div className="min-w-0 lg:pt-6">
             <Reveal>
-              <Eyebrow tone="onDark">Vì sao chọn Hợp Lực</Eyebrow>
+              <Eyebrow tone="onDark">{t.why}</Eyebrow>
             </Reveal>
             <Reveal delay={90}>
-              <h2 className="mt-5 text-balance font-display text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[48px]">
-                Đào tạo thực chiến,{" "}
-                <em className="font-medium italic text-accent-400">đồng hành</em> đến khi có việc làm
+              <h2 className="mt-5 max-w-[640px] text-balance font-display text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[48px] lg:text-left">
+                {t.whyTitle}{" "}
+                <em className="font-medium italic text-accent-400 lg:whitespace-nowrap">{t.whyEmphasis}</em>{" "}{t.whyEnding}
               </h2>
             </Reveal>
-            <ol className="mt-10 space-y-7">
+            <ol className="mt-11 space-y-8">
               {features.map((f, i) => (
                 <li key={f.title}>
-                  <Reveal delay={180 + i * 90} className="group flex gap-5">
+                  <Reveal delay={180 + i * 90} className="group flex gap-4 sm:gap-5">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.08] text-accent-400 backdrop-blur transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-accent-500 group-hover:bg-accent-600 group-hover:text-white">
                       {FEATURE_ICONS[i % FEATURE_ICONS.length]}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="font-mono text-[11px] tracking-wider text-brand-200/60">{String(i + 1).padStart(2, "0")}</div>
                       <h3 className="font-display text-[20px] font-semibold">{f.title}</h3>
                       <p className="mt-1.5 max-w-md text-[14.5px] leading-relaxed text-brand-100/75">{f.desc}</p>
@@ -316,18 +313,17 @@ export default async function HomePage() {
             </ol>
           </div>
 
-          <div>
-            {/* Mô hình 3D có vùng riêng, KHÔNG còn thẻ nào nổi đè lên (người dùng: "bị che hết hình đang
-                chuyển động"). Canvas không tràn xuống dưới (bottom-0) để không chạm hàng số liệu. */}
-            <div className="relative h-[400px] sm:h-[500px]">
-              <DnaScene3D theme="dark" className="absolute -inset-x-6 -top-10 bottom-0 sm:-inset-x-12" />
+          <div className="min-w-0">
+            {/* Cảnh nằm trọn trong cột riêng, chừa khoảng cách với phần chữ và hàng số liệu. */}
+            <div className="relative h-[360px] sm:h-[440px] lg:h-[460px] xl:h-[480px]">
+              <DnaScene3D theme="dark" className="absolute inset-0" />
             </div>
-            <div className="mb-4 hidden items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-wider text-brand-100/60 lg:flex">
+            <div className="mb-6 hidden items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-wider text-brand-100/60 lg:flex">
               <span className="dot-pulse h-1.5 w-1.5 rounded-full bg-accent-500" />
-              Di chuột để xoay mô hình
+              {t.rotateModel}
             </div>
-            {/* 4 chỉ số thành 1 hàng ngay dưới mô hình (điện thoại/tablet: lưới 2×2) */}
-            <div className="mt-2 grid grid-cols-2 gap-3 lg:mt-0 lg:grid-cols-4">
+            {/* Bốn chỉ số nằm dưới mô hình; dùng lưới 2×2 đến khi cột đủ rộng từ xl. */}
+            <div className="mt-2 grid grid-cols-2 gap-3 lg:mt-0 xl:grid-cols-4">
               {stats.map((s, i) => (
                 <Reveal key={s.label} delay={i * 80}>
                   <DarkStat value={s.value} label={s.label} accent={i % 3 !== 0} />
@@ -342,17 +338,17 @@ export default async function HomePage() {
           Trái: 1 tin nổi bật lớn + 2 tin nhỏ (kiểu tạp chí). Phải: bảng "Thông báo"
           (bài được ghim) + "Sự kiện sắp diễn ra" — gộp 3 khối cũ thành 1 cho trang gọn. */}
       {(latestPosts.length > 0 || pinnedPosts.length > 0 || nextEvents.length > 0) && (
-        <section className="bg-paper px-6 py-24 sm:px-8">
+        <section className="bg-paper px-6 py-20 sm:px-8 sm:py-24">
           <div className="mx-auto max-w-[1320px]">
             <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
-              <SectionHeading eyebrow="Tin tức & sự kiện" title="Hợp Lực hôm nay" align="left" className="mb-0" />
+              <SectionHeading eyebrow={t.news} title={t.newsTitle} align="left" className="mb-0" />
               <Reveal delay={180}>
-                <MoreLink href="/tin-tuc">Xem tất cả tin</MoreLink>
+                <MoreLink href="/tin-tuc">{t.allNews}</MoreLink>
               </Reveal>
             </div>
-            <div className={cn("grid gap-6", latestPosts.length > 0 && (pinnedPosts.length > 0 || nextEvents.length > 0) && "lg:grid-cols-[1fr_380px]")}>
+            <div className={cn("grid gap-6 xl:gap-8", latestPosts.length > 0 && (pinnedPosts.length > 0 || nextEvents.length > 0) && "lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]")}>
               {latestPosts.length > 0 && (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid min-w-0 gap-5 md:grid-cols-2 md:gap-6">
                   {latestPosts.map((n, i) => {
                     const featured = i === 0;
                     // Chỉ có 1 tin nhỏ (tổng 2 bài) thì cho trải hết hàng, tránh trống nửa bên phải.
@@ -361,80 +357,79 @@ export default async function HomePage() {
                     if (featured) {
                       return (
                         <Reveal key={n.id} className="md:col-span-2">
-                          <TiltCard max={2.5} className="rounded-[22px]">
-                            <Link
-                              href={`/tin-tuc/${n.slug}`}
-                              className="group relative block h-[380px] overflow-clip rounded-[22px] shadow-md2 sm:h-[440px]"
-                            >
-                              <div className="img-reveal img-shine absolute inset-0">
-                                {n.coverImageUrl ? (
-                                  <FitImage
-                                    src={n.coverImageUrl}
-                                    alt={n.title}
-                                    sizes="(max-width: 1024px) 100vw, 860px"
-                                    textBelow
-                                    className="transition-transform duration-[1200ms] ease-out group-hover:scale-105"
-                                  />
-                                ) : (
-                                  <ImagePlaceholder label="Ảnh bài viết" />
-                                )}
-                              </div>
-                              <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/45 to-transparent" />
-                              <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-9">
-                                <div className="mb-3 flex flex-wrap items-center gap-3">
-                                  <span className="rounded bg-accent-600 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
-                                    {n.categoryName ?? "Tin nổi bật"}
-                                  </span>
-                                  <span className="font-mono text-[11px] text-white/75">{formatVNDate(n.publishedAt)}</span>
-                                </div>
-                                <h3 className="max-w-3xl font-display text-[24px] font-semibold leading-snug sm:text-[32px]">{n.title}</h3>
-                                {n.excerpt && <p className="mt-3 line-clamp-2 max-w-2xl text-[14.5px] leading-relaxed text-white/80">{n.excerpt}</p>}
-                                <span className="mt-5 inline-flex items-center gap-2 text-[13.5px] font-bold">
-                                  <span className="link-underline">Đọc tiếp</span>
-                                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                          <Link
+                            href={`/tin-tuc/${n.slug}`}
+                            className="group relative isolate flex min-h-[400px] flex-col justify-end overflow-hidden rounded-[24px] bg-brand-900 shadow-md2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-4 sm:min-h-[440px] lg:min-h-[460px]"
+                          >
+                            <div className="absolute inset-0 overflow-hidden">
+                              {n.coverImageUrl ? (
+                                <FitImage
+                                  src={n.coverImageUrl}
+                                  alt={n.title}
+                                  sizes="(max-width: 1023px) 100vw, (max-width: 1279px) calc(100vw - 428px), 908px"
+                                  textBelow
+                                  className="transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.035] motion-safe:group-focus-visible:scale-[1.035] motion-reduce:transition-none"
+                                />
+                              ) : (
+                                <ImagePlaceholder label={t.postImage} />
+                              )}
+                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/55 to-brand-900/5" />
+                            <div className="relative p-5 text-white sm:p-8">
+                              <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                                <span className="max-w-full break-words rounded-md bg-accent-600 px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em]">
+                                  {n.categoryName ?? t.featuredNews}
                                 </span>
+                                <span className="whitespace-nowrap font-mono text-[11px] text-white/85">{formatSiteDate(n.publishedAt, locale)}</span>
                               </div>
-                            </Link>
-                          </TiltCard>
+                              <h3 className="max-w-3xl text-pretty font-display text-[24px] font-semibold leading-[1.25] tracking-tight sm:text-[30px] lg:text-[32px]">{n.title}</h3>
+                              {n.excerpt && <p className="mt-3 line-clamp-2 max-w-2xl text-[14px] leading-relaxed text-white/85 sm:text-[14.5px]">{n.excerpt}</p>}
+                              <span className="mt-6 inline-flex items-center gap-3 text-[13px] font-semibold">
+                                <span className="link-underline">{t.readMore}</span>
+                                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 transition-transform duration-300 motion-safe:group-hover:translate-x-1 motion-safe:group-focus-visible:translate-x-1 motion-reduce:transition-none">→</span>
+                              </span>
+                            </div>
+                          </Link>
                         </Reveal>
                       );
                     }
                     return (
                       <Reveal key={n.id} delay={i * 90} className={cn(fullRow && "md:col-span-2")}>
-                        <TiltCard max={6} className="h-full rounded-[22px]">
-                          {/* Mobile: hàng ngang gọn (ảnh nhỏ trái, chữ phải) cho khối tin không dài lê thê; từ md: thẻ ảnh lớn. */}
-                          <Link
-                            href={`/tin-tuc/${n.slug}`}
-                            className="group flex h-full gap-4 overflow-clip rounded-[22px] border border-line bg-white p-3 shadow-sm2 transition-shadow hover:shadow-md2 md:block md:p-0"
-                          >
-                            <div className="img-reveal img-shine relative h-24 w-28 shrink-0 overflow-hidden rounded-2xl md:h-[190px] md:w-auto md:rounded-none">
-                              {n.coverImageUrl ? (
-                                <FitImage
-                                  src={n.coverImageUrl}
-                                  alt={n.title}
-                                  sizes="(max-width: 768px) 112px, 380px"
-                                  className="transition-transform duration-700 group-hover:scale-105"
-                                />
-                              ) : (
-                                <ImagePlaceholder label="Ảnh bài viết" />
+                        {/* Mobile: hàng ngang gọn (ảnh nhỏ trái, chữ phải) cho khối tin không dài lê thê; từ md: thẻ ảnh lớn. */}
+                        <Link
+                          href={`/tin-tuc/${n.slug}`}
+                          className="group flex h-full min-w-0 gap-4 overflow-hidden rounded-[22px] border border-line bg-white p-3 shadow-sm2 transition-shadow duration-300 hover:shadow-md2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-4 motion-reduce:transition-none md:flex-col md:gap-0 md:p-0"
+                        >
+                          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl sm:w-28 md:aspect-[16/10] md:h-auto md:w-full md:rounded-none">
+                            {n.coverImageUrl ? (
+                              <FitImage
+                                src={n.coverImageUrl}
+                                alt={n.title}
+                                sizes="(max-width: 639px) 96px, (max-width: 767px) 112px, (max-width: 1023px) 50vw, 450px"
+                                className="transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.035] motion-safe:group-focus-visible:scale-[1.035] motion-reduce:transition-none"
+                              />
+                            ) : (
+                              <ImagePlaceholder label={t.postImage} />
+                            )}
+                          </div>
+                          <div className="flex min-w-0 flex-1 flex-col py-1 md:p-5 xl:p-6">
+                            {/* Nhãn chuyên mục đỏ in hoa kiểu VinUni */}
+                            <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                              {n.categoryName && (
+                                <span className="max-w-full break-words font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em] text-accent-600">
+                                  {n.categoryName}
+                                </span>
                               )}
+                              <span className="whitespace-nowrap font-mono text-[11px] text-ink-muted">{formatSiteDate(n.publishedAt, locale)}</span>
                             </div>
-                            <div className="min-w-0 py-1 md:p-5">
-                              {/* Nhãn chuyên mục đỏ in hoa kiểu VinUni */}
-                              <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
-                                {n.categoryName && (
-                                  <span className="whitespace-nowrap font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-accent-600">
-                                    {n.categoryName}
-                                  </span>
-                                )}
-                                <span className="font-mono text-[10.5px] text-ink-faint">{formatVNDate(n.publishedAt)}</span>
-                              </div>
-                              <h3 className="line-clamp-3 font-display text-[15px] font-semibold leading-snug text-ink transition-colors group-hover:text-brand-700 md:text-[17px]">
-                                {n.title}
-                              </h3>
-                            </div>
-                          </Link>
-                        </TiltCard>
+                            <h3 className="line-clamp-3 font-display text-[15px] font-semibold leading-[1.4] text-ink transition-colors group-hover:text-brand-700 group-focus-visible:text-brand-700 md:text-[18px]">
+                              {n.title}
+                            </h3>
+                            <span aria-hidden="true" className="mt-auto hidden items-center gap-2 pt-5 text-[12px] font-semibold text-brand-700 md:inline-flex">
+                              {t.readMore} <span className="transition-transform duration-300 motion-safe:group-hover:translate-x-1 motion-safe:group-focus-visible:translate-x-1 motion-reduce:transition-none">→</span>
+                            </span>
+                          </div>
+                        </Link>
                       </Reveal>
                     );
                   })}
@@ -442,36 +437,35 @@ export default async function HomePage() {
               )}
 
               {(pinnedPosts.length > 0 || nextEvents.length > 0) && (
-                // min-w-0 + minmax(0,1fr): dòng giờ/địa điểm sự kiện `truncate` (không xuống dòng) không được
-                // đẩy cột rộng quá 380px — nếu không cả trang bị tràn ngang ~30px.
+                // Giới hạn chiều rộng cột để tiêu đề, giờ và địa điểm xuống dòng trong đúng khung.
                 <div className={cn("grid h-fit min-w-0 grid-cols-[minmax(0,1fr)] gap-6", latestPosts.length === 0 && "md:grid-cols-2")}>
                   {pinnedPosts.length > 0 && (
                     <Reveal delay={120}>
-                      <aside className="overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label="Thông báo">
-                        <div className="flex items-center gap-3 bg-gradient-to-r from-accent-600 to-accent-500 px-6 py-4 text-white">
+                      <aside className="overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label={t.notices}>
+                        <div className="flex items-center gap-3 bg-gradient-to-r from-accent-600 to-accent-500 px-5 py-4 text-white sm:px-6">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                             <path d="M12 2a5 5 0 00-5 5v3.6c0 .5-.2 1-.6 1.4L5 13.4c-.6.6-.2 1.6.6 1.6h13a1 1 0 00.7-1.6l-1.4-1.4a2 2 0 01-.6-1.4V7a5 5 0 00-5-5z" strokeLinecap="round" strokeLinejoin="round" />
                             <path d="M9 18a3 3 0 006 0" strokeLinecap="round" />
                           </svg>
-                          <span className="font-display text-[18px] font-semibold">Thông báo</span>
+                          <span className="font-display text-[18px] font-semibold">{t.notices}</span>
                         </div>
                         <ul className="divide-y divide-line">
                           {pinnedPosts.map((p) => {
-                            const date = vnDayMonth(p.publishedAt);
+                            const date = siteDayMonth(p.publishedAt, locale);
                             return (
                               <li key={p.id}>
-                                <Link href={`/tin-tuc/${p.slug}`} className="group flex gap-4 px-6 py-4 transition-colors hover:bg-brand-50">
+                                <Link href={`/tin-tuc/${p.slug}`} className="group flex items-start gap-4 px-5 py-5 transition-colors hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600 sm:px-6">
                                   {date && (
                                     <span className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-paper text-center">
                                       <span className="font-display text-[20px] font-bold leading-none text-brand-900">{date.day}</span>
                                       <span className="mt-1 font-mono text-[9.5px] uppercase text-ink-faint">{date.month}</span>
                                     </span>
                                   )}
-                                  <span className="min-w-0 text-[14px] font-semibold leading-snug text-ink group-hover:text-brand-700">
+                                  <span className="min-w-0 text-[14px] font-semibold leading-relaxed text-ink group-hover:text-brand-700 group-focus-visible:text-brand-700">
                                     {p.title}
                                     {p.attachmentUrl && (
                                       <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 align-middle text-[10.5px] font-semibold text-brand-700">
-                                        📎 Tệp đính kèm
+                                        📎 {t.attachment}
                                       </span>
                                     )}
                                   </span>
@@ -486,22 +480,22 @@ export default async function HomePage() {
 
                   {nextEvents.length > 0 && (
                     <Reveal delay={200}>
-                      <aside className="overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label="Sự kiện sắp diễn ra">
-                        <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-brand-900 to-brand-700 px-6 py-4 text-white">
-                          <span className="flex items-center gap-3">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                      <aside className="overflow-hidden rounded-[22px] border border-line bg-white shadow-sm2" aria-label={t.upcomingEvents}>
+                        <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-brand-900 to-brand-700 px-5 py-4 text-white sm:px-6">
+                          <span className="flex min-w-0 items-center gap-3">
+                            <svg className="shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                               <rect x="3" y="5" width="18" height="16" rx="2" />
                               <path d="M3 10h18M8 3v4M16 3v4" strokeLinecap="round" />
                             </svg>
-                            <span className="font-display text-[18px] font-semibold">Sự kiện sắp diễn ra</span>
+                            <span className="font-display text-[16px] font-semibold leading-snug sm:text-[18px]">{t.upcomingEvents}</span>
                           </span>
-                          <Link href="/su-kien" className="text-[12px] font-semibold text-brand-100 hover:text-white">
-                            Lịch →
+                          <Link href="/su-kien" className="shrink-0 py-2 text-[12px] font-semibold text-brand-100 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+                            {t.calendar} →
                           </Link>
                         </div>
                         <ul className="divide-y divide-line">
                           {nextEvents.map((e) => {
-                            const date = vnDayMonth(e.startAt);
+                            const date = siteDayMonth(e.startAt, locale);
                             const body = (
                               <>
                                 {date && (
@@ -510,23 +504,23 @@ export default async function HomePage() {
                                     <span className="mt-1 font-mono text-[9.5px] uppercase text-brand-100">{date.month}</span>
                                   </span>
                                 )}
-                                <span className="min-w-0">
-                                  <span className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink group-hover:text-brand-700">{e.title}</span>
-                                  <span className="mt-1 block truncate font-mono text-[10.5px] uppercase tracking-wider text-accent-600">
-                                    {formatVNDateTime(e.startAt)}
-                                    {e.location ? ` · ${e.location}` : ""}
+                                <span className="min-w-0 flex-1">
+                                  <span className="line-clamp-2 text-[14px] font-semibold leading-relaxed text-ink group-hover:text-brand-700 group-focus-visible:text-brand-700">{e.title}</span>
+                                  <span className="mt-2 block font-mono text-[11px] font-medium leading-relaxed text-accent-600">
+                                    {formatSiteDate(e.startAt, locale, true)}
                                   </span>
+                                  {e.location && <span className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-ink-muted">{e.location}</span>}
                                 </span>
                               </>
                             );
                             return (
                               <li key={e.id}>
                                 {e.slug ? (
-                                  <Link href={`/su-kien/${e.slug}`} className="group flex gap-4 px-6 py-4 transition-colors hover:bg-brand-50">
+                                  <Link href={`/su-kien/${e.slug}`} className="group flex items-start gap-4 px-5 py-5 transition-colors hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600 sm:px-6">
                                     {body}
                                   </Link>
                                 ) : (
-                                  <div className="flex gap-4 px-6 py-4">{body}</div>
+                                  <div className="flex items-start gap-4 px-5 py-5 sm:px-6">{body}</div>
                                 )}
                               </li>
                             );
@@ -547,57 +541,63 @@ export default async function HomePage() {
         <section className="overflow-hidden bg-paper-alt py-24">
           <div className="mx-auto mb-10 flex max-w-[1320px] flex-wrap items-end justify-between gap-6 px-6 sm:px-8">
             <SectionHeading
-              eyebrow="Ngành đào tạo"
-              title={`${allPrograms.length} ngành trọng điểm khối sức khoẻ`}
-              description="Chương trình gắn chặt thực hành lâm sàng tại bệnh viện đối tác ngay từ năm nhất."
+              eyebrow={t.programs}
+              title={programCountLabel(allPrograms.length, locale)}
+              description={t.programsDescription}
               align="left"
               className="mb-0"
             />
             <Reveal delay={180}>
-              <MoreLink href="/nganh-dao-tao">Xem tất cả ngành</MoreLink>
+              <MoreLink href="/nganh-dao-tao">{t.allPrograms}</MoreLink>
             </Reveal>
           </div>
-          <EdgeSlider label="Danh sách ngành đào tạo" itemClassName="min-h-[340px] w-[85%] sm:min-h-[360px] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]">
+          <EdgeSlider locale={locale} label={t.programList} itemClassName="min-h-[340px] w-[85%] sm:min-h-[360px] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]">
             {allPrograms.map((p, i) => (
-              <ProgramCard key={p.slug} program={p} gradientClass={programGradient(i)} delay={Math.min(i, 3) * 80} />
+              <ProgramCard key={p.slug} locale={locale} program={p} gradientClass={programGradient(i)} delay={Math.min(i, 3) * 80} />
             ))}
           </EdgeSlider>
         </section>
       )}
 
       {/* ============ 5. SỨ MỆNH - TẦM NHÌN ============
-          Đệm trên/dưới bằng nhau: khối kế tiếp (đội ngũ giảng viên) nền xanh đậm, thiếu đệm dưới thì thẻ dính sát mép
-          khối tối. Nội dung căn giữa theo chiều dọc → 2 đoạn dài ngắn khác nhau vẫn cân; chỉ có 1 đoạn thì 1 thẻ giữa trang.
-          2 cột chỉ từ lg — ở 768px mỗi thẻ ~330px, đoạn chữ cỡ 21px kéo dài 7–8 dòng. */}
+          Trên PC hai thẻ cùng chiều cao, nhãn và nội dung thẳng hàng; chỉ một thẻ thì căn giữa.
+          Giữ hai cột từ lg để đoạn văn có đủ bề ngang trên tablet. */}
       {missionBlocks.length > 0 && (
-        <section className="px-6 py-24 sm:px-8">
-          <div className={cn("mx-auto grid gap-5", missionBlocks.length > 1 ? "max-w-[1320px] lg:grid-cols-2" : "max-w-3xl")}>
+        <section className="px-6 py-20 sm:px-8 sm:py-24">
+          <div className={cn("mx-auto grid gap-6 xl:gap-8", missionBlocks.length > 1 ? "max-w-[1320px] lg:grid-cols-2" : "max-w-3xl")}>
             {missionBlocks.map((b, i) => (
               <Reveal key={b.label} delay={i * 120} className="h-full">
                 <TiltCard
-                  max={4}
-                  className="flex h-full flex-col justify-center overflow-clip rounded-[24px] border border-line bg-white px-8 py-10 shadow-sm2 sm:px-11 sm:py-12"
+                  max={1.5}
+                  className={cn(
+                    "flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white px-6 py-8 shadow-sm2 hover:shadow-md2 sm:px-10 sm:py-10 xl:px-12 xl:py-12",
+                    b.tone === "red" ? "hover:border-accent-200" : "hover:border-brand-200"
+                  )}
                 >
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r",
+                      "pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r",
                       b.tone === "red" ? "from-accent-600 to-accent-500" : "from-brand-700 to-brand-500"
                     )}
                   />
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "pointer-events-none absolute -top-4 right-6 select-none font-display text-[140px] font-bold leading-none",
-                      b.tone === "red" ? "text-accent-500/10" : "text-brand-500/10"
-                    )}
-                  >
-                    “
-                  </span>
-                  <Eyebrow tone={b.tone} className="mb-5 self-start">
-                    {b.label}
-                  </Eyebrow>
-                  <p className="relative text-pretty font-display text-[19px] leading-relaxed text-brand-900 sm:text-[21px]">{b.text}</p>
+                  <div className="relative mb-6 flex min-h-10 items-center justify-between gap-4">
+                    <h2>
+                      <Eyebrow tone={b.tone} className="text-[12px] font-bold tracking-[0.1em]">
+                        {b.label}
+                      </Eyebrow>
+                    </h2>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "pointer-events-none h-10 shrink-0 select-none font-display text-[80px] font-medium leading-none sm:text-[88px]",
+                        b.tone === "red" ? "text-accent-500/20" : "text-brand-500/20"
+                      )}
+                    >
+                      “
+                    </span>
+                  </div>
+                  <p className="relative text-pretty font-display text-[18px] leading-[1.7] text-brand-900 sm:text-[20px]">{b.text}</p>
                 </TiltCard>
               </Reveal>
             ))}
@@ -609,30 +609,30 @@ export default async function HomePage() {
           Lưới 2 cột (từ xl — 1024px thì 3 thẻ bên phải chỉ rộng ~160px): trái = chân dung lớn người đầu danh sách (cao 2 hàng), phải = tiêu đề + số liệu (hàng 1)
           và tối đa 3 thẻ trong mờ (hàng 2). Điện thoại theo thứ tự DOM: tiêu đề → người nổi bật → dải vuốt ngang. */}
       {featuredFaculty && (
-        <section className="relative isolate overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 py-24 text-white sm:px-8 lg:py-28">
-          <div className="bg-grid-dark pointer-events-none absolute inset-0" />
+        <section className="relative isolate overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 py-20 text-white sm:px-8 sm:py-24 lg:py-28">
+          <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-40" />
           <ParallaxBlur
-            speed={0.1}
-            className="pointer-events-none absolute -left-32 top-1/4 h-[440px] w-[440px] rounded-full bg-brand-500/25 blur-[90px]"
+            speed={0.06}
+            className="pointer-events-none absolute -left-32 top-1/4 h-[440px] w-[440px] rounded-full bg-brand-500/10 blur-[90px]"
           />
           <ParallaxBlur
-            speed={-0.1}
-            className="pointer-events-none absolute -bottom-10 -right-24 h-[380px] w-[380px] rounded-full bg-accent-500/15 blur-[90px]"
+            speed={-0.06}
+            className="pointer-events-none absolute -bottom-10 -right-24 h-[380px] w-[380px] rounded-full bg-accent-500/5 blur-[90px]"
           />
-          <div className="relative mx-auto grid max-w-[1320px] gap-12 xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:gap-x-14 xl:gap-y-10">
+          <div className="relative mx-auto grid max-w-[1320px] gap-10 sm:gap-y-12 xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:gap-x-14 xl:gap-y-8">
             <div className="xl:col-start-2 xl:row-start-1">
-              <div className="flex flex-wrap items-end justify-between gap-6">
+              <div className="flex flex-col items-start gap-5 sm:gap-6">
                 <SectionHeading
                   onDark
                   eyebrowTone="onDark"
-                  eyebrow="Đội ngũ giảng viên"
-                  title="Giảng viên giàu kinh nghiệm lâm sàng"
+                  eyebrow={t.faculty}
+                  title={t.facultyTitle}
                   align="left"
                   className="mb-0"
                 />
                 <Reveal delay={180}>
                   <MoreLink href="/doi-ngu-giang-vien" onDark>
-                    Xem toàn bộ đội ngũ
+                    {t.allFaculty}
                   </MoreLink>
                 </Reveal>
               </div>
@@ -656,13 +656,14 @@ export default async function HomePage() {
                 </Reveal>
               )}
             </div>
-            <Reveal className="xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:self-center">
-              <FacultySpotlight data={facultyCard(featuredFaculty)} />
+            <Reveal className="xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:self-end">
+              <FacultySpotlight locale={locale} data={facultyCard(featuredFaculty)} />
             </Reveal>
             {otherFaculty.length > 0 && (
               <div className={cn(MOBILE_SWIPE_ROW, "sm:grid-cols-3 sm:gap-5 xl:col-start-2 xl:row-start-2")}>
                 {otherFaculty.map((f, i) => (
                   <FacultyCard
+                    locale={locale}
                     key={f.id}
                     tone="glass"
                     delay={i * 90}
@@ -680,6 +681,7 @@ export default async function HomePage() {
       {/* ============ 7. CÂU CHUYỆN THÀNH CÔNG (cựu SV) ============ */}
       {testimonials.length > 0 && (
         <TestimonialSlider
+          locale={locale}
           items={testimonials.map(({ id, quote, name, role, avatarUrl }) => ({ id, quote, name, role, avatarUrl }))}
         />
       )}
@@ -691,13 +693,13 @@ export default async function HomePage() {
           speed={0.18}
           className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-accent-500/25 blur-[50px]"
         />
-        <LightboxGroup items={galleryLightbox}>
+        <LightboxGroup locale={locale} items={galleryLightbox}>
           <div className="relative mx-auto max-w-[1320px]">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
               <SectionHeading
-                eyebrow="Đời sống sinh viên"
+                eyebrow={t.studentLife}
                 eyebrowTone="onDark"
-                title="Trải nghiệm Hợp Lực"
+                title={t.experience}
                 align="left"
                 onDark
                 className="mb-0"
@@ -706,17 +708,17 @@ export default async function HomePage() {
                 {firstVideoIndex >= 0 && (
                   <LightboxTrigger
                     index={firstVideoIndex}
-                    label="Xem video giới thiệu"
+                    label={t.viewVideo}
                     className="inline-flex cursor-pointer items-center gap-3 rounded-full bg-white py-2 pl-2 pr-5 text-[13.5px] font-bold text-brand-900 shadow-lg2 transition-transform hover:-translate-y-0.5"
                   >
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-accent-500 text-white">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
                     </span>
-                    Xem video
+                    {t.viewVideo}
                   </LightboxTrigger>
                 )}
                 <MoreLink href="/thu-vien" onDark>
-                  Xem thư viện
+                  {t.viewLibrary}
                 </MoreLink>
               </Reveal>
             </div>
@@ -735,7 +737,7 @@ export default async function HomePage() {
                   )}
                 >
                   {item ? (
-                    <LightboxTrigger index={i} label={`${item.videoUrl ? "Xem video" : "Xem ảnh"}: ${item.caption}`} className="relative block h-full w-full cursor-zoom-in">
+                    <LightboxTrigger index={i} label={`${item.videoUrl ? t.viewVideo : t.viewImage}: ${item.caption}`} className="relative block h-full w-full cursor-zoom-in">
                       <GalleryMedia
                         item={item}
                         className="img-reveal img-shine h-full w-full"
@@ -750,7 +752,7 @@ export default async function HomePage() {
                   ) : (
                     <ImagePlaceholder
                       label={
-                        ["Thực hành lâm sàng", "Phòng thí nghiệm", "Lễ tốt nghiệp", "Hoạt động ngoại khoá", "Khuôn viên trường"][i]
+                        [t.clinicalPractice, t.laboratory, t.graduation, t.extracurricular, t.campus][i]
                       }
                     />
                   )}
@@ -763,9 +765,9 @@ export default async function HomePage() {
 
       {/* ============ 9. ĐỐI TÁC — dải logo chạy ngang (VinUni đặt đối tác gần cuối trang) ============ */}
       {partners.length > 0 && (
-        <section className="py-20" aria-label="Đối tác đào tạo">
+        <section className="py-20" aria-label={t.trainingPartners}>
           <div className="px-6 sm:px-8">
-            <SectionHeading eyebrow="Đối tác" title="Đối tác đào tạo & thực hành lâm sàng" className="mb-10" />
+            <SectionHeading eyebrow={t.partners} title={t.partnersTitle} className="mb-10" />
           </div>
           <div className="marquee overflow-hidden">
             <div className="marquee-track flex w-max items-center">
@@ -827,7 +829,7 @@ export default async function HomePage() {
             <div className="relative grid gap-10 p-8 sm:p-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14 lg:p-16">
               <div>
                 <Reveal>
-                  <Eyebrow tone="onDark">Tuyển sinh</Eyebrow>
+                  <Eyebrow tone="onDark">{t.admissions}</Eyebrow>
                 </Reveal>
                 <Reveal delay={90}>
                   <h2 className="mt-5 text-balance font-display text-[32px] font-semibold leading-[1.1] tracking-tight sm:text-[42px]">
@@ -842,19 +844,19 @@ export default async function HomePage() {
                     href="/tuyen-sinh#dang-ky"
                     className="whitespace-nowrap rounded-xl bg-white px-5 py-4 text-[14px] font-bold text-accent-600 shadow-lg2 transition-transform hover:-translate-y-0.5 sm:px-7 sm:text-[15px]"
                   >
-                    Đăng ký xét tuyển ngay
+                    {t.applyNow}
                   </Link>
                   <Link
                     href="/tra-cuu-ket-qua"
                     className="whitespace-nowrap rounded-xl border border-white/45 px-5 py-4 text-[14px] font-bold text-white transition-colors hover:bg-white/10 sm:px-7 sm:text-[15px]"
                   >
-                    Tra cứu kết quả
+                    {t.results}
                   </Link>
                 </Reveal>
               </div>
               <div>
                 <Reveal className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-white/75">
-                  Quy trình · {steps.length} bước xét tuyển
+                  {admissionStepsLabel(steps.length, locale)}
                 </Reveal>
                 <ol className="space-y-3">
                   {steps.map((s, i) => (
@@ -887,12 +889,12 @@ export default async function HomePage() {
                   </svg>
                 </div>
                 <div>
-                  <div className="text-[14px] font-bold text-ink">Công khai theo quy định</div>
-                  <div className="text-[12.5px] text-ink-faint">Tài chính, cơ sở vật chất, chương trình đào tạo, đội ngũ giảng viên</div>
+                  <div className="text-[14px] font-bold text-ink">{t.disclosures}</div>
+                  <div className="text-[12.5px] text-ink-faint">{t.disclosuresDescription}</div>
                 </div>
               </div>
               <span className="text-sm font-semibold text-brand-700">
-                <span className="link-underline">Xem chi tiết</span> →
+                <span className="link-underline">{t.viewDetails}</span> →
               </span>
             </Link>
           </Reveal>

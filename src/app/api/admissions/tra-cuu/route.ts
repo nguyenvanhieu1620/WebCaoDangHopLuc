@@ -15,6 +15,11 @@ const STATUS_LABEL: Record<string, string> = {
   reviewed: "Đã xem xét hồ sơ",
   contacted: "Đã liên hệ trao đổi kết quả",
 };
+const STATUS_LABEL_EN: Record<string, string> = {
+  new: "Received, awaiting review",
+  reviewed: "Application reviewed",
+  contacted: "Contacted about the result",
+};
 
 const MAX_BODY_BYTES = 2 * 1024;
 
@@ -23,14 +28,14 @@ export async function POST(request: Request) {
   // thể lặp lại, nhưng vẫn cần chặn dò quét số CCCD hàng loạt.
   if (!checkRateLimit(`lookup:${getClientIp(request)}`, 20, 10 * 60 * 1000)) {
     return NextResponse.json(
-      { ok: false, error: "Bạn tra cứu quá nhiều lần, vui lòng thử lại sau ít phút." },
+      { ok: false, error: "Bạn tra cứu quá nhiều lần, vui lòng thử lại sau ít phút.", errorEn: "Too many requests. Please try again in a few minutes." },
       { status: 429 }
     );
   }
 
   const parsed = await readJsonObject(request, MAX_BODY_BYTES);
   if (!parsed.ok) {
-    return NextResponse.json({ ok: false, error: parsed.error }, { status: parsed.status });
+    return NextResponse.json({ ok: false, error: parsed.error, errorEn: parsed.status === 413 ? "The submitted data is too large." : "Invalid request data." }, { status: parsed.status });
   }
 
   const fields = readStringFields(parsed.data, {
@@ -38,24 +43,33 @@ export async function POST(request: Request) {
   });
   if (!fields.ok) {
     const error = fields.kind === "missing" ? "Vui lòng nhập số CCCD đã đăng ký." : fields.error;
-    return NextResponse.json({ ok: false, error }, { status: 400 });
+    return NextResponse.json({ ok: false, error, errorEn: "Enter your registered 12-digit Vietnamese citizen ID number." }, { status: 400 });
   }
   const idNumber = normalizeCccd(fields.values.idNumber);
   if (!isValidCccd(idNumber)) {
-    return NextResponse.json({ ok: false, error: "Số CCCD phải gồm đúng 12 chữ số." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Số CCCD phải gồm đúng 12 chữ số.", errorEn: "The Vietnamese citizen ID number must contain exactly 12 digits." }, { status: 400 });
   }
 
   const rows = await db.query.admissionSubmissions.findMany({
     where: eq(schema.admissionSubmissions.idNumber, idNumber),
     orderBy: asc(schema.admissionSubmissions.seq),
   });
+  const en = parsed.data.locale === "en";
+  const programNames = new Map<string, string>();
+  if (en && rows.length) {
+    const programs = await db.query.programs.findMany({ orderBy: asc(schema.programs.seq) });
+    for (const program of programs) {
+      const name = program.nameEn?.trim() || program.name;
+      for (const key of [program.slug, program.name, program.nameEn]) if (key) programNames.set(key, name);
+    }
+  }
 
   return NextResponse.json({
     ok: true,
     results: rows.map((r) => ({
       fullName: r.fullName,
-      program: r.program,
-      statusLabel: STATUS_LABEL[r.status] ?? r.status,
+      program: programNames.get(r.program) ?? r.program,
+      statusLabel: en ? STATUS_LABEL_EN[r.status] ?? "Status is being updated" : STATUS_LABEL[r.status] ?? r.status,
       createdAt: r.createdAt,
     })),
   });

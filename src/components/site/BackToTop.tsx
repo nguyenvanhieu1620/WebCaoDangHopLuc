@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/locale";
+import { siteCopy } from "@/lib/site-copy";
 
 /** Cuộn quá mốc này (px) mới hiện nút. */
 const SHOW_AFTER = 600;
@@ -16,7 +18,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  * Vòng tiến trình cập nhật thẳng vào DOM qua ref (không setState mỗi khung
  * hình cuộn); state chỉ đổi khi qua/lùi mốc hiện-ẩn.
  */
-export function BackToTop() {
+export function BackToTop({ locale = "vi" }: { locale?: Locale }) {
+  const t = siteCopy(locale);
   const [visible, setVisible] = useState(false);
   const ringRef = useRef<SVGCircleElement>(null);
 
@@ -52,8 +55,8 @@ export function BackToTop() {
     <button
       type="button"
       onClick={toTop}
-      aria-label="Lên đầu trang"
-      title="Lên đầu trang"
+      aria-label={t.backToTop}
+      title={t.backToTop}
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
       className={cn(

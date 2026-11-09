@@ -1,3 +1,5 @@
+import { pageText } from "@/lib/page-copy";
+import { getLocale } from "@/lib/locale";
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PageStub } from "@/components/ui/PageStub";
@@ -14,7 +16,10 @@ import { getPageBySlug } from "@/lib/data/pages";
 import { getHomepageContent } from "@/lib/data/homepage";
 import { getMilestoneYears } from "@/lib/data/milestones";
 
-export const metadata: Metadata = { title: "Giới thiệu" };
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = pageText(await getLocale());
+  return { title: copy("Giới thiệu") };
+}
 
 /**
  * Giới thiệu nhiều khối kiểu trang "Về VinUni": nội dung chung (trang tĩnh
@@ -23,6 +28,7 @@ export const metadata: Metadata = { title: "Giới thiệu" };
  * dữ liệu thì tự ẩn; mục lục bên trái chỉ liệt kê khối đang hiện.
  */
 export default async function AboutPage() {
+  const copy = pageText(await getLocale());
   const [page, content, milestoneYears] = await Promise.all([
     getPageBySlug("gioi-thieu"),
     getHomepageContent(),
@@ -32,29 +38,29 @@ export default async function AboutPage() {
   if (!page) {
     return (
       <PageStub
-        eyebrow="Giới thiệu"
-        title="Về Trường Cao đẳng Y Dược Hợp Lực"
-        description="Sứ mệnh, lịch sử hình thành, cơ sở vật chất và đội ngũ lãnh đạo nhà trường."
+        eyebrow={copy("Giới thiệu")}
+        title={copy("Về Trường Cao đẳng Y Dược Hợp Lực")}
+        description={copy("Sứ mệnh, lịch sử hình thành, cơ sở vật chất và đội ngũ lãnh đạo nhà trường.")}
       />
     );
   }
 
   const hasMission = !!(content.missionText || content.visionText);
   const toc = [
-    { id: "gioi-thieu-chung", label: "Giới thiệu chung" },
-    hasMission && { id: "su-menh-tam-nhin", label: "Sứ mệnh & Tầm nhìn" },
-    content.stats.length > 0 && { id: "con-so", label: "Hợp Lực qua những con số" },
-    milestoneYears.length > 0 && { id: "cot-moc", label: "Những cột mốc" },
+    { id: "gioi-thieu-chung", label: copy("Giới thiệu chung") },
+    hasMission && { id: "su-menh-tam-nhin", label: copy("Sứ mệnh & Tầm nhìn") },
+    content.stats.length > 0 && { id: "con-so", label: copy("Hợp Lực qua những con số") },
+    milestoneYears.length > 0 && { id: "cot-moc", label: copy("Những cột mốc") },
   ].filter((x): x is { id: string; label: string } => !!x);
 
   return (
     <>
-      <PageHero crumbs={[{ label: "Giới thiệu" }]} eyebrow="Giới thiệu" title={page.title} imageUrl={page.coverImageUrl} />
+      <PageHero crumbs={[{ label: copy("Giới thiệu") }]} eyebrow={copy("Giới thiệu")} title={page.title} imageUrl={page.coverImageUrl} />
 
       <DecorativeSection contentClassName="mx-auto grid max-w-[1180px] gap-12 lg:grid-cols-[260px_1fr] lg:gap-16">
         <aside className="lg:sticky lg:top-32 lg:h-fit">
-          <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Trên trang này</div>
-          <nav aria-label="Mục lục trang Giới thiệu" className="mt-4">
+          <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">{copy("Trên trang này")}</div>
+          <nav aria-label={copy("Mục lục trang Giới thiệu")} className="mt-4">
             <ol className="space-y-1 border-l-2 border-line">
               {toc.map((t, i) => (
                 <li key={t.id}>
@@ -69,7 +75,7 @@ export default async function AboutPage() {
         </aside>
         <div id="gioi-thieu-chung" className="scroll-mt-28 lg:scroll-mt-32">
           <Eyebrow tone="red" className="mb-5">
-            Giới thiệu chung
+            {copy("Giới thiệu chung")}
           </Eyebrow>
           <MarkdownContent content={page.content} />
         </div>
@@ -78,11 +84,11 @@ export default async function AboutPage() {
       {hasMission && (
         <section id="su-menh-tam-nhin" className="scroll-mt-28 lg:scroll-mt-32 bg-paper-alt px-6 py-24 sm:px-8">
           <div className="mx-auto max-w-[1180px]">
-            <SectionHeading eyebrow="Định hướng" title="Sứ mệnh & Tầm nhìn" />
+            <SectionHeading eyebrow={copy("Định hướng")} title={copy("Sứ mệnh & Tầm nhìn")} />
             <div className="grid gap-5 md:grid-cols-2">
               {[
-                { text: content.missionText, label: "Sứ mệnh", tone: "blue" as const },
-                { text: content.visionText, label: "Tầm nhìn", tone: "red" as const },
+                { text: content.missionText, label: copy("Sứ mệnh"), tone: "blue" as const },
+                { text: content.visionText, label: copy("Tầm nhìn"), tone: "red" as const },
               ]
                 .filter((b) => b.text)
                 .map((b, i) => (
@@ -107,7 +113,7 @@ export default async function AboutPage() {
         <section id="con-so" className="relative isolate scroll-mt-28 lg:scroll-mt-32 overflow-hidden bg-gradient-to-br from-brand-900 to-brand-800 px-6 py-20 text-white sm:px-8">
           <div className="bg-grid-dark pointer-events-none absolute inset-0" />
           <div className="relative mx-auto max-w-[1180px]">
-            <SectionHeading eyebrow="Con số" eyebrowTone="onDark" title="Hợp Lực qua những con số" onDark className="mb-12" />
+            <SectionHeading eyebrow={copy("Con số")} eyebrowTone="onDark" title={copy("Hợp Lực qua những con số")} onDark className="mb-12" />
             <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[22px] bg-white/10 lg:grid-cols-4">
               {content.stats.map((s, i) => (
                 <Reveal key={s.label} delay={i * 90} className="bg-brand-900/60 px-6 py-8 text-center backdrop-blur">
@@ -127,17 +133,17 @@ export default async function AboutPage() {
         <section id="cot-moc" className="scroll-mt-28 lg:scroll-mt-32 px-6 py-24 sm:px-8">
           <div className="mx-auto max-w-[1180px]">
             <SectionHeading
-              eyebrow="Lịch sử"
+              eyebrow={copy("Lịch sử")}
               eyebrowTone="red"
               title={
                 <>
-                  Những cột mốc <em className="font-medium italic text-accent-600">Hợp Lực</em>
+                  {copy("Những cột mốc")} <em className="font-medium italic text-accent-600">{copy("Hợp Lực")}</em>
                 </>
               }
-              description="Nhìn lại những dấu mốc trên hành trình xây dựng và phát triển của nhà trường."
+              description={copy("Nhìn lại những dấu mốc trên hành trình xây dựng và phát triển của nhà trường.")}
             />
             <Reveal>
-              <MilestoneTimeline years={milestoneYears} />
+              <MilestoneTimeline locale={await getLocale()} years={milestoneYears} />
             </Reveal>
           </div>
         </section>
@@ -146,10 +152,10 @@ export default async function AboutPage() {
       <section className="px-6 pb-24 sm:px-8">
         <Reveal className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-6 rounded-[24px] border border-line bg-white px-8 py-7 shadow-sm2">
           <div>
-            <div className="font-display text-[22px] font-semibold text-brand-900">Tìm hiểu các ngành đào tạo của trường</div>
-            <p className="mt-1 text-[14px] text-ink-soft">Chương trình, thời gian đào tạo, chỉ tiêu và học phí từng ngành.</p>
+            <div className="font-display text-[22px] font-semibold text-brand-900">{copy("Tìm hiểu các ngành đào tạo của trường")}</div>
+            <p className="mt-1 text-[14px] text-ink-soft">{copy("Chương trình, thời gian đào tạo, chỉ tiêu và học phí từng ngành.")}</p>
           </div>
-          <MoreLink href="/nganh-dao-tao">Xem ngành đào tạo</MoreLink>
+          <MoreLink href="/nganh-dao-tao">{copy("Xem ngành đào tạo")}</MoreLink>
         </Reveal>
       </section>
     </>

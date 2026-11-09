@@ -15,7 +15,9 @@ import { getAdmissionInfo } from "@/lib/data/admission-info";
 import { getLocale } from "@/lib/locale";
 import { DocumentChecklist } from "@/components/site/DocumentChecklist";
 
-export const metadata: Metadata = { title: "Tuyển sinh" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getLocale()) === "en" ? "Admissions" : "Tuyển sinh" };
+}
 
 const TEXT = {
   vi: {

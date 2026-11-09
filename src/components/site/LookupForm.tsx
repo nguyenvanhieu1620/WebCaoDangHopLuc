@@ -1,8 +1,10 @@
 "use client";
 
+import { pageText } from "@/lib/page-copy";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { formatVNDate } from "@/lib/utils";
+import { formatSiteDate } from "@/lib/site-copy";
+import type { Locale } from "@/lib/locale";
 
 type LookupResult = {
   fullName: string;
@@ -12,7 +14,8 @@ type LookupResult = {
 };
 
 /** Form tra cứu kết quả xét tuyển — POST tới /api/admissions/tra-cuu theo số CCCD. */
-export function LookupForm() {
+export function LookupForm({ locale = "vi" }: { locale?: Locale }) {
+  const copy = pageText(locale);
   const [idNumber, setIdNumber] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [results, setResults] = useState<LookupResult[]>([]);
@@ -27,18 +30,18 @@ export function LookupForm() {
       const res = await fetch("/api/admissions/tra-cuu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idNumber: idNumber.trim() }),
+        body: JSON.stringify({ idNumber: idNumber.trim(), locale }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setErrorMessage(data.error || "Có lỗi xảy ra, vui lòng thử lại.");
+        setErrorMessage(locale === "en" ? data.errorEn || copy("Có lỗi xảy ra, vui lòng thử lại.") : data.error || copy("Có lỗi xảy ra, vui lòng thử lại."));
         setStatus("error");
         return;
       }
       setResults(data.results);
       setStatus("done");
     } catch {
-      setErrorMessage("Không thể kết nối máy chủ, vui lòng thử lại.");
+      setErrorMessage(copy("Không thể kết nối máy chủ, vui lòng thử lại."));
       setStatus("error");
     }
   }
@@ -50,15 +53,15 @@ export function LookupForm() {
           id="lookup-id-number"
           name="idNumber"
           autoComplete="off"
-          aria-label="Số CCCD đã đăng ký"
+          aria-label={copy("Số CCCD đã đăng ký")}
           inputMode="numeric"
           pattern="[0-9]{12}"
           maxLength={12}
-          title="Số CCCD gồm 12 chữ số"
+          title={copy("Số CCCD gồm 12 chữ số")}
           value={idNumber}
           onChange={(e) => setIdNumber(e.target.value)}
           required
-          placeholder="Nhập số CCCD đã đăng ký"
+          placeholder={copy("Nhập số CCCD đã đăng ký")}
           className="flex-1 rounded-xl border border-line bg-white px-4 py-3.5 text-sm outline-none focus:border-brand-500"
         />
         <button
@@ -69,7 +72,7 @@ export function LookupForm() {
             status === "loading" && "opacity-60"
           )}
         >
-          {status === "loading" ? "Đang tra cứu..." : "Tra cứu"}
+          {status === "loading" ? copy("Đang tra cứu...") : copy("Tra cứu")}
         </button>
       </form>
 
@@ -83,8 +86,7 @@ export function LookupForm() {
         <div role="status" className="mt-6">
           {results.length === 0 ? (
             <div className="rounded-xl border border-line bg-white p-6 text-center text-sm text-ink-faint">
-              Không tìm thấy hồ sơ nào với số CCCD này. Kiểm tra lại số đã nhập
-              hoặc liên hệ hotline để được hỗ trợ.
+              {locale === "en" ? "No applications were found for this citizen ID number. Check the number or contact the hotline for support." : "Không tìm thấy hồ sơ nào với số CCCD này. Kiểm tra lại số đã nhập hoặc liên hệ hotline để được hỗ trợ."}
             </div>
           ) : (
             <ul className="space-y-3">
@@ -98,7 +100,7 @@ export function LookupForm() {
                   </div>
                   <div className="mt-1.5 text-[13.5px] text-brand-700">{r.statusLabel}</div>
                   <div className="mt-1 font-mono text-[11px] text-ink-faint">
-                    Ngày đăng ký: {formatVNDate(r.createdAt)}
+                    {copy("Ngày đăng ký:")} {formatSiteDate(r.createdAt, locale)}
                   </div>
                 </li>
               ))}

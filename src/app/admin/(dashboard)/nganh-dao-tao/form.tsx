@@ -66,7 +66,7 @@ export async function ProgramFormPage({ id }: { id?: string }) {
         </div>
         <div>
           <label htmlFor="f-nganh-dao-tao-image" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-            Ảnh ngành <span className="font-normal text-ink-faint">(tuỳ chọn — để trống thì thẻ ngành chỉ có khối màu)</span>
+            Ảnh ngành <span className="font-normal text-ink-faint">(tuỳ chọn — để trống thì thẻ Trang chủ hiện mã ngành trên nền màu)</span>
           </label>
           <ImagePicker id="f-nganh-dao-tao-image" spec="program" fileFieldName="image" pickedFieldName="imageExisting" images={mediaImages} currentUrl={editing?.imageUrl} />
           {editing?.imageUrl && (

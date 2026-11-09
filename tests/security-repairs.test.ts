@@ -196,11 +196,29 @@ test("xoá media dọn cache trước khi xoá metadata; không đụng DB/tệp
     "@/lib/upload-dir": { uploadedFilePath: () => "/fixture/uploads/a.png" },
     "@/lib/image-cache": { purgeOptimizedImageCache: async () => { effects.push("purge"); } },
     "@/lib/media": {}, "@/lib/admin-auth": { requirePermission: async () => ({}) },
+    "@/lib/media-usage": { getMediaUsage: async () => new Map() },
     "drizzle-orm": { eq: () => ({}) },
     "@/lib/db": { db: { query: { mediaItems: { findFirst: async () => ({ url: "/uploads/a.png" }) } }, delete: () => ({ where: async () => { effects.push("metadata"); } }) }, schema: { mediaItems: { id: "id" } } },
   });
   await action.deleteMediaAction("fixture");
   assert.deepEqual(effects, ["unlink", "purge", "metadata"]);
+});
+
+test("gọi trực tiếp action không thể xoá media đang dùng", async () => {
+  const effects: string[] = [];
+  const action = loadModule<typeof import("../src/app/admin/(dashboard)/media/actions")>("src/app/admin/(dashboard)/media/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: () => { throw new Error("blocked"); } },
+    "node:fs/promises": { unlink: async () => { effects.push("unlink"); } },
+    "@/lib/upload-dir": { uploadedFilePath: () => "/fixture/uploads/a.png" },
+    "@/lib/image-cache": { purgeOptimizedImageCache: async () => { effects.push("purge"); } },
+    "@/lib/media": {}, "@/lib/admin-auth": { requirePermission: async () => ({}) },
+    "@/lib/media-usage": { getMediaUsage: async () => new Map([["/uploads/a.png", [{ label: "Banner", href: "/admin/banner-trang-chu" }]]]) },
+    "drizzle-orm": { eq: () => ({}) },
+    "@/lib/db": { db: { query: { mediaItems: { findFirst: async () => ({ url: "/uploads/a.png" }) } }, delete: () => ({ where: async () => { effects.push("metadata"); } }) }, schema: { mediaItems: { id: "id" } } },
+  });
+  await assert.rejects(action.deleteMediaAction("fixture"), /blocked/);
+  assert.deepEqual(effects, []);
 });
 
 test("upload HEAD không gắn cache immutable một năm", async () => {

@@ -23,7 +23,7 @@ export async function HeroBannerFormPage({ id }: { id?: string }) {
   return (
     <AdminFormLayout
       title={editing ? "Sửa banner" : "Thêm banner"}
-      description="Ảnh phủ kín khung banner, có thể cắt theo màn hình; tự chuyển 6,5 giây/ảnh. Xem khuyến nghị kích thước dưới ô chọn ảnh."
+      description="Ảnh phủ kín khung banner; tỉ lệ PC thay đổi theo cửa sổ, điện thoại là 16:9. Xem kích thước theo từng khung dưới ô chọn ảnh. Tự chuyển 6,5 giây/ảnh."
       backHref="/admin/banner-trang-chu"
     >
       <form action={upsertHeroBannerAction} className="space-y-5">
@@ -46,7 +46,8 @@ export async function HeroBannerFormPage({ id }: { id?: string }) {
           <p className="mb-3 text-[11.5px] leading-relaxed text-ink-faint">
             Chỉ phát trên máy tính, trong khung ảnh banner: tự chạy, tắt tiếng, lặp lại, có nút tạm dừng. Điện thoại và người
             bật &quot;giảm chuyển động&quot; vẫn thấy ẢNH ở trên (ảnh cũng là ảnh chờ khi video đang tải). Khuyến nghị MP4 (H.264),
-            5–15 giây, 1920×1080 hoặc 1280×720, dưới 10MB — video nặng làm Trang chủ tải chậm. Để trống cả 2 ô = không có video.
+            5–15 giây, 1920×1080 hoặc 1280×720, dưới 10MB. Video phủ kín khung và có thể bị cắt theo cửa sổ;
+            giữ chủ thể ở giữa. Video nặng làm Trang chủ tải chậm. Để trống cả 2 ô = không có video.
           </p>
           <label htmlFor="f-banner-trang-chu-videoExisting" className="mb-1.5 block text-xs font-semibold text-ink-soft">
             Chọn video có sẵn trong Thư viện media

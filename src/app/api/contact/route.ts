@@ -22,14 +22,14 @@ export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!checkRateLimit(`contact:${ip}`, 5, 10 * 60 * 1000)) {
     return NextResponse.json(
-      { ok: false, error: "Bạn gửi quá nhiều lần, vui lòng thử lại sau ít phút." },
+      { ok: false, error: "Bạn gửi quá nhiều lần, vui lòng thử lại sau ít phút.", errorEn: "Too many messages. Please try again in a few minutes." },
       { status: 429 }
     );
   }
 
   const parsed = await readJsonObject(request, MAX_BODY_BYTES);
   if (!parsed.ok) {
-    return NextResponse.json({ ok: false, error: parsed.error }, { status: parsed.status });
+    return NextResponse.json({ ok: false, error: parsed.error, errorEn: parsed.status === 413 ? "The submitted data is too large." : "Invalid request data." }, { status: parsed.status });
   }
   const body = parsed.data;
 
@@ -46,24 +46,26 @@ export async function POST(request: Request) {
   });
   if (!fields.ok) {
     const error = fields.kind === "missing" ? "Thiếu thông tin bắt buộc (họ tên, nội dung)." : fields.error;
-    return NextResponse.json({ ok: false, error }, { status: 400 });
+    const label = { name: "full name", phone: "phone number", email: "email", message: "message", turnstileToken: "verification token" }[fields.field];
+    const errorEn = fields.kind === "missing" ? "Please enter your full name and message." : fields.kind === "tooLong" ? `The ${label} is too long.` : `The ${label} must be text.`;
+    return NextResponse.json({ ok: false, error, errorEn }, { status: 400 });
   }
   const { name, email, message, turnstileToken } = fields.values;
   const phone = normalizeVnPhone(fields.values.phone);
 
   if (phone && !isValidVnPhone(phone)) {
     return NextResponse.json(
-      { ok: false, error: "Số điện thoại không hợp lệ (10 chữ số bắt đầu bằng 0, hoặc dạng +84)." },
+      { ok: false, error: "Số điện thoại không hợp lệ (10 chữ số bắt đầu bằng 0, hoặc dạng +84).", errorEn: "Enter a valid Vietnamese mobile number: 10 digits starting with 0, or the +84 format." },
       { status: 400 }
     );
   }
   if (email && !isValidEmail(email)) {
-    return NextResponse.json({ ok: false, error: "Email không hợp lệ." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Email không hợp lệ.", errorEn: "Enter a valid email address." }, { status: 400 });
   }
 
   if (!(await verifyTurnstileToken(turnstileToken, ip))) {
     return NextResponse.json(
-      { ok: false, error: "Xác minh chống spam thất bại, vui lòng thử lại." },
+      { ok: false, error: "Xác minh chống spam thất bại, vui lòng thử lại.", errorEn: "Spam verification failed. Please try again." },
       { status: 400 }
     );
   }

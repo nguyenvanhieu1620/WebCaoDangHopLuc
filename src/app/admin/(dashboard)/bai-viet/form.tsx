@@ -10,6 +10,7 @@ import { db, schema } from "@/lib/db";
 import { listMediaImages } from "@/lib/admin-media";
 import { requirePermission } from "@/lib/admin-auth";
 import { upsertPostAction } from "./actions";
+import { PostFormGuard } from "@/components/admin/PostFormGuard";
 
 const input = "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500";
 
@@ -18,7 +19,7 @@ const input = "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-
  * Bố cục 2 cột trên máy tính: trái = tiêu đề, mô tả, nội dung; phải = danh mục, ảnh, tệp, ghim, đăng.
  */
 export async function PostFormPage({ id }: { id?: string }) {
-  await requirePermission("posts");
+  const user = await requirePermission("posts");
   const [editing, categories, mediaImages] = await Promise.all([
     id ? db.query.posts.findFirst({ where: eq(schema.posts.id, id) }) : null,
     db.query.categories.findMany({ orderBy: [asc(schema.categories.name), asc(schema.categories.seq)] }),
@@ -49,6 +50,7 @@ export async function PostFormPage({ id }: { id?: string }) {
         </p>
       )}
       <form action={upsertPostAction} className="space-y-5">
+        <PostFormGuard draftKey={`hopluc-post:${user.id}:${editing?.id ?? "new"}:${editing?.updatedAt ?? ""}`} />
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0 space-y-5">

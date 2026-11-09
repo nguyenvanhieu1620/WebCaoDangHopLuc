@@ -1,3 +1,5 @@
+import { pageText } from "@/lib/page-copy";
+import { getLocale } from "@/lib/locale";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,11 +19,12 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  const copy = pageText(await getLocale());
   const { slug } = await params;
   const faculty = await getFacultyBySlug(slug);
   return {
-    title: faculty ? facultyDisplayName(faculty) : "Giảng viên",
-    description: faculty ? `${facultyDisplayName(faculty)} — ${faculty.role}, Trường Cao đẳng Y Dược Hợp Lực.` : undefined,
+    title: faculty ? facultyDisplayName(faculty) : copy("Giảng viên"),
+    description: faculty ? `${facultyDisplayName(faculty)} — ${faculty.role}, ${(await getLocale()) === "en" ? "Hop Luc Medical and Pharmaceutical College" : "Trường Cao đẳng Y Dược Hợp Lực"}.` : undefined,
   };
 }
 
@@ -75,6 +78,7 @@ export default async function FacultyDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const copy = pageText(await getLocale());
   const { slug } = await params;
   const [faculty, departments, everyone] = await Promise.all([getFacultyBySlug(slug), getDepartments(), getFacultyList()]);
   if (!faculty) notFound();
@@ -85,7 +89,8 @@ export default async function FacultyDetailPage({
   const others = everyone.filter((f) => f.id !== faculty.id && f.slug);
   const sameDepartment = department ? others.filter((f) => f.departmentId === department.id) : [];
   const related = (sameDepartment.length > 0 ? sameDepartment : others).slice(0, 4);
-  const relatedTitle = sameDepartment.length > 0 ? `Cùng ${department!.name}` : "Đội ngũ nhà trường";
+  const en = (await getLocale()) === "en";
+  const relatedTitle = sameDepartment.length > 0 ? `${en ? "More from" : "Cùng"} ${department!.name}` : copy("Đội ngũ nhà trường");
 
   return (
     <>
@@ -101,13 +106,13 @@ export default async function FacultyDetailPage({
               <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-white/65">
                 <li>
                   <Link href="/" className="transition-colors hover:text-white">
-                    Trang chủ
+                    {copy("Trang chủ")}
                   </Link>
                 </li>
                 <li className="flex items-center gap-2">
                   <span aria-hidden="true" className="text-accent-400">›</span>
                   <Link href="/doi-ngu-giang-vien" className="transition-colors hover:text-white">
-                    Đội ngũ giảng viên
+                    {copy("Đội ngũ giảng viên")}
                   </Link>
                 </li>
                 <li className="flex min-w-0 items-center gap-2">
@@ -119,7 +124,7 @@ export default async function FacultyDetailPage({
               </ol>
             </nav>
             <div className="hero-rise mt-7" style={{ animationDelay: "80ms" }}>
-              <Eyebrow tone="onDark">{department ? department.name : "Đội ngũ giảng viên"}</Eyebrow>
+              <Eyebrow tone="onDark">{department ? department.name : copy("Đội ngũ giảng viên")}</Eyebrow>
             </div>
             {titlePrefix && (
               <div className="hero-rise mt-6 font-mono text-[13px] uppercase tracking-[0.2em] text-brand-200" style={{ animationDelay: "120ms" }}>
@@ -138,7 +143,7 @@ export default async function FacultyDetailPage({
             </div>
             {faculty.specialty && (
               <p className="hero-rise mt-5 max-w-xl text-[15.5px] leading-relaxed text-white/75" style={{ animationDelay: "280ms" }}>
-                Chuyên môn: {faculty.specialty}
+                {copy("Chuyên môn:")} {faculty.specialty}
               </p>
             )}
           </div>
@@ -168,18 +173,18 @@ export default async function FacultyDetailPage({
           <section aria-labelledby="gioi-thieu">
             <h2 id="gioi-thieu" className="mb-5 flex items-center gap-3 font-display text-[22px] font-semibold text-brand-900">
               <span className="h-6 w-1 rounded-full bg-accent-600" />
-              Giới thiệu
+              {copy("Giới thiệu")}
             </h2>
             {faculty.bio ? (
               <MarkdownContent content={faculty.bio} />
             ) : (
               <div className="rounded-2xl border border-line bg-white p-6 shadow-sm2">
                 <p className="text-[16px] leading-relaxed text-ink-soft">
-                  <strong className="font-semibold text-ink">{displayName}</strong> hiện đảm nhiệm vị trí{" "}
-                  {faculty.role.toLocaleLowerCase("vi-VN")}
-                  {department ? `, thuộc ${department.name}` : ""} — Trường Cao đẳng Y Dược Hợp Lực.
+                  <strong className="font-semibold text-ink">{displayName}</strong>{en ? " holds the position of " : " hiện đảm nhiệm vị trí "}
+                  {faculty.role}
+                  {department ? `, ${department.name}` : ""} — {en ? "Hop Luc Medical and Pharmaceutical College." : "Trường Cao đẳng Y Dược Hợp Lực."}
                 </p>
-                <p className="mt-3 text-[13px] text-ink-faint">Hồ sơ chi tiết đang được nhà trường cập nhật.</p>
+                <p className="mt-3 text-[13px] text-ink-faint">{copy("Hồ sơ chi tiết đang được nhà trường cập nhật.")}</p>
               </div>
             )}
           </section>
@@ -187,29 +192,29 @@ export default async function FacultyDetailPage({
           <section aria-labelledby="trinh-do">
             <h2 id="trinh-do" className="mb-5 flex items-center gap-3 font-display text-[22px] font-semibold text-brand-900">
               <span className="h-6 w-1 rounded-full bg-accent-600" />
-              Trình độ &amp; chuyên môn
+              {copy("Trình độ &amp; chuyên môn")}
             </h2>
             <dl className="grid gap-4 sm:grid-cols-2">
-              <Fact label="Chức vụ" icon={ICON.role}>
+              <Fact label={copy("Chức vụ")} icon={ICON.role}>
                 {faculty.role}
               </Fact>
               {department && (
-                <Fact label="Khoa / Bộ môn" icon={ICON.department}>
+                <Fact label={copy("Khoa / Bộ môn")} icon={ICON.department}>
                   {department.name}
                 </Fact>
               )}
               {faculty.academicRank && (
-                <Fact label="Học hàm" icon={ICON.degree}>
+                <Fact label={copy("Học hàm")} icon={ICON.degree}>
                   {faculty.academicRank}
                 </Fact>
               )}
               {faculty.degree && (
-                <Fact label="Học vị" icon={ICON.degree}>
+                <Fact label={copy("Học vị")} icon={ICON.degree}>
                   {faculty.degree}
                 </Fact>
               )}
               {faculty.specialty && (
-                <Fact label="Chuyên môn" icon={ICON.specialty}>
+                <Fact label={copy("Chuyên môn")} icon={ICON.specialty}>
                   {faculty.specialty}
                 </Fact>
               )}
@@ -246,7 +251,7 @@ export default async function FacultyDetailPage({
               </ul>
               <Reveal className="mt-5 border-t border-white/10 pt-5">
                 <MoreLink href="/doi-ngu-giang-vien" onDark>
-                  Xem toàn bộ đội ngũ
+                  {copy("Xem toàn bộ đội ngũ")}
                 </MoreLink>
               </Reveal>
             </div>

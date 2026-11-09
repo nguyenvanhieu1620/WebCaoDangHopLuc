@@ -1,3 +1,6 @@
+import { formatSiteDate } from "@/lib/site-copy";
+import { pageText } from "@/lib/page-copy";
+import { getLocale } from "@/lib/locale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
@@ -5,16 +8,17 @@ import { MoreLink } from "@/components/ui/MoreLink";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { PageHero } from "@/components/site/PageHero";
 import { getPublishedPostBySlug } from "@/lib/data/posts";
-import { formatVNDate } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  const locale = await getLocale();
+  const copy = pageText(locale);
   const { slug } = await params;
   const post = await getPublishedPostBySlug(slug);
-  return { title: post ? post.title : "Bài viết" };
+  return { title: post ? post.title : copy("Bài viết") };
 }
 
 export default async function NewsDetailPage({
@@ -22,6 +26,8 @@ export default async function NewsDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const locale = await getLocale();
+  const copy = pageText(locale);
   const { slug } = await params;
   const post = await getPublishedPostBySlug(slug);
   if (!post) notFound();
@@ -30,7 +36,7 @@ export default async function NewsDetailPage({
     <>
       {/* Ảnh bìa bài viết làm nền banner — tiêu đề, chuyên mục, ngày đăng đè lên (kiểu tạp chí). */}
       <PageHero bannerKey="tin-tuc"
-        crumbs={[{ label: "Tin tức", href: "/tin-tuc" }, { label: post.title }]}
+        crumbs={[{ label: copy("Tin tức"), href: "/tin-tuc" }, { label: post.title }]}
         title={post.title}
         imageUrl={post.coverImageUrl}
         variant="article"
@@ -41,7 +47,7 @@ export default async function NewsDetailPage({
               {post.categoryName}
             </span>
           )}
-          <span className="font-mono text-[12px] uppercase tracking-wider text-white/75">{formatVNDate(post.publishedAt)}</span>
+          <span className="font-mono text-[12px] uppercase tracking-wider text-white/75">{formatSiteDate(post.publishedAt, locale)}</span>
         </div>
       </PageHero>
 
@@ -65,17 +71,17 @@ export default async function NewsDetailPage({
             </span>
             <span className="min-w-0">
               <span className="block text-[12px] font-semibold uppercase tracking-wider text-ink-faint">
-                Tài liệu đính kèm
+                {copy("Tài liệu đính kèm")}
               </span>
               <span className="block truncate font-semibold text-brand-700">
-                <span className="link-underline">{post.attachmentName || "Tải tệp đính kèm"}</span>
+                <span className="link-underline">{post.attachmentName || copy("Tải tệp đính kèm")}</span>
               </span>
             </span>
           </a>
         )}
 
         <div className="mt-12 border-t border-line pt-6">
-          <MoreLink href="/tin-tuc">Xem tin tức khác</MoreLink>
+          <MoreLink href="/tin-tuc">{copy("Xem tin tức khác")}</MoreLink>
         </div>
       </DecorativeSection>
     </>

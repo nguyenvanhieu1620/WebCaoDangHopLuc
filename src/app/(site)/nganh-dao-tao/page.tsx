@@ -5,7 +5,9 @@ import { ProgramExplorer } from "@/components/site/ProgramExplorer";
 import { getLocale } from "@/lib/locale";
 import { getPrograms } from "@/lib/data/programs";
 
-export const metadata: Metadata = { title: "Ngành đào tạo" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getLocale()) === "en" ? "Programs" : "Ngành đào tạo" };
+}
 
 export default async function ProgramsPage() {
   const programs = await getPrograms();
@@ -27,7 +29,7 @@ export default async function ProgramsPage() {
       <DecorativeSection contentClassName="mx-auto max-w-[1220px]">
         {programs.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
-            Chưa có ngành đào tạo nào — quản lý qua admin/nganh-dao-tao.
+            {en ? "Program information will be available soon." : "Thông tin ngành đào tạo đang được cập nhật."}
           </div>
         ) : (
           <ProgramExplorer programs={programs} locale={locale} />

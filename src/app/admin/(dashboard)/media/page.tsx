@@ -12,6 +12,7 @@ import { AdminNewButton } from "@/components/admin/AdminFormLayout";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { CopyTextButton } from "@/components/admin/CopyTextButton";
 import { paginate } from "@/lib/pagination";
+import { getMediaUsage } from "@/lib/media-usage";
 
 export const metadata: Metadata = { title: "Thư viện media" };
 
@@ -25,10 +26,10 @@ const FILTERS = [
 export default async function AdminMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; page?: string; uploaded?: string }>;
+  searchParams: Promise<{ type?: string; page?: string; uploaded?: string; blocked?: string }>;
 }) {
   await requirePermission("media");
-  const { type, page, uploaded } = await searchParams;
+  const { type, page, uploaded, blocked } = await searchParams;
   const activeType = type === "image" || type === "video" || type === "document" ? type : "all";
 
   const allItems = await db.query.mediaItems.findMany({
@@ -37,6 +38,7 @@ export default async function AdminMediaPage({
   const items = activeType === "all" ? allItems : allItems.filter((i) => i.type === activeType);
   // 24 = 4 hàng × 6 cột ở màn hình rộng.
   const pg = paginate(items, page, 24);
+  const usage = await getMediaUsage(pg.items.map((item) => item.url));
   const uploadedCount = Number(uploaded) || 0;
 
   return (
@@ -47,6 +49,11 @@ export default async function AdminMediaPage({
         actions={<AdminNewButton href="/admin/media/tai-len" label="Tải lên" />}
       />
       <div className="p-5 sm:p-8">
+        {blocked && (
+          <p role="alert" className="mb-5 rounded-xl bg-accent-100 p-4 text-sm font-semibold text-accent-700">
+            Không thể xoá: tệp đang được sử dụng. Hãy thay hoặc gỡ tệp khỏi các nội dung đang dùng rồi thử lại.
+          </p>
+        )}
         {uploadedCount > 0 && (
           <div role="status" className="mb-5 rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
             ✓ Đã tải lên {uploadedCount} tệp.
@@ -105,9 +112,21 @@ export default async function AdminMediaPage({
                   <div title={item.filename} className="truncate text-[11.5px] font-semibold text-ink">
                     {item.filename}
                   </div>
+                  {!!usage.get(item.url)?.length && (
+                    <details className="mt-2 text-[11px] text-brand-800">
+                      <summary className="cursor-pointer font-semibold">Đang dùng · xem nơi sử dụng</summary>
+                      <ul className="mt-1 space-y-1">
+                        {usage.get(item.url)!.map((place) => (
+                          <li key={place.href}><Link className="underline" href={place.href}>{place.label}</Link></li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                   <div className="mt-1 flex items-center justify-between">
                     <CopyTextButton text={item.url} className="text-[10.5px] font-semibold text-brand-700 hover:underline" />
-                    <form
+                    {usage.get(item.url)?.length ? (
+                      <span className="text-[10.5px] text-ink-faint" title="Thay hoặc gỡ tệp khỏi nội dung đang dùng trước khi xoá">Được bảo vệ</span>
+                    ) : <form
                       action={async () => {
                         "use server";
                         await deleteMediaAction(item.id);
@@ -119,7 +138,7 @@ export default async function AdminMediaPage({
                       >
                         Xoá
                       </ConfirmDeleteButton>
-                    </form>
+                    </form>}
                   </div>
                 </div>
               </div>

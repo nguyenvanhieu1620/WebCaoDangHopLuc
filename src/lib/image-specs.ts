@@ -6,8 +6,8 @@
  *
  * Web tự thu nhỏ ảnh to (next/image) nên ảnh lớn hơn khuyến nghị không sao; ảnh NHỎ hơn
  * thì bị kéo giãn → mờ. Máy tính: khung phủ kín (cắt phần thừa) nên chủ thể nên ở giữa ảnh.
- * Điện thoại: banner + thẻ ảnh hiện TRỌN ảnh (FitImage / khối "ảnh trọn vẹn" của HeroBanner,
- * PageHero) — admin chỉ tải 1 ảnh cho cả 2.
+ * Điện thoại: thẻ dùng FitImage thu vừa để hiện trọn ảnh; banner Trang chủ vẫn phủ kín khung
+ * và có thể cắt ảnh. Một ảnh dùng ở nhiều vị trí thì phải ghi rõ các khung trong `where`/`tip`.
  */
 
 export type ImageSpecKey = "hero" | "pageBanner" | "cover" | "program" | "portrait" | "avatar" | "gallery" | "logo" | "milestone";
@@ -32,9 +32,9 @@ export type ImageSpec = {
 
 export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
   hero: {
-    shape: "landscape", ratio: "≈2,11:1 (desktop đã đo)", minWidth: 1920, minHeight: 910, ideal: "2530×1200 (khung desktop 1265×600)",
-    where: "Đầu Trang chủ, rộng hết màn hình; tiêu đề và nút nằm bên dưới. Khung desktop thay đổi theo màn hình, khung điện thoại là 16:9.",
-    tip: "Tại cửa sổ desktop 1280×720, khung banner là 1265×600: dùng ảnh 2530×1200 hoặc gần tương đương 2560×1214. 2560×1440 cao hơn tỉ lệ khung này nên bị cắt trên/dưới. Đây không phải kích thước vừa khít mọi thiết bị: trên điện thoại, ảnh ngang theo tỉ lệ desktop có thể bị cắt hai bên. Giữ chữ/chủ thể quan trọng ở giữa, chừa mép trên cho thanh menu và góc dưới cho nút chuyển ảnh. Nên nén dưới ~1MB.",
+    shape: "landscape", ratio: "Thay đổi theo cửa sổ PC", minWidth: 1920, minHeight: 910, ideal: "Ngang 2560px; chiều cao theo khung",
+    where: "Đầu Trang chủ, rộng hết màn hình; tiêu đề và nút nằm bên dưới. Khung PC thay đổi theo cả chiều rộng và chiều cao cửa sổ; điện thoại là 16:9.",
+    tip: "Kích thước đã đo theo vùng nội dung web (không phải độ phân giải màn hình): cửa sổ 1280×720 → ảnh 2530×1200; 1920×900 → khoảng 2560×1048; 1920×1080 → khoảng 2560×1290. Không có một kích thước vừa khít mọi cửa sổ: ảnh phủ kín khung nên có thể bị cắt trên/dưới hoặc hai bên. Giữ chữ/chủ thể ở giữa, chừa nền quanh các mép; tránh phần trên bị menu đè và góc dưới phải có nút chuyển ảnh. Nên nén dưới ~1MB.",
   },
   pageBanner: {
     shape: "landscape", ratio: "3:1", minWidth: 1920, minHeight: 600, ideal: "2400×800",
@@ -42,14 +42,14 @@ export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
     tip: "Máy tính: phủ kín dải banner (cắt bớt trên/dưới), bên trái phủ màu tối để đặt chữ → chủ thể ở giữa hoặc hơi lệch phải. Điện thoại: ảnh hiện trọn vẹn phía trên tiêu đề.",
   },
   cover: {
-    shape: "landscape", ratio: "16:9", minWidth: 1200, minHeight: 675, ideal: "1920×1080",
-    where: "Thẻ tin/sự kiện (máy tính cắt còn khoảng 2:1, điện thoại hiện trọn ảnh) và làm nền banner trang chi tiết.",
-    tip: "Chủ thể ở giữa, chừa khoảng trống xung quanh. Ảnh rộng dưới 1920px sẽ hơi mờ khi làm nền banner.",
+    shape: "landscape", ratio: "16:9 (ảnh dùng chung)", minWidth: 1200, minHeight: 675, ideal: "1920×1080",
+    where: "Trang chủ: tin chính có khung thay đổi theo màn hình (PC cao tối thiểu 460px), tin phụ PC là 16:10. Ảnh còn dùng cho thẻ tin/sự kiện và banner trang chi tiết.",
+    tip: "Không có một tỉ lệ vừa khít mọi vị trí: PC phủ kín khung nên có thể cắt mép; thẻ trên điện thoại hiện trọn ảnh. Giữ chủ thể ở giữa, chừa khoảng trống phía dưới cho tiêu đề tin chính. Ảnh rộng dưới 1920px có thể mờ khi làm nền banner.",
   },
   program: {
-    shape: "landscape", ratio: "16:9 hoặc 3:2", minWidth: 1200, minHeight: 800, ideal: "1920×1080",
-    where: "Đầu thẻ ngành (máy tính cắt còn khoảng 2,3:1, điện thoại hiện trọn ảnh), ảnh lớn 16:9 ở trang chi tiết ngành và nền banner.",
-    tip: "Chủ thể ở giữa — trên máy tính thẻ cắt bớt mép trên/dưới.",
+    shape: "landscape", ratio: "16:10 (thẻ Trang chủ)", minWidth: 1200, minHeight: 750, ideal: "1920×1200",
+    where: "Đầu thẻ ngành trên Trang chủ cố định 16:10. Ảnh lớn trong trang chi tiết là 16:9; ảnh còn dùng ở danh sách ngành và nền banner.",
+    tip: "Ảnh 1920×1200 đúng tỉ lệ thẻ Trang chủ; các vị trí khác trên PC có thể cắt mép trên/dưới. Thẻ trên điện thoại hiện trọn ảnh. Giữ chủ thể ở giữa, tránh đặt chữ quan trọng sát mép hoặc hai góc trên vì có nhãn mã ngành và thời gian học.",
   },
   portrait: {
     shape: "portrait", ratio: "3:4", minWidth: 600, minHeight: 800, ideal: "900×1200",

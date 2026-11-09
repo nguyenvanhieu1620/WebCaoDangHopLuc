@@ -1,6 +1,6 @@
 import { db, schema } from "@/lib/db";
 import { and, count, desc, eq } from "drizzle-orm";
-import { getLocale, pickLocale } from "@/lib/locale";
+import { getLocale, pickLocale, type Locale } from "@/lib/locale";
 
 export const POSTS_PER_PAGE = 12;
 
@@ -21,12 +21,12 @@ export type PublishedPostDetail = PublishedPostPreview & {
   content: string;
 };
 
-async function categoryNameMap(categoryIds: string[]): Promise<Map<string, string>> {
+async function categoryNameMap(categoryIds: string[], locale: Locale): Promise<Map<string, string>> {
   if (categoryIds.length === 0) return new Map();
   const rows = await db.query.categories.findMany({
     where: (c, { inArray }) => inArray(c.id, categoryIds),
   });
-  return new Map(rows.map((c) => [c.id, c.name]));
+  return new Map(rows.map((c) => [c.id, pickLocale(c.name, c.nameEn, locale)]));
 }
 
 /** Bài viết đã đăng, mới nhất trước — dùng cho khối "Tin tức" ở Trang chủ. */
@@ -42,7 +42,7 @@ export async function getLatestPublishedPosts(limit: number): Promise<PublishedP
   if (rows.length === 0) return [];
 
   const names = await categoryNameMap(
-    [...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))]
+    [...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))], locale
   );
   return rows.map((r) => ({
     id: r.id,
@@ -70,7 +70,7 @@ export async function getPinnedPosts(limit: number): Promise<PublishedPostPrevie
   if (rows.length === 0) return [];
 
   const names = await categoryNameMap(
-    [...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))]
+    [...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))], locale
   );
   return rows.map((r) => ({
     id: r.id,
@@ -170,7 +170,7 @@ export async function getPublishedPostsPage(
 
   const names = categoryRow
     ? new Map<string, string>()
-    : await categoryNameMap([...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))]);
+    : await categoryNameMap([...new Set(rows.map((r) => r.categoryId).filter((id): id is string => !!id))], locale);
 
   return {
     posts: rows.map((r) => ({
@@ -201,7 +201,7 @@ export async function getPublishedPostBySlug(slug: string): Promise<PublishedPos
   ]);
   if (!row || row.status !== "published") return null;
 
-  const names = await categoryNameMap(row.categoryId ? [row.categoryId] : []);
+  const names = await categoryNameMap(row.categoryId ? [row.categoryId] : [], locale);
   return {
     id: row.id,
     slug: row.slug,

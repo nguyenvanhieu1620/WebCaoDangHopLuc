@@ -13,12 +13,15 @@ export type SearchResult = {
   href: string;
   title: TextPart[];
   snippet: TextPart[];
+  tuition?: string;
   score: number;
 };
 
 export const SEARCH_MIN_LENGTH = 2;
 const SEARCH_MAX_LENGTH = 100;
 const MAX_RESULTS = 40;
+// Đặt trang ngành khớp chính xác lên trên các kết quả khớp từ khóa thông thường.
+const TUITION_PROGRAM_BOOST = 1_000;
 
 /** Trang tĩnh nào có route công khai — trang không có route thì không đưa vào kết quả. */
 const pageHref = staticPageHref;
@@ -98,7 +101,7 @@ function snippetAround(body: string, terms: string[]): TextPart[] {
   return highlight(cut, terms);
 }
 
-type Candidate = { type: SearchResultType; href: string; title: string; body: string; boost?: number };
+type Candidate = { type: SearchResultType; href: string; title: string; body: string; boost?: number; code?: string; tuition?: string };
 
 /**
  * Tìm kiếm toàn site cho /tim-kiem — ngành, bài viết đã đăng, sự kiện, giảng
@@ -123,6 +126,10 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
     db.query.faqs.findMany({ orderBy: asc(schema.faqs.seq) }),
   ]);
   const L = (vi: string | null, en: string | null) => (vi ? pickLocale(vi, en, locale) : "");
+  const tuitionLabel = locale === "en" ? "Tuition" : "Học phí";
+  const tuitionPattern = locale === "en" ? /\btuition(?: fees?)?(?: for)?\b/ : /\bhoc phi(?: cua)?(?: nganh)?\b/;
+  const isTuitionQuery = tuitionPattern.test(query);
+  const tuitionProgram = isTuitionQuery ? normalizeSearch(query.replace(tuitionPattern, " ")) : "";
 
   const candidates: Candidate[] = [
     ...programs.map((p) => ({
@@ -131,6 +138,8 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
       title: L(p.name, p.nameEn),
       body: stripMarkdown(`${p.code} ${L(p.summary, p.summaryEn)} ${L(p.content, p.contentEn)}`),
       boost: 1,
+      code: p.code,
+      tuition: L(p.tuition, p.tuitionEn).trim(),
     })),
     ...posts.map((p) => ({
       type: "post" as const,
@@ -173,16 +182,23 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
   for (const c of candidates) {
     const normTitle = normalizeSearch(c.title);
     const normBody = normalizeSearch(c.body);
-    if (!terms.every((t) => normTitle.includes(t) || normBody.includes(t))) continue;
+    const normTuition = isTuitionQuery && c.tuition ? normalizeSearch(`${tuitionLabel} ${c.tuition}`) : "";
+    const exactTuitionProgram = c.type === "program" && tuitionProgram !== "" &&
+      (normTitle === tuitionProgram || normalizeSearch(c.code ?? "") === tuitionProgram);
+    if (!exactTuitionProgram && !terms.every((t) => normTitle.includes(t) || normBody.includes(t) || normTuition.includes(t))) {
+      continue;
+    }
     const titleHits = terms.filter((t) => normTitle.includes(t)).length;
     // Khớp nguyên cụm từ ("ho so" → "hồ sơ") xếp trên khớp rời rạc từng âm tiết.
     const phrase = terms.length > 1 ? (normTitle.includes(query) ? 12 : normBody.includes(query) ? 4 : 0) : 0;
-    const score = titleHits * 10 + phrase + (normTitle.startsWith(query) ? 5 : 0) + (c.boost ?? 0);
+    const score = titleHits * 10 + phrase + (normTitle.startsWith(query) ? 5 : 0) + (c.boost ?? 0) +
+      (exactTuitionProgram ? TUITION_PROGRAM_BOOST : 0);
     results.push({
       type: c.type,
       href: c.href,
       title: highlight(c.title, terms),
       snippet: snippetAround(c.body, terms),
+      tuition: c.tuition || undefined,
       score,
     });
   }

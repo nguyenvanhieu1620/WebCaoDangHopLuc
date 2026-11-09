@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { Database } from "../src/lib/db/client";
 import * as schema from "../src/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 let admission: typeof import("../src/app/api/admissions/route");
 let lookup: typeof import("../src/app/api/admissions/tra-cuu/route");
@@ -103,6 +104,43 @@ test("liên hệ hợp lệ với field tuỳ chọn trống được lưu; obje
   const rows = await database.db.query.contactMessages.findMany();
   assert.equal(rows.length, 1);
   assert.equal(rows[0].message, "Xin tư vấn");
+});
+
+test("tra cứu EN dịch trạng thái và tên ngành, VI giữ tương thích, không đổi dữ liệu gốc", async () => {
+  const idNumber = "038201009876";
+  await database.db.insert(database.schema.admissionSubmissions).values(
+    ["new", "reviewed", "contacted"].map((status) => ({ fullName: "Test locale", phone: "0901234567", idNumber, program: "Điều dưỡng", status }))
+  );
+  for (const locale of ["en", "vi", "en"]) {
+    const response = await lookup.POST(request({ idNumber, locale }));
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.deepEqual(data.results.map((r: { statusLabel: string }) => r.statusLabel), locale === "en"
+      ? ["Received, awaiting review", "Application reviewed", "Contacted about the result"]
+      : ["Đã tiếp nhận, đang chờ xét duyệt", "Đã xem xét hồ sơ", "Đã liên hệ trao đổi kết quả"]);
+    assert.ok(data.results.every((r: { program: string }) => r.program === (locale === "en" ? "Nursing" : "Điều dưỡng")));
+    assert.ok(data.results.every((r: object) => !('phone' in r) && !('email' in r) && !('idNumber' in r)));
+  }
+  assert.ok((await database.db.query.admissionSubmissions.findMany()).every((r) => r.program === "Điều dưỡng"));
+  await database.db.delete(schema.admissionSubmissions).where(eq(schema.admissionSubmissions.idNumber, idNumber));
+});
+
+test("lỗi form liên hệ và tra cứu có bản Anh cụ thể, không tạo dữ liệu", async () => {
+  const before = (await database.db.query.contactMessages.findMany()).length;
+  for (const [body, expected] of [
+    [{ name: "Test", message: "Test", phone: "123" }, "Enter a valid Vietnamese mobile number"],
+    [{ name: "Test", message: "Test", email: "bad" }, "Enter a valid email address."],
+    [{ name: {}, message: "Test" }, "The full name must be text."],
+    [{ name: "Test", message: "x".repeat(5001) }, "The message is too long."],
+  ] as const) {
+    const response = await contact.POST(request(body));
+    assert.equal(response.status, 400);
+    assert.ok((await response.json()).errorEn.startsWith(expected));
+  }
+  const response = await lookup.POST(request({ idNumber: "123", locale: "en" }));
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).errorEn, "The Vietnamese citizen ID number must contain exactly 12 digits.");
+  assert.equal((await database.db.query.contactMessages.findMany()).length, before);
 });
 
 test("newsletter chuẩn hoá email và không tạo bản ghi trùng", async () => {

@@ -9,6 +9,8 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { CountUp } from "@/components/site/CountUp";
 import { Reveal } from "@/components/site/Reveal";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/locale";
+import { siteCopy } from "@/lib/site-copy";
 
 export type HeroSlide = {
   id: string;
@@ -20,6 +22,7 @@ export type HeroSlide = {
 };
 
 type HeroBannerProps = {
+  locale?: Locale;
   slides: HeroSlide[];
   badge: string;
   titleLine1: string;
@@ -108,7 +111,8 @@ function HeroVideo({ src, play, enabled }: { src: string; play: boolean; enabled
  *   điều khiển: ≥ sm là viên thuốc nhỏ góc dưới ảnh; điện thoại nằm thành hàng ngay dưới ảnh để không che ảnh.
  * `prefers-reduced-motion` → không tự chuyển. Banner đang ẩn có `inert` + `aria-hidden`.
  */
-export function HeroBanner({ slides, badge, titleLine1, titleLine2, description, stats }: HeroBannerProps) {
+export function HeroBanner({ slides, badge, titleLine1, titleLine2, description, stats, locale = "vi" }: HeroBannerProps) {
+  const t = siteCopy(locale);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -284,7 +288,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
           type="button"
           onClick={() => setPaused((v) => !v)}
           aria-label={
-            count > 1 ? (paused ? "Tiếp tục trình chiếu" : "Tạm dừng trình chiếu") : paused ? "Phát tiếp video" : "Tạm dừng video"
+            count > 1 ? (paused ? t.resumeSlideshow : t.pauseSlideshow) : paused ? t.resumeVideo : t.pauseVideo
           }
           aria-pressed={paused}
           className={btn}
@@ -297,10 +301,10 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
         </button>
         {count > 1 && (
           <>
-            <button type="button" onClick={() => go(index - 1)} aria-label="Banner trước" className={btn}>
+            <button type="button" onClick={() => go(index - 1)} aria-label={t.previousBanner} className={btn}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
-            <button type="button" onClick={() => go(index + 1)} aria-label="Banner tiếp theo" className={btn}>
+            <button type="button" onClick={() => go(index + 1)} aria-label={t.nextBanner} className={btn}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </>
@@ -319,7 +323,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
     <>
       <section
         aria-roledescription="carousel"
-        aria-label="Banner giới thiệu nhà trường"
+        aria-label={t.bannerRegion}
         // Desktop: banner nằm sau menu trong suốt; mobile: ảnh bắt đầu dưới menu.
         // Margin âm đặt trên chính section, tránh collapse.
         className="relative isolate -mt-[72px] bg-brand-900 pt-[72px] lg:-mt-[84px] lg:pt-0"
@@ -355,7 +359,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
             >
               <Image
                 src={slide.imageUrl}
-                alt={slide.caption || `Ảnh banner ${i + 1}`}
+                alt={slide.caption || `${t.bannerImage} ${i + 1}`}
                 fill
                 priority={i === 0}
                 sizes="100vw"
@@ -365,7 +369,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
               {slide.linkUrl && (
                 <Link
                   href={slide.linkUrl}
-                  aria-label={slide.caption ? `${slide.caption} — xem chi tiết` : "Xem chi tiết banner"}
+                  aria-label={slide.caption ? `${slide.caption} — ${t.viewDetails}` : t.bannerDetails}
                   draggable={false}
                   className={cn("absolute inset-0", dragging && "cursor-grabbing")}
                 />
@@ -389,7 +393,7 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
                       <span className="min-w-0 truncate">{current.caption}</span>
                       {current.linkUrl && (
                         <Link href={current.linkUrl} className="shrink-0 font-semibold underline-offset-4 hover:underline">
-                          Xem chi tiết →
+                          {t.viewDetails} →
                         </Link>
                       )}
                     </div>
@@ -447,9 +451,9 @@ export function HeroBanner({ slides, badge, titleLine1, titleLine2, description,
           </Reveal>
           <Reveal delay={120} className="flex flex-col gap-7 lg:items-end">
             <div className="flex flex-wrap gap-3">
-              <Button href="/tuyen-sinh">Đăng ký xét tuyển</Button>
+              <Button href="/tuyen-sinh">{t.apply}</Button>
               <Button href="/nganh-dao-tao" variant="outline">
-                Khám phá ngành học →
+                {t.explorePrograms} →
               </Button>
             </div>
             {stats.length > 0 && (

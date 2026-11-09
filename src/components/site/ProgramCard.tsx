@@ -5,23 +5,26 @@ import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 import type { Program } from "@/lib/db/schema";
 import { FitImage } from "@/components/ui/FitImage";
+import type { Locale } from "@/lib/locale";
+import { siteCopy, programDuration } from "@/lib/site-copy";
 
 type ProgramCardProps = {
+  locale?: Locale;
   program: Pick<Program, "slug" | "code" | "name" | "summary" | "duration" | "intake"> & { imageUrl?: string | null };
   gradientClass: string;
   delay?: number;
 };
 
 /**
- * Thẻ ngành đào tạo dùng chung cho Trang chủ + `/nganh-dao-tao` — gộp lại
- * từ 2 chỗ markup gần giống hệt nhau, đồng thời thêm hiệu ứng "spotlight"
- * theo con trỏ chuột (`--spot-x`/`--spot-y` cập nhật qua `onMouseMove`, chỉ
+ * Thẻ ngành đào tạo trong slider Trang chủ, có hiệu ứng "spotlight"
+ * theo con trỏ chuột (`--spot-x`/`--spot-y` cập nhật qua `onPointerMove`, chỉ
  * CSS thuần vẽ vệt sáng tròn, không thêm thư viện ngoài). Client Component
- * vì cần `onMouseMove` — không gắn được từ Server Component.
+ * vì cần `onPointerMove` — không gắn được từ Server Component.
  * Ngành có ảnh (admin/nganh-dao-tao) thì đầu thẻ là ảnh thật, thân thẻ vẫn là
- * khối màu gradient xoay vòng; chưa có ảnh thì chỉ có khối màu như cũ.
+ * khối màu gradient xoay vòng; chưa có ảnh thì dùng mã ngành trên nền trang trí.
  */
-export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCardProps) {
+export function ProgramCard({ program: p, gradientClass, delay = 0, locale = "vi" }: ProgramCardProps) {
+  const t = siteCopy(locale);
   return (
     <Reveal delay={delay} className="h-full">
       <Link
@@ -41,7 +44,7 @@ export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCar
           e.currentTarget.style.setProperty("--tilt-y", "0deg");
         }}
         className={cn(
-          "program-card-depth group relative flex h-full flex-col overflow-hidden rounded-[22px] bg-gradient-to-br p-7 text-white shadow-md2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700",
+          "program-card-depth group relative flex h-full flex-col overflow-hidden rounded-[24px] bg-gradient-to-br text-white shadow-md2 ring-1 ring-inset ring-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700",
           gradientClass
         )}
         // Kéo slider bằng chuột không được kéo theo "bóng ma" của link.
@@ -55,39 +58,45 @@ export function ProgramCard({ program: p, gradientClass, delay = 0 }: ProgramCar
           }}
         />
         <div className="pointer-events-none absolute -bottom-10 -right-10 h-[150px] w-[150px] rounded-full bg-white/10" />
-        {p.imageUrl ? (
-          // Có ảnh: ảnh tràn sát mép trên thẻ (bù -mx/-mt đúng bằng p-7), mã ngành + thời gian thành nhãn kính đè lên ảnh.
-          <div className="img-shine relative -mx-7 -mt-7 mb-5 h-[168px] shrink-0">
+        <div className="relative aspect-[16/10] shrink-0 overflow-hidden border-b border-white/15">
+          {p.imageUrl ? (
             <FitImage
               src={p.imageUrl}
               alt={p.name}
-              sizes="(max-width: 640px) 82vw, (max-width: 1024px) 46vw, 400px"
-              className="transition-transform duration-700 group-hover:scale-105"
+              sizes="(max-width: 639px) 85vw, (max-width: 1023px) 46vw, 420px"
+              className="transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.035] motion-safe:group-focus-visible:scale-[1.035] motion-reduce:transition-none"
               draggable={false}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/55 via-transparent to-brand-900/20" />
-            <div className="absolute inset-x-4 top-4 z-[4] flex items-center justify-between font-mono text-[10.5px] font-semibold uppercase tracking-wider">
-              <span className="rounded-full bg-white/20 px-2.5 py-1 ring-1 ring-inset ring-white/30 backdrop-blur-md">{p.code}</span>
-              <span className="rounded-full bg-white/20 px-2.5 py-1 ring-1 ring-inset ring-white/30 backdrop-blur-md">{p.duration}</span>
+          ) : (
+            <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center bg-white/5">
+              <span className="select-none font-display text-[72px] font-semibold tracking-tight text-white/20">{p.code}</span>
+              <span className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full border border-white/15" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-brand-900/55 via-transparent to-brand-900/20" />
+          <div className="absolute inset-x-4 top-4 flex flex-wrap items-start justify-between gap-2 font-mono text-[10.5px] font-semibold uppercase tracking-wider">
+            <span className="max-w-full break-words rounded-full bg-brand-900/70 px-3 py-1.5 ring-1 ring-inset ring-white/25 backdrop-blur-sm">{p.code}</span>
+            <span className="max-w-full break-words rounded-full bg-brand-900/70 px-3 py-1.5 ring-1 ring-inset ring-white/25 backdrop-blur-sm">{programDuration(p.duration, locale)}</span>
+          </div>
+        </div>
+        <div className="relative flex flex-1 flex-col p-6 sm:p-7">
+          <h3 className="min-h-[2.6em] text-pretty font-display text-[22px] font-semibold leading-[1.3] tracking-tight sm:text-[24px]">{p.name}</h3>
+          <p className="mt-3 line-clamp-3 min-h-[4.95em] text-[14px] leading-[1.65] text-white/85">
+            {p.summary}
+          </p>
+          {/* Chân thẻ thẳng hàng trong slider kể cả khi tên ngành xuống hai dòng. */}
+          <div className="mt-auto pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/20 pt-5">
+              <span className="text-[11px] font-medium text-white/75">
+                {t.intake}
+                <span className="mt-1 block font-mono text-[22px] font-semibold leading-none text-white">{p.intake}</span>
+              </span>
+              <span className="inline-flex min-h-11 items-center justify-center gap-2.5 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-brand-900 shadow-sm2 transition-colors group-hover:bg-brand-50 group-focus-visible:bg-brand-50">
+                {t.details}
+                <span aria-hidden="true" className="transition-transform duration-300 motion-safe:group-hover:translate-x-1 motion-safe:group-focus-visible:translate-x-1 motion-reduce:transition-none">→</span>
+              </span>
             </div>
           </div>
-        ) : (
-          <div className="relative flex items-center justify-between font-mono text-[10.5px] uppercase tracking-wider text-white/85">
-            <span>{p.code}</span>
-            <span>{p.duration}</span>
-          </div>
-        )}
-        <h3 className={cn("relative font-display text-[22px] font-bold", !p.imageUrl && "mt-3.5")}>{p.name}</h3>
-        <p className="relative mt-2.5 max-w-[220px] text-[13px] leading-relaxed text-white/90">
-          {p.summary}
-        </p>
-        {/* mt-auto: thẻ cao (slider Trang chủ) thì dòng cuối luôn nằm sát đáy, thẳng hàng giữa các thẻ */}
-        <div className="relative mt-auto flex items-center justify-between pt-5">
-          <span className="text-[12px] font-semibold text-white/80">Chỉ tiêu {p.intake}</span>
-          <span className="text-[13px] font-bold">
-            {/* gạch chân trắng trên nền màu (inline style vì CSS .link-underline đứng sau lớp utilities, class arbitrary không đè được) */}
-            <span className="link-underline" style={{ backgroundImage: "linear-gradient(white, white)" }}>Chi tiết</span> →
-          </span>
         </div>
       </Link>
     </Reveal>

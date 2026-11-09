@@ -34,7 +34,7 @@ export default async function SiteGroupLayout({
       <main>{children}</main>
       <SiteFooter settings={settings} programs={programs} locale={locale} />
       <QuickContactWidget contacts={contacts} locale={locale} />
-      <BackToTop />
+      <BackToTop locale={locale} />
       <MobileActionBar settings={settings} locale={locale} />
       {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
         <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />

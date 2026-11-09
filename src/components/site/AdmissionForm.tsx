@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { isValidVnPhone, normalizeVnPhone } from "@/lib/validate";
 import { TurnstileWidget } from "./TurnstileWidget";
 import type { Locale } from "@/lib/locale";
 
@@ -20,12 +21,21 @@ export function AdmissionForm({ programs, selectedProgram = "", locale = "vi" }:
   const en = locale === "en";
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [phoneInvalid, setPhoneInvalid] = useState(false);
+  const phoneInput = useRef<HTMLInputElement>(null);
+  const confirmation = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (status !== "success") return;
+
+    confirmation.current?.focus({ preventScroll: true });
+    confirmation.current?.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }, [status]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     // Chụp lại tham chiếu form ngay lập tức — sau `await`, SyntheticEvent.currentTarget có thể đã bị React dọn.
     const form = e.currentTarget;
-    setStatus("submitting");
     setErrorMessage("");
 
     const formData = new FormData(form);
@@ -39,6 +49,17 @@ export function AdmissionForm({ programs, selectedProgram = "", locale = "vi" }:
       website: String(formData.get("website") || "").trim(),
       turnstileToken: String(formData.get("cf-turnstile-response") || "").trim(),
     };
+
+    if (!isValidVnPhone(normalizeVnPhone(payload.phone))) {
+      setStatus("idle");
+      setPhoneInvalid(true);
+      phoneInput.current?.focus({ preventScroll: true });
+      phoneInput.current?.scrollIntoView({ block: "center", behavior: "instant" });
+      return;
+    }
+
+    setPhoneInvalid(false);
+    setStatus("submitting");
 
     try {
       const res = await fetch("/api/admissions", {
@@ -62,21 +83,25 @@ export function AdmissionForm({ programs, selectedProgram = "", locale = "vi" }:
 
   if (status === "success") {
     return (
-      <div role="status" className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
+      <div
+        ref={confirmation}
+        role="status"
+        tabIndex={-1}
+        className="scroll-mt-[88px] scroll-mb-24 rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center lg:scroll-mt-32 lg:scroll-mb-4"
+      >
         <div className="font-display text-lg font-semibold text-brand-900">
           {en ? "Application received!" : "Đã nhận hồ sơ đăng ký!"}
         </div>
         <p className="mt-2 text-[14px] text-ink-soft">
-          {en ? "Our admissions team will contact you. Use your citizen ID to check your application at " : "Đội ngũ tư vấn tuyển sinh sẽ liên hệ với bạn. Dùng số CCCD vừa nhập để tra cứu trạng thái hồ sơ tại trang "}
-          <a href="/tra-cuu-ket-qua" className="font-semibold text-brand-700 underline">
-            {en ? "Application status" : "Tra cứu kết quả"}
-          </a>
-          .
+          {en ? "Our admissions team will contact you. You can check your application status with the citizen ID you entered." : "Đội ngũ tư vấn tuyển sinh sẽ liên hệ với bạn. Bạn có thể tra cứu trạng thái hồ sơ bằng số CCCD vừa nhập."}
         </p>
+        <a href="/tra-cuu-ket-qua" className="mt-2 inline-flex min-h-11 items-center justify-center px-3 text-sm font-semibold text-brand-700 underline">
+          {en ? "Application status" : "Tra cứu kết quả"}
+        </a>
         <button
           type="button"
           onClick={() => setStatus("idle")}
-          className="mt-5 text-sm font-semibold text-brand-700 hover:text-accent-600"
+          className="mx-auto mt-2 block text-sm font-semibold text-brand-700 hover:text-accent-600"
         >
           {en ? "Submit another application" : "Đăng ký hồ sơ khác"}
         </button>
@@ -98,7 +123,25 @@ export function AdmissionForm({ programs, selectedProgram = "", locale = "vi" }:
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="admission-phone" className={labelClass}>{en ? "Phone number *" : "Số điện thoại *"}</label>
-          <input id="admission-phone" name="phone" type="tel" autoComplete="tel" maxLength={30} required className={inputClass} placeholder="09xxxxxxxx" />
+          <input
+            ref={phoneInput}
+            id="admission-phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            maxLength={30}
+            required
+            aria-invalid={phoneInvalid || undefined}
+            aria-describedby={phoneInvalid ? "admission-phone-error" : undefined}
+            onChange={() => setPhoneInvalid(false)}
+            className={cn(inputClass, "aria-[invalid=true]:border-accent-600")}
+            placeholder="09xxxxxxxx"
+          />
+          {phoneInvalid && (
+            <p id="admission-phone-error" role="alert" className="mt-1.5 text-xs font-medium text-accent-700">
+              {en ? "Enter 10 digits starting with 0, or +84 followed by 9 digits." : "Nhập 10 chữ số bắt đầu bằng 0, hoặc +84 theo sau là 9 chữ số."}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="admission-cccd" className={labelClass}>{en ? "Citizen ID *" : "Số CCCD *"}</label>

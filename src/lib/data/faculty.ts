@@ -2,10 +2,15 @@ import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import type { Faculty } from "@/lib/db/schema";
 import { getLocale, pickLocale, type Locale } from "@/lib/locale";
+import { slugify } from "@/lib/utils";
 
-function localize(f: Faculty, locale: Locale): Faculty {
+type LocalizedFaculty = Faculty & { directoryRoleKey: string; directoryRankKey: string | null };
+
+function localize(f: Faculty, locale: Locale): LocalizedFaculty {
   return {
     ...f,
+    directoryRoleKey: slugify(f.role),
+    directoryRankKey: f.academicRank?.trim() ? slugify(f.academicRank) : null,
     role: pickLocale(f.role, f.roleEn, locale),
     degree: f.degree ? pickLocale(f.degree, f.degreeEn, locale) : f.degree,
     academicRank: f.academicRank
@@ -23,7 +28,7 @@ export function facultyDisplayName(f: Pick<Faculty, "name" | "degree" | "academi
 }
 
 /** Đội ngũ giảng viên hiển thị ở Trang chủ và /doi-ngu-giang-vien — quản lý qua admin/giang-vien. */
-export async function getFacultyList(): Promise<Faculty[]> {
+export async function getFacultyList(): Promise<LocalizedFaculty[]> {
   const [rows, locale] = await Promise.all([
     db.query.faculty.findMany({ orderBy: [asc(schema.faculty.sortOrder), asc(schema.faculty.seq)] }),
     getLocale(),

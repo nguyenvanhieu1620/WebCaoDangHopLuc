@@ -1,3 +1,5 @@
+import { pageText } from "@/lib/page-copy";
+import { getLocale } from "@/lib/locale";
 import type { Metadata } from "next";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { getPageBySlug } from "@/lib/data/pages";
@@ -8,9 +10,13 @@ import { PageHero } from "@/components/site/PageHero";
 import { SOCIAL_BG, SocialIcon, socialLinks } from "@/components/ui/SocialIcon";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Liên hệ" };
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = pageText(await getLocale());
+  return { title: copy("Liên hệ") };
+}
 
 export default async function ContactPage({ searchParams }: { searchParams: Promise<{ chuDe?: string }> }) {
+  const copy = pageText(await getLocale());
   const [page, settings] = await Promise.all([getPageBySlug("lien-he"), getSiteSettings()]);
   const subject = (await searchParams).chuDe?.trim().slice(0, 300) || "";
 
@@ -19,33 +25,33 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
   return (
     <>
     <PageHero
-      crumbs={[{ label: "Liên hệ" }]}
-      eyebrow="Liên hệ"
-      title={page?.title ?? "Liên hệ với Hợp Lực"}
+      crumbs={[{ label: copy("Liên hệ") }]}
+      eyebrow={copy("Liên hệ")}
+      title={page?.title ?? copy("Liên hệ với Hợp Lực")}
       imageUrl={page?.coverImageUrl}
       description={`Hotline ${settings.hotline} · ${settings.email}`}
     />
     <DecorativeSection contentClassName="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>
           {page?.content ? <MarkdownContent content={page.content} /> : (
-            <p className="text-base leading-relaxed text-ink-soft">Gửi câu hỏi qua form bên dưới hoặc liên hệ trực tiếp để được nhà trường hỗ trợ.</p>
+            <p className="text-base leading-relaxed text-ink-soft">{copy("Gửi câu hỏi qua form bên dưới hoặc liên hệ trực tiếp để được nhà trường hỗ trợ.")}</p>
           )}
 
           <div className="mt-10 rounded-2xl border border-line bg-white p-7 shadow-sm2">
             <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
-              Gửi câu hỏi cho nhà trường
+              {copy("Gửi câu hỏi cho nhà trường")}
             </div>
-            <ContactForm key={subject} initialMessage={subject ? `Tôi muốn được tư vấn: ${subject}` : ""} />
+            <ContactForm key={subject} locale={await getLocale()} initialMessage={subject ? `${(await getLocale()) === "en" ? "I would like advice about" : "Tôi muốn được tư vấn"}: ${subject}` : ""} />
           </div>
         </div>
 
         <div className="h-fit rounded-2xl border border-line bg-white p-7 shadow-sm2 lg:sticky lg:top-32">
           <div className="mb-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
-            Thông tin liên hệ
+            {copy("Thông tin liên hệ")}
           </div>
           <dl className="space-y-4 text-[14.5px]">
             <div>
-              <dt className="text-ink-faint">Địa chỉ</dt>
+              <dt className="text-ink-faint">{copy("Địa chỉ")}</dt>
               <dd className="mt-0.5 font-semibold text-ink">{settings.address}</dd>
             </div>
             <div>
@@ -59,7 +65,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
           </dl>
           {socials.length > 0 && (
             <div className="mt-6 border-t border-line pt-5">
-              <div className="mb-3 text-[14.5px] text-ink-faint">Theo dõi nhà trường</div>
+              <div className="mb-3 text-[14.5px] text-ink-faint">{copy("Theo dõi nhà trường")}</div>
               <div className="flex flex-col gap-2.5">
                 {socials.map((s) => (
                   <a

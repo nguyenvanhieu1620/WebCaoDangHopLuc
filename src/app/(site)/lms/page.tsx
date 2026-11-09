@@ -1,3 +1,4 @@
+import { pageText } from "@/lib/page-copy";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/Button";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
@@ -5,9 +6,13 @@ import { PageHero } from "@/components/site/PageHero";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getLocale } from "@/lib/locale";
 
-export const metadata: Metadata = { title: "Cổng LMS VNPT" };
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = pageText(await getLocale());
+  return { title: copy("Cổng LMS VNPT") };
+}
 
 export default async function LmsPage() {
+  const copy = pageText(await getLocale());
   const settings = await getSiteSettings();
   const en = (await getLocale()) === "en";
   const hasRealLink = settings.lmsUrl && settings.lmsUrl !== "#";
@@ -15,17 +20,17 @@ export default async function LmsPage() {
   return (
     <>
       <PageHero bannerKey="lms"
-        crumbs={[{ label: "Cổng LMS VNPT" }]}
-        eyebrow="Học trực tuyến"
-        title="Cổng LMS VNPT"
-        description="Hệ thống học trực tuyến LMS VNPT dành cho sinh viên, giảng viên — dùng chung tài khoản đã được nhà trường cấp để đăng nhập."
+        crumbs={[{ label: copy("Cổng LMS VNPT") }]}
+        eyebrow={copy("Học trực tuyến")}
+        title={copy("Cổng LMS VNPT")}
+        description={copy("Hệ thống học trực tuyến LMS VNPT dành cho sinh viên, giảng viên — dùng chung tài khoản đã được nhà trường cấp để đăng nhập.")}
       >
-        {hasRealLink && <Button href={settings.lmsUrl}>Truy cập LMS VNPT →</Button>}
+        {hasRealLink && <Button href={settings.lmsUrl}>{copy("Truy cập LMS VNPT →")}</Button>}
       </PageHero>
       <DecorativeSection contentClassName="mx-auto max-w-2xl text-center">
         {hasRealLink ? (
           <p className="text-[15px] leading-relaxed text-ink-soft">
-            Gặp sự cố đăng nhập? Liên hệ phòng Đào tạo qua hotline {settings.hotline} để được cấp lại tài khoản.
+            {copy("Gặp sự cố đăng nhập? Liên hệ phòng Đào tạo qua hotline")} {settings.hotline} {copy("để được cấp lại tài khoản.")}
           </p>
         ) : (
           <div className="mx-auto rounded-2xl border border-brand-100 bg-white p-8 shadow-sm2">

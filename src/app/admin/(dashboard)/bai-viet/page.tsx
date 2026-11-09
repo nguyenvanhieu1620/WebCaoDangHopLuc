@@ -10,6 +10,7 @@ import { paginate } from "@/lib/pagination";
 import { togglePublishAction, deletePostAction } from "./actions";
 import { requirePermission } from "@/lib/admin-auth";
 import { normalizeSearch } from "@/lib/utils";
+import { ClearSavedPostDraft } from "@/components/admin/PostFormGuard";
 
 export const metadata: Metadata = { title: "Quản lý bài viết" };
 
@@ -24,7 +25,7 @@ export default async function AdminPostsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; page?: string; saved?: string }>;
 }) {
-  await requirePermission("posts");
+  const user = await requirePermission("posts");
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const activeStatus = sp.status === "published" || sp.status === "draft" ? sp.status : "all";
@@ -51,6 +52,8 @@ export default async function AdminPostsPage({
   };
 
   return (
+    <>
+    <ClearSavedPostDraft saved={sp.saved === "1"} userId={user.id} />
     <div>
       <AdminTopbar
         title="Bài viết"
@@ -182,5 +185,6 @@ export default async function AdminPostsPage({
         </div>
       </div>
     </div>
+    </>
   );
 }

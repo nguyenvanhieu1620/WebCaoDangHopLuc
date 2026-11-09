@@ -8,11 +8,13 @@ import { searchSite, SEARCH_MIN_LENGTH, type SearchResultType, type TextPart } f
 import { getLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Tìm kiếm",
-  // Trang kết quả tìm kiếm không cần Google lập chỉ mục (nội dung trùng các trang gốc).
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: (await getLocale()) === "en" ? "Search" : "Tìm kiếm",
+    // Trang kết quả tìm kiếm không cần Google lập chỉ mục (nội dung trùng các trang gốc).
+    robots: { index: false, follow: true },
+  };
+}
 
 const TEXT = {
   vi: {
@@ -26,6 +28,7 @@ const TEXT = {
     empty: (q: string) => `Không tìm thấy kết quả cho “${q}”.`,
     emptyHint: "Thử từ khoá ngắn hơn, hoặc xem nhanh các mục được quan tâm nhiều:",
     popular: "Gợi ý phổ biến",
+    tuition: "Học phí",
   },
   en: {
     eyebrow: "Search",
@@ -38,6 +41,7 @@ const TEXT = {
     empty: (q: string) => `No results for “${q}”.`,
     emptyHint: "Try a shorter keyword, or jump to a popular section:",
     popular: "Popular",
+    tuition: "Tuition",
   },
 };
 
@@ -137,7 +141,7 @@ export default async function SearchPage({
           <p className="text-sm text-ink-soft" aria-live="polite">{t.results(results.length, query)}</p>
 
           {results.length > 0 && (
-            <nav aria-label="Lọc kết quả" className="mt-4 flex flex-wrap gap-2">
+            <nav aria-label={locale === "en" ? "Filter results" : "Lọc kết quả"} className="mt-4 flex flex-wrap gap-2">
               <Link
                 href={filterHref(null)}
                 className={cn(
@@ -192,6 +196,11 @@ export default async function SearchPage({
                       {r.snippet.length > 0 && (
                         <p className="mt-1.5 line-clamp-2 text-[14px] leading-relaxed text-ink-soft">
                           <Highlighted parts={r.snippet} />
+                        </p>
+                      )}
+                      {r.tuition && (
+                        <p className="mt-2 text-sm font-medium text-ink-soft [overflow-wrap:anywhere]">
+                          <span className="font-semibold text-brand-800">{t.tuition}</span> · {r.tuition}
                         </p>
                       )}
                       <span className="mt-2 block font-mono text-[11px] text-ink-faint">{r.href}</span>

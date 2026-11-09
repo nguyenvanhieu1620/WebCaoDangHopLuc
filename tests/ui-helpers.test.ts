@@ -160,6 +160,17 @@ test("buildFacultyDirectory + filterMembers lọc nhiều tiêu chí, không d�
   assert.equal(filterMembers(dir.members, { ...EMPTY_FILTERS, trinhDo: "thac-si", khoa: "duoc" }, "khoa").length, 2, "đếm theo khoa bỏ qua chính bộ lọc khoa");
 });
 
+test("danh bạ EN dịch bậc học và nhóm khác, giữ khoá lọc chức vụ khi đổi ngôn ngữ", () => {
+  const base = { id: "locale-faculty", name: "An", role: "Giảng viên", degree: "ThS", academicRank: null, departmentId: null } as Faculty;
+  const vi = buildFacultyDirectory([{ ...base, directoryRoleKey: "giang-vien" }], [], (f) => f.name, "vi");
+  const en = buildFacultyDirectory([{ ...base, role: "Lecturer", degree: "MSc", directoryRoleKey: "giang-vien" }], [], (f) => f.name, "en");
+  assert.equal(en.departmentOptions[0].label, "Other");
+  assert.equal(en.degreeOptions[0].label, "Master's degree");
+  assert.equal(en.degreeOptions[0].key, vi.degreeOptions[0].key);
+  assert.equal(en.roleOptions[0].key, vi.roleOptions[0].key);
+  assert.equal(filterMembers(en.members, { ...EMPTY_FILTERS, chucVu: vi.roleOptions[0].key }).length, 1);
+});
+
 test("paginate cắt đúng trang, trang sai/thiếu về 1, vượt quá về trang cuối", () => {
   const items = Array.from({ length: 45 }, (_, i) => i + 1);
   const p1 = paginate(items, undefined);

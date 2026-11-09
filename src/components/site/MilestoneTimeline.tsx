@@ -4,13 +4,14 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import type { MilestoneYear } from "@/lib/data/milestones";
 import { FitImage } from "@/components/ui/FitImage";
+import type { Locale } from "@/lib/locale";
 
 /**
  * Dòng thời gian "Những cột mốc" kiểu VinUni: thanh năm nằm ngang (cuộn được
  * khi nhiều năm), chọn 1 năm → hiện các mốc trong năm đó. Mặc định chọn năm
  * MỚI NHẤT. Bàn phím: ← → chuyển năm (mẫu tablist chuẩn WAI-ARIA).
  */
-export function MilestoneTimeline({ years }: { years: MilestoneYear[] }) {
+export function MilestoneTimeline({ years, locale = "vi" }: { years: MilestoneYear[]; locale?: Locale }) {
   const [active, setActive] = useState(years.length - 1);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const railRef = useRef<HTMLDivElement>(null);
@@ -46,11 +47,11 @@ export function MilestoneTimeline({ years }: { years: MilestoneYear[] }) {
   return (
     <div>
       <div className="flex items-center gap-3">
-        <button type="button" aria-label="Năm trước" onClick={() => select(active - 1)} disabled={active === 0} className={arrow}>
+        <button type="button" aria-label={locale === "en" ? "Previous year" : "Năm trước"} onClick={() => select(active - 1)} disabled={active === 0} className={arrow}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
         <div ref={railRef} className="no-scrollbar relative flex-1 overflow-x-auto">
-          <div role="tablist" aria-label="Chọn năm" onKeyDown={onKeyDown} className="relative flex min-w-full justify-between gap-2 px-2">
+          <div role="tablist" aria-label={locale === "en" ? "Choose a year" : "Chọn năm"} onKeyDown={onKeyDown} className="relative flex min-w-full justify-between gap-2 px-2">
             {/* Đường nối các năm */}
             <span aria-hidden="true" className="pointer-events-none absolute inset-x-6 top-[30px] h-0.5 bg-brand-900/10" />
             {years.map((y, i) => (
@@ -87,7 +88,7 @@ export function MilestoneTimeline({ years }: { years: MilestoneYear[] }) {
             ))}
           </div>
         </div>
-        <button type="button" aria-label="Năm sau" onClick={() => select(active + 1)} disabled={active === years.length - 1} className={arrow}>
+        <button type="button" aria-label={locale === "en" ? "Next year" : "Năm sau"} onClick={() => select(active + 1)} disabled={active === years.length - 1} className={arrow}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </div>

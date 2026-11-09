@@ -2,11 +2,13 @@ import { db, schema } from "@/lib/db";
 import { asc, eq } from "drizzle-orm";
 import type { Program } from "@/lib/db/schema";
 import { getLocale, pickLocale } from "@/lib/locale";
+import { programDuration } from "@/lib/site-copy";
 
 function localize(p: Program, locale: "vi" | "en"): Program {
   return {
     ...p,
     name: pickLocale(p.name, p.nameEn, locale),
+    duration: programDuration(p.duration, locale),
     summary: pickLocale(p.summary, p.summaryEn, locale),
     content: p.content ? pickLocale(p.content, p.contentEn, locale) : p.content,
     tuition: p.tuition ? pickLocale(p.tuition, p.tuitionEn, locale) : p.tuition,

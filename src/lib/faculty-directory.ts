@@ -1,5 +1,6 @@
 import type { Department, Faculty } from "@/lib/db/schema";
 import { normalizeSearch, slugify } from "@/lib/utils";
+import type { Locale } from "@/lib/locale";
 
 /**
  * Danh bạ giảng viên có tìm kiếm nhiều tiêu chí (/doi-ngu-giang-vien): trang (server) dựng sẵn danh
@@ -34,11 +35,11 @@ export const NO_DEPARTMENT_KEY = "khac";
 
 /** Trình độ gom theo bậc — người xem tìm "Thạc sĩ" phải ra cả "ThS" lẫn "ThS.BS". Thứ tự = thứ tự hiện trong ô chọn. */
 const DEGREE_LEVELS = [
-  { key: "tien-si", label: "Tiến sĩ" },
-  { key: "ck2", label: "Chuyên khoa II" },
-  { key: "thac-si", label: "Thạc sĩ" },
-  { key: "ck1", label: "Chuyên khoa I" },
-  { key: "dai-hoc", label: "Đại học (BS, DS, CN…)" },
+  { key: "tien-si", label: "Tiến sĩ", en: "Doctorate" },
+  { key: "ck2", label: "Chuyên khoa II", en: "Specialist level II" },
+  { key: "thac-si", label: "Thạc sĩ", en: "Master's degree" },
+  { key: "ck1", label: "Chuyên khoa I", en: "Specialist level I" },
+  { key: "dai-hoc", label: "Đại học (BS, DS, CN…)", en: "University degree (medicine, pharmacy, bachelor's…)" },
 ] as const;
 
 /**
@@ -49,7 +50,10 @@ export function degreeLevel(degree: string | null | undefined): { key: string; l
   const raw = degree?.trim();
   if (!raw) return null;
   const n = normalizeSearch(raw).replace(/[.\s-]/g, "");
-  const level = (key: (typeof DEGREE_LEVELS)[number]["key"]) => DEGREE_LEVELS.find((l) => l.key === key)!;
+  const level = (key: (typeof DEGREE_LEVELS)[number]["key"]) => {
+    const found = DEGREE_LEVELS.find((l) => l.key === key)!;
+    return { key: found.key, label: found.label };
+  };
   if (/ckii|ck2|chuyenkhoa(ii|2)|specialistii/.test(n)) return level("ck2");
   if (/cki|ck1|chuyenkhoa(i|1)|specialisti/.test(n)) return level("ck1");
   if (/^ts|tiensi|phd|doctorate/.test(n)) return level("tien-si");
@@ -69,9 +73,10 @@ const countBy = (keys: (string | null)[]) => {
 
 /** Dựng danh sách gọn cho client + các lựa chọn lọc (chỉ những giá trị thật sự có trong dữ liệu, kèm số lượng). */
 export function buildFacultyDirectory(
-  faculty: Faculty[],
+  faculty: (Faculty & { directoryRoleKey?: string; directoryRankKey?: string | null })[],
   departments: Department[],
-  displayName: (f: Faculty) => string
+  displayName: (f: Faculty) => string,
+  locale: Locale = "vi"
 ) {
   const deptById = new Map(departments.map((d) => [d.id, d]));
   const degreeLabels = new Map<string, string>();
@@ -88,10 +93,10 @@ export function buildFacultyDirectory(
       specialty: f.specialty?.trim() || null,
       photoUrl: f.photoUrl,
       departmentKey: dept ? dept.id : NO_DEPARTMENT_KEY,
-      departmentName: dept ? dept.name : "Khác",
+      departmentName: dept ? dept.name : locale === "en" ? "Other" : "Khác",
       degreeKey: level?.key ?? null,
-      rankKey: f.academicRank?.trim() ? slugify(f.academicRank) : null,
-      roleKey: slugify(f.role),
+      rankKey: f.directoryRankKey !== undefined ? f.directoryRankKey : f.academicRank?.trim() ? slugify(f.academicRank) : null,
+      roleKey: f.directoryRoleKey ?? slugify(f.role),
       search: searchText([name, f.name, f.role, f.specialty, dept?.name, level?.label, f.academicRank].filter(Boolean).join(" ")),
     };
   });
@@ -101,12 +106,12 @@ export function buildFacultyDirectory(
     .filter((d) => deptCounts.has(d.id))
     .map((d) => ({ key: d.id, label: d.name, count: deptCounts.get(d.id)! }));
   if (deptCounts.has(NO_DEPARTMENT_KEY)) {
-    departmentOptions.push({ key: NO_DEPARTMENT_KEY, label: "Khác", count: deptCounts.get(NO_DEPARTMENT_KEY)! });
+    departmentOptions.push({ key: NO_DEPARTMENT_KEY, label: locale === "en" ? "Other" : "Khác", count: deptCounts.get(NO_DEPARTMENT_KEY)! });
   }
 
   const degreeCounts = countBy(members.map((m) => m.degreeKey));
   const degreeOptions: DirectoryOption[] = [
-    ...DEGREE_LEVELS.filter((l) => degreeCounts.has(l.key)).map((l) => ({ ...l, count: degreeCounts.get(l.key)! })),
+    ...DEGREE_LEVELS.filter((l) => degreeCounts.has(l.key)).map((l) => ({ key: l.key, label: locale === "en" ? l.en : l.label, count: degreeCounts.get(l.key)! })),
     // Học vị lạ (không gom được) — xếp sau các bậc chuẩn.
     ...[...degreeCounts.keys()]
       .filter((k) => k.startsWith("khac-"))

@@ -1,3 +1,6 @@
+import { formatSiteDate } from "@/lib/site-copy";
+import { pageText } from "@/lib/page-copy";
+import { getLocale } from "@/lib/locale";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
@@ -7,7 +10,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { TiltCard } from "@/components/site/TiltCard";
 import { getPublishedPostsPage, type PublishedPostPreview } from "@/lib/data/posts";
 import { getCategories } from "@/lib/data/categories";
-import { cn, formatVNDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { FitImage } from "@/components/ui/FitImage";
 
 export async function generateMetadata({
@@ -15,10 +18,12 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<{ category?: string }>;
 }): Promise<Metadata> {
+  const locale = await getLocale();
+  const copy = pageText(locale);
   const { category } = await searchParams;
-  if (!category) return { title: "Tin tức" };
+  if (!category) return { title: copy("Tin tức") };
   const found = (await getCategories()).find((c) => c.slug === category);
-  return { title: found?.name ?? "Tin tức" };
+  return { title: found?.name ?? copy("Tin tức") };
 }
 
 /** Số bài ở cột "Mới nhất" cạnh tin nổi bật (trang 1). */
@@ -35,6 +40,8 @@ export default async function NewsPage({
 }: {
   searchParams: Promise<{ category?: string; page?: string }>;
 }) {
+  const locale = await getLocale();
+  const copy = pageText(locale);
   const { category, page } = await searchParams;
   const pageNum = Math.max(1, Number(page) || 1);
   const [{ posts, currentPage, totalPages }, categories] = await Promise.all([
@@ -60,28 +67,28 @@ export default async function NewsPage({
   return (
     <>
       <PageHero bannerKey="tin-tuc"
-        crumbs={activeCategory ? [{ label: "Tin tức", href: "/tin-tuc" }, { label: activeCategory.name }] : [{ label: "Tin tức" }]}
-        eyebrow={activeCategory ? "Chuyên mục" : "Tin tức & sự kiện"}
+        crumbs={activeCategory ? [{ label: copy("Tin tức"), href: "/tin-tuc" }, { label: activeCategory.name }] : [{ label: copy("Tin tức") }]}
+        eyebrow={activeCategory ? copy("Chuyên mục") : copy("Tin tức & sự kiện")}
         title={
           activeCategory
             ? isScholarship
-              ? "Học bổng & chính sách hỗ trợ học phí"
+              ? copy("Học bổng & chính sách hỗ trợ học phí")
               : activeCategory.name
-            : "Hoạt động đào tạo, tuyển sinh mới nhất"
+            : copy("Hoạt động đào tạo, tuyển sinh mới nhất")
         }
         description={
           isScholarship
-            ? "Thông tin học bổng, ưu đãi và hỗ trợ học phí dành cho sinh viên."
-            : "Thông báo, sự kiện và hoạt động của nhà trường."
+            ? copy("Thông tin học bổng, ưu đãi và hỗ trợ học phí dành cho sinh viên.")
+            : copy("Thông báo, sự kiện và hoạt động của nhà trường.")
         }
       />
 
       <DecorativeSection contentClassName="mx-auto max-w-[1220px]">
         {/* Thanh tab chuyên mục — cuộn ngang trên điện thoại */}
         {categories.length > 0 && (
-          <nav aria-label="Chuyên mục tin tức" className="no-scrollbar -mx-6 mb-10 overflow-x-auto px-6 sm:mx-0 sm:px-0">
+          <nav aria-label={copy("Chuyên mục tin tức")} className="no-scrollbar -mx-6 mb-10 overflow-x-auto px-6 sm:mx-0 sm:px-0">
             <ul className="flex w-max gap-2 border-b border-line pb-4 sm:w-auto sm:flex-wrap">
-              {[{ slug: null as string | null, name: "Tất cả" }, ...categories.map((c) => ({ slug: c.slug as string | null, name: c.name }))].map((c) => {
+              {[{ slug: null as string | null, name: copy("Tất cả") }, ...categories.map((c) => ({ slug: c.slug as string | null, name: c.name }))].map((c) => {
                 const active = (c.slug ?? null) === (activeCategory?.slug ?? null);
                 return (
                   <li key={c.slug ?? "all"}>
@@ -104,7 +111,7 @@ export default async function NewsPage({
 
         {posts.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
-            {isScholarship ? "Chưa có bài viết học bổng nào được đăng." : "Chưa có bài viết nào được đăng."}
+            {isScholarship ? copy("Chưa có bài viết học bổng nào được đăng.") : copy("Chưa có bài viết nào được đăng.")}
           </div>
         ) : (
           <>
@@ -124,21 +131,21 @@ export default async function NewsPage({
                             className="transition-transform duration-[1200ms] ease-out group-hover:scale-105"
                           />
                         ) : (
-                          <ImagePlaceholder label="Ảnh bài viết" />
+                          <ImagePlaceholder label={copy("Ảnh bài viết")} />
                         )}
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/40 to-transparent" />
                       <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-9">
                         <div className="mb-3 flex flex-wrap items-center gap-3">
                           <span className="rounded bg-accent-600 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
-                            {featured.categoryName ?? "Tin nổi bật"}
+                            {featured.categoryName ?? copy("Tin nổi bật")}
                           </span>
-                          <span className="font-mono text-[11px] text-white/75">{formatVNDate(featured.publishedAt)}</span>
+                          <span className="font-mono text-[11px] text-white/75">{formatSiteDate(featured.publishedAt, locale)}</span>
                         </div>
                         <h2 className="max-w-2xl font-display text-[24px] font-semibold leading-snug sm:text-[32px]">{featured.title}</h2>
                         {featured.excerpt && <p className="mt-3 line-clamp-2 max-w-2xl text-[14.5px] leading-relaxed text-white/80">{featured.excerpt}</p>}
                         <span className="mt-5 inline-flex items-center gap-2 text-[13.5px] font-bold">
-                          <span className="link-underline">Đọc tiếp</span>
+                          <span className="link-underline">{copy("Đọc tiếp")}</span>
                           <span className="transition-transform group-hover:translate-x-1">→</span>
                         </span>
                       </div>
@@ -147,7 +154,7 @@ export default async function NewsPage({
                 </Reveal>
 
                 <div>
-                  <h2 className="mb-2 font-display text-[22px] font-semibold uppercase tracking-wide text-accent-600">Mới nhất</h2>
+                  <h2 className="mb-2 font-display text-[22px] font-semibold uppercase tracking-wide text-accent-600">{copy("Mới nhất")}</h2>
                   <ul className="divide-y divide-line">
                     {latest.map((p, i) => (
                       <li key={p.id}>
@@ -157,7 +164,7 @@ export default async function NewsPage({
                               {p.coverImageUrl ? (
                                 <FitImage src={p.coverImageUrl} alt="" sizes="96px" className="transition-transform duration-700 group-hover:scale-110" />
                               ) : (
-                                <ImagePlaceholder label="Tin" />
+                                <ImagePlaceholder label={copy("Tin")} />
                               )}
                             </div>
                             <div className="min-w-0">
@@ -165,7 +172,7 @@ export default async function NewsPage({
                                 {p.categoryName && (
                                   <span className="whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-600">{p.categoryName}</span>
                                 )}
-                                <span className="font-mono text-[10px] text-ink-faint">{formatVNDate(p.publishedAt)}</span>
+                                <span className="font-mono text-[10px] text-ink-faint">{formatSiteDate(p.publishedAt, locale)}</span>
                               </div>
                               <h3 className="mt-1 line-clamp-2 text-[14.5px] font-semibold leading-snug text-ink transition-colors group-hover:text-brand-700">
                                 {p.title}
@@ -185,7 +192,7 @@ export default async function NewsPage({
                 {featured && (
                   <div className="mb-6 flex items-center gap-4">
                     <span className="h-6 w-1 rounded-full bg-accent-600" />
-                    <h2 className="font-display text-[22px] font-semibold text-brand-900">Tất cả bài viết</h2>
+                    <h2 className="font-display text-[22px] font-semibold text-brand-900">{copy("Tất cả bài viết")}</h2>
                   </div>
                 )}
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -199,7 +206,7 @@ export default async function NewsPage({
         )}
 
         {totalPages > 1 && (
-          <nav aria-label="Phân trang" className="mt-12 flex items-center justify-center gap-3">
+          <nav aria-label={copy("Phân trang")} className="mt-12 flex items-center justify-center gap-3">
             <Link
               href={buildHref({ page: currentPage - 1 })}
               aria-disabled={currentPage <= 1}
@@ -208,7 +215,7 @@ export default async function NewsPage({
                 currentPage <= 1 ? "pointer-events-none opacity-40" : "bg-white text-ink-soft hover:border-brand-500 hover:text-brand-700"
               )}
             >
-              ← Trước
+              {copy("← Trước")}
             </Link>
             <span className="font-mono text-[12px] tracking-[0.16em] text-ink-faint">
               <span className="text-brand-900">{String(currentPage).padStart(2, "0")}</span> / {String(totalPages).padStart(2, "0")}
@@ -221,7 +228,7 @@ export default async function NewsPage({
                 currentPage >= totalPages ? "pointer-events-none opacity-40" : "bg-white text-ink-soft hover:border-brand-500 hover:text-brand-700"
               )}
             >
-              Sau →
+              {copy("Sau →")}
             </Link>
           </nav>
         )}
@@ -230,7 +237,9 @@ export default async function NewsPage({
   );
 }
 
-function PostCard({ post, index }: { post: PublishedPostPreview; index: number }) {
+async function PostCard({ post, index }: { post: PublishedPostPreview; index: number }) {
+  const locale = await getLocale();
+  const copy = pageText(locale);
   return (
     <Reveal delay={(index % 3) * 80}>
       <TiltCard max={5} className="h-full rounded-2xl">
@@ -247,7 +256,7 @@ function PostCard({ post, index }: { post: PublishedPostPreview; index: number }
                 className="transition-transform duration-700 group-hover:scale-105"
               />
             ) : (
-              <ImagePlaceholder label="Ảnh bài viết" />
+              <ImagePlaceholder label={copy("Ảnh bài viết")} />
             )}
           </div>
           <div className="p-5">
@@ -256,7 +265,7 @@ function PostCard({ post, index }: { post: PublishedPostPreview; index: number }
               {post.categoryName && (
                 <span className="whitespace-nowrap font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-accent-600">{post.categoryName}</span>
               )}
-              <span className="font-mono text-[10.5px] text-ink-faint">{formatVNDate(post.publishedAt)}</span>
+              <span className="font-mono text-[10.5px] text-ink-faint">{formatSiteDate(post.publishedAt, locale)}</span>
             </div>
             <h3 className="font-display text-[17px] font-semibold leading-snug text-ink transition-colors group-hover:text-brand-700">{post.title}</h3>
             {post.excerpt && <p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-ink-soft">{post.excerpt}</p>}

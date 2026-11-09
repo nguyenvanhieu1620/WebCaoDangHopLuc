@@ -1,3 +1,4 @@
+import { pageText } from "@/lib/page-copy";
 import type { Metadata } from "next";
 import { DecorativeSection } from "@/components/site/DecorativeSection";
 import { PageHero } from "@/components/site/PageHero";
@@ -5,34 +6,41 @@ import { Reveal } from "@/components/site/Reveal";
 import { GalleryMedia } from "@/components/site/GalleryMedia";
 import { LightboxGroup, LightboxTrigger } from "@/components/site/Lightbox";
 import { getGalleryItems } from "@/lib/data/gallery";
+import { getLocale } from "@/lib/locale";
+import { siteCopy } from "@/lib/site-copy";
 
-export const metadata: Metadata = { title: "Thư viện ảnh & video" };
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = pageText(await getLocale());
+  return { title: copy("Thư viện ảnh & video") };
+}
 
 export default async function GalleryPage() {
-  const items = await getGalleryItems();
+  const copy = pageText(await getLocale());
+  const [items, locale] = await Promise.all([getGalleryItems(), getLocale()]);
+  const t = siteCopy(locale);
   const lightboxItems = items.map(({ id, imageUrl, caption, videoUrl }) => ({ id, imageUrl, caption, videoUrl }));
 
   return (
     <>
       <PageHero bannerKey="thu-vien"
-        crumbs={[{ label: "Thư viện" }]}
-        eyebrow="Thư viện"
-        title="Thư viện ảnh & video"
-        description="Hình ảnh, video hoạt động đào tạo và đời sống sinh viên tại trường — bấm vào ảnh để xem lớn, video phát ngay trên trang."
+        crumbs={[{ label: copy("Thư viện") }]}
+        eyebrow={copy("Thư viện")}
+        title={copy("Thư viện ảnh & video")}
+        description={copy("Hình ảnh, video hoạt động đào tạo và đời sống sinh viên tại trường — bấm vào ảnh để xem lớn, video phát ngay trên trang.")}
       />
       <DecorativeSection contentClassName="mx-auto max-w-[1220px]">
         {items.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
-            Chưa có ảnh nào — quản lý qua admin/thu-vien-trang-chu.
+            {copy("Chưa có ảnh nào — quản lý qua admin/thu-vien-trang-chu.")}
           </div>
         ) : (
-          <LightboxGroup items={lightboxItems}>
+          <LightboxGroup locale={locale} items={lightboxItems}>
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
               {items.map((item, i) => (
                 <Reveal key={item.id} delay={(i % 4) * 70}>
                   <LightboxTrigger
                     index={i}
-                    label={`${item.videoUrl ? "Xem video" : "Xem ảnh"}: ${item.caption}`}
+                    label={`${item.videoUrl ? t.viewVideo : t.viewImage}: ${item.caption}`}
                     className="block w-full cursor-zoom-in overflow-clip rounded-2xl border border-line bg-white shadow-sm2 transition-shadow hover:shadow-md2"
                   >
                     {/* Điện thoại: ô 4:3 cho sát ảnh ngang (ảnh hiện trọn — FitImage — nên ô quá cao thì dải nền mờ dày). */}
