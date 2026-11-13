@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
@@ -35,7 +36,11 @@ export async function ProgramFormPage({ id }: { id?: string }) {
           </a>
         </p>
       )}
-      <form action={upsertProgramAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertProgramAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối và danh sách ngành trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div className="grid gap-5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div>
@@ -127,7 +132,7 @@ export async function ProgramFormPage({ id }: { id?: string }) {
           Hiện ở Trang chủ
         </label>
         <FormActions cancelHref="/admin/nganh-dao-tao" submitLabel={editing ? "Lưu thay đổi" : "Thêm ngành"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

@@ -11,6 +11,7 @@ import { listMediaImages } from "@/lib/admin-media";
 import { requirePermission } from "@/lib/admin-auth";
 import { upsertPostAction } from "./actions";
 import { PostFormGuard } from "@/components/admin/PostFormGuard";
+import { PostSaveForm } from "./save-form";
 
 const input = "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500";
 
@@ -26,6 +27,7 @@ export async function PostFormPage({ id }: { id?: string }) {
     listMediaImages(),
   ]);
   if (id && !editing) notFound();
+  const draftKey = `hopluc-post:${user.id}:${editing?.id ?? "new"}:${editing?.updatedAt ?? ""}`;
 
   return (
     <AdminFormLayout
@@ -49,8 +51,8 @@ export async function PostFormPage({ id }: { id?: string }) {
           <span>— đổi tiêu đề không đổi link này</span>
         </p>
       )}
-      <form action={upsertPostAction} className="space-y-5">
-        <PostFormGuard draftKey={`hopluc-post:${user.id}:${editing?.id ?? "new"}:${editing?.updatedAt ?? ""}`} />
+      <PostSaveForm key={draftKey} action={upsertPostAction} draftKey={draftKey}>
+        <PostFormGuard draftKey={draftKey} />
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0 space-y-5">
@@ -163,7 +165,7 @@ export async function PostFormPage({ id }: { id?: string }) {
           </div>
         </div>
         <FormActions cancelHref="/admin/bai-viet" submitLabel={editing ? "Lưu thay đổi" : "Lưu bài viết"} />
-      </form>
+      </PostSaveForm>
     </AdminFormLayout>
   );
 }

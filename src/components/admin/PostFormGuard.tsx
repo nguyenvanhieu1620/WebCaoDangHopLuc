@@ -3,14 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
+import { snapshotAdminForm as snapshot } from "@/lib/admin-form";
 
 const PENDING_KEY = "hopluc-post-draft-pending";
 const TEXT_FIELDS = new Set(["title", "excerpt", "content", "titleEn", "excerptEn", "contentEn", "categoryId"]);
 
-function snapshot(form: HTMLFormElement) {
-  return JSON.stringify([...new FormData(form)].filter(([key]) => !key.startsWith("$ACTION_")).map(([key, value]) =>
-    [key, typeof value === "string" ? value : value.name ? [value.name, value.size, value.lastModified] : ""]
-  ));
+export function clearFailedPostSave(draftKey: string) {
+  try {
+    if (sessionStorage.getItem(PENDING_KEY) === draftKey) sessionStorage.removeItem(PENDING_KEY);
+  } catch { /* Lưu tạm là tùy chọn của trình duyệt. */ }
 }
 
 /** Bản tạm theo tài khoản/tab; chỉ lưu chữ, không lưu nội dung tệp lên trình duyệt. */

@@ -1,5 +1,6 @@
 import type { AdmissionSubmission } from "@/lib/db/schema";
 import { normalizeSearch, dbTimestampToISO, vnDateKey } from "@/lib/utils";
+import { isValidVnPhone, normalizeVnPhone } from "@/lib/validate";
 
 export type AdmissionStatusFilter = "all" | "new" | "reviewed" | "contacted";
 export type AdmissionFilters = { q?: string; status: AdmissionStatusFilter; program?: string; from?: string; to?: string };
@@ -15,6 +16,10 @@ export function parseStatusFilter(status: string | undefined): AdmissionStatusFi
   return status === "new" || status === "reviewed" || status === "contacted" ? status : "all";
 }
 
+function localPhoneNumber(phone: string): string {
+  return phone.startsWith("+84") && isValidVnPhone(phone) ? `0${phone.slice(3)}` : phone;
+}
+
 /**
  * Lọc hồ sơ theo trạng thái + từ khoá (tên/SĐT/CCCD/ngành, không phân biệt
  * dấu) — dùng chung cho trang danh sách và file Excel xuất ra, để "Xuất
@@ -25,6 +30,9 @@ export function filterAdmissions(
   { q, status, program, from, to }: AdmissionFilters
 ): AdmissionSubmission[] {
   const needle = q ? normalizeSearch(q) : "";
+  const compact = normalizeVnPhone(needle);
+  const numericQuery = /^\+?\d+$/.test(compact) ? compact : "";
+  const phoneQuery = localPhoneNumber(numericQuery);
   const start = parseDateFilter(from);
   const end = parseDateFilter(to);
   return all.filter((s) => {
@@ -34,9 +42,13 @@ export function filterAdmissions(
       const day = vnDateKey(dbTimestampToISO(s.createdAt));
       if ((start && day < start) || (end && day > end)) return false;
     }
-    if (needle && !normalizeSearch(`${s.fullName} ${s.phone} ${s.idNumber ?? ""} ${s.program}`).includes(needle)) {
-      return false;
-    }
-    return true;
+    if (!needle) return true;
+    const searchableText = normalizeSearch(`${s.fullName} ${s.phone} ${s.idNumber ?? ""} ${s.program}`);
+    if (searchableText.includes(needle)) return true;
+    if (!numericQuery) return false;
+
+    const phone = normalizeVnPhone(s.phone);
+    const idNumber = normalizeVnPhone(s.idNumber ?? "");
+    return phone.includes(numericQuery) || localPhoneNumber(phone).includes(phoneQuery) || idNumber.includes(numericQuery);
   });
 }

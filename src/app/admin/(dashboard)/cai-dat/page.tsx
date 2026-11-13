@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
+import { SavedNotice } from "@/components/admin/AdminFormLayout";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { updateSiteSettingsAction } from "./actions";
-import { requirePermission } from "@/lib/admin-auth";
+import { hasPermission, requirePermission } from "@/lib/admin-auth";
 import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
+import { safeHref } from "@/lib/safe-href";
 
 export const metadata: Metadata = { title: "Cài đặt chung" };
 
@@ -14,7 +17,8 @@ export default async function AdminSiteSettingsPage({
 }: {
   searchParams: Promise<{ saved?: string; invalid?: string; email?: string }>;
 }) {
-  await requirePermission("site-settings");
+  const user = await requirePermission("site-settings");
+  const canEditEmail = hasPermission(user, "admissions-contact");
   const { saved, invalid, email: emailProblem } = await searchParams;
   const settings = await db.query.siteSettings.findFirst({
     where: eq(schema.siteSettings.id, "main"),
@@ -31,28 +35,11 @@ export default async function AdminSiteSettingsPage({
       />
       <div className="p-8">
         {!normalizeExternalUrl(settings.lmsUrl) && <p role="status" className="mb-5 max-w-2xl rounded-xl border border-accent-200 bg-accent-50 p-4 text-sm text-accent-700">Cổng LMS chưa có đường dẫn hợp lệ. Cập nhật URL LMS chính thức bên dưới để sinh viên có thể truy cập.</p>}
-        {saved && (
-          <div className="mb-5 max-w-2xl rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
-            ✓ Đã lưu thay đổi thành công.
-          </div>
-        )}
-        {invalid && (
-          <div role="alert" className="mb-5 max-w-2xl rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700">
-            <b>⚠️ Link {invalid} không hợp lệ nên chưa được lưu</b> (vẫn giữ link cũ). Hãy dán
-            nguyên địa chỉ trang, VD <code>https://www.facebook.com/ten-trang</code>.
-          </div>
-        )}
-        {(emailProblem === "locked" || emailProblem === "invalid") && (
-          <div role="alert" className="mb-5 max-w-2xl rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700">
-            <b>⚠️ Email chưa được đổi</b> (vẫn giữ email cũ).{" "}
-            {emailProblem === "locked"
-              ? "Email này nhận thông báo hồ sơ tuyển sinh (có CCCD, số điện thoại) nên chỉ tài khoản có quyền “Tuyển sinh & Liên hệ” mới đổi được."
-              : "Địa chỉ email không đúng định dạng."}
-          </div>
-        )}
-        <form
+        <AdminSaveForm
           action={updateSiteSettingsAction}
+          unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối rồi mở Cài đặt chung trong tab khác để đối chiếu trước khi thử lại."
           className="max-w-2xl space-y-4 rounded-2xl border border-line bg-white p-6"
+          successNotice={<SavedNotice show={saved === "1" && !invalid && !emailProblem} />}
         >
           <div>
             <label htmlFor="f-cai-dat-announcement" className="mb-1.5 block text-xs font-semibold text-ink-soft">
@@ -89,6 +76,7 @@ export default async function AdminSiteSettingsPage({
               <input
                 id="f-cai-dat-hotline"
                 name="hotline"
+                inputMode="tel"
                 required
                 defaultValue={settings.hotline}
                 className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -100,10 +88,17 @@ export default async function AdminSiteSettingsPage({
                 id="f-cai-dat-email"
                 name="email"
                 type="email"
-                required
+                required={canEditEmail}
+                disabled={!canEditEmail}
+                aria-describedby={canEditEmail ? undefined : "site-settings-email-permission"}
                 defaultValue={settings.email}
-                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 disabled:bg-paper-alt disabled:text-ink-soft"
               />
+              {!canEditEmail && (
+                <p id="site-settings-email-permission" className="mt-1.5 text-xs text-ink-soft">
+                  Cần quyền Tuyển sinh &amp; Liên hệ để đổi email nhận hồ sơ.
+                </p>
+              )}
             </div>
           </div>
           <div>
@@ -155,7 +150,7 @@ export default async function AdminSiteSettingsPage({
           >
             Lưu cài đặt
           </button>
-        </form>
+        </AdminSaveForm>
       </div>
     </div>
   );
@@ -179,7 +174,7 @@ function LinkField({
   normalize?: (raw: string) => string | null;
 }) {
   const stored = value === "#" ? "" : value;
-  const url = stored ? normalize(stored) : null;
+  const url = stored ? safeHref(normalize(stored) ?? "") : null;
   return (
     <div className="min-w-0">
       <label htmlFor={name} className="mb-1.5 block text-xs font-semibold text-ink-soft">

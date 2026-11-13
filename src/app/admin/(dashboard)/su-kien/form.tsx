@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
@@ -34,7 +35,11 @@ export async function EventFormPage({ id }: { id?: string }) {
           </a>
         </p>
       )}
-      <form action={upsertEventAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertEventAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối và danh sách sự kiện trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div>
           <label htmlFor="f-su-kien-title" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên sự kiện</label>
@@ -47,13 +52,15 @@ export async function EventFormPage({ id }: { id?: string }) {
             placeholder="VD: Ngày hội tư vấn tuyển sinh 2026"
           />
         </div>
-        <div className="grid gap-5 sm:grid-cols-3">
+        <div className="grid gap-x-5 gap-y-3 sm:grid-cols-3">
+          <p id="event-timezone" className="text-xs text-ink-faint sm:col-span-3">Nhập ngày và giờ theo giờ Việt Nam (UTC+7).</p>
           <div>
             <label htmlFor="f-su-kien-startAt" className="mb-1.5 block text-xs font-semibold text-ink-soft">Bắt đầu</label>
             <input
               id="f-su-kien-startAt"
               name="startAt"
               type="datetime-local"
+              aria-describedby="event-timezone"
               required
               defaultValue={isoToVnDatetimeLocal(editing?.startAt)}
               className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
@@ -65,6 +72,7 @@ export async function EventFormPage({ id }: { id?: string }) {
               id="f-su-kien-endAt"
               name="endAt"
               type="datetime-local"
+              aria-describedby="event-timezone"
               defaultValue={isoToVnDatetimeLocal(editing?.endAt)}
               className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
             />
@@ -131,7 +139,7 @@ export async function EventFormPage({ id }: { id?: string }) {
           </div>
         </details>
         <FormActions cancelHref="/admin/su-kien" submitLabel={editing ? "Lưu thay đổi" : "Thêm sự kiện"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

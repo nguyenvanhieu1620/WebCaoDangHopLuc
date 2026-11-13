@@ -170,12 +170,12 @@ export function vnDateKey(iso: string): string {
  * chuỗi không offset theo giờ LOCAL CỦA MÁY CHỦ, sai nếu server không đặt
  * múi giờ Việt Nam, VD deploy lên cloud mặc định UTC).
  */
-export function vnDatetimeLocalToISO(value: string): string {
-  const [datePart, timePart] = value.split("T");
-  const [y, m, d] = datePart.split("-").map(Number);
-  const [hh, mm] = (timePart || "00:00").split(":").map(Number);
-  const utcMs = Date.UTC(y, m - 1, d, hh, mm) - VN_OFFSET_MINUTES * 60 * 1000;
-  return new Date(utcMs).toISOString();
+export function vnDatetimeLocalToISO(value: string): string | null {
+  if (!/^(?!0000)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
+  const localTime = new Date(`${value}:00Z`);
+  // Loại các ngày mà Date tự chuyển sang ngày khác, ví dụ 29/02 của năm không nhuận.
+  if (!Number.isFinite(localTime.getTime()) || localTime.toISOString().slice(0, 16) !== value) return null;
+  return new Date(localTime.getTime() - VN_OFFSET_MINUTES * 60 * 1000).toISOString();
 }
 
 /** Chiều ngược lại của `vnDatetimeLocalToISO` — dùng để tự điền giá trị vào <input type="datetime-local"> lúc hiện form Sửa. */
@@ -184,5 +184,6 @@ export function isoToVnDatetimeLocal(iso: string | null | undefined): string {
   const vnMs = new Date(iso).getTime() + VN_OFFSET_MINUTES * 60 * 1000;
   const d = new Date(vnMs);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+  const year = String(d.getUTCFullYear()).padStart(4, "0");
+  return `${year}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }

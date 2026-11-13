@@ -1,10 +1,10 @@
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { db, schema } from "@/lib/db";
 import { normalizeExternalUrl, slugify, videoSource } from "@/lib/utils";
 import { checkUpload, uploadKindOf } from "@/lib/upload-rules";
-import { UPLOAD_DIR } from "@/lib/upload-dir";
+import { UPLOAD_DIR, uploadedFilePath } from "@/lib/upload-dir";
 import { contentMatchesType, EXTENSION_BY_MIME } from "@/lib/file-signature";
 
 /**
@@ -15,9 +15,43 @@ import { contentMatchesType, EXTENSION_BY_MIME } from "@/lib/file-signature";
  */
 
 export type SavedMedia = { url: string; type: "image" | "video" | "document"; filename: string };
+export type MediaUploadOptions = {
+  database?: Pick<typeof db, "insert">;
+  onWrite?: (url: string) => void;
+};
+
+type MediaTransaction = Pick<typeof db, "query" | "select" | "insert" | "update">;
+
+/** Lưu nội dung và metadata media trong cùng transaction, dọn các file mới nếu lỗi trước commit. */
+export async function saveWithMedia<T>(
+  save: (tx: MediaTransaction, uploadOptions: MediaUploadOptions) => Promise<T>,
+): Promise<{ result: T } | { error: unknown; unconfirmed: boolean }> {
+  const uploadedUrls: string[] = [];
+  let readyToCommit = false;
+  try {
+    const result = await db.transaction(async (tx) => {
+      const saved = await save(tx, { database: tx, onWrite: (url) => uploadedUrls.push(url) });
+      readyToCommit = true;
+      return saved;
+    });
+    return { result };
+  } catch (error) {
+    // Nếu mất kết nối sau commit, bản ghi có thể đã tham chiếu tới các file mới.
+    if (!readyToCommit) {
+      await Promise.all(uploadedUrls.map(async (url) => {
+        const file = uploadedFilePath(url);
+        if (!file) return;
+        await unlink(file).catch((cleanupError: NodeJS.ErrnoException) => {
+          if (cleanupError.code !== "ENOENT") console.error("Không dọn được tệp của lần lưu thất bại.", cleanupError);
+        });
+      }));
+    }
+    return { error, unconfirmed: readyToCommit };
+  }
+}
 
 /** Ghi 1 file upload xuống đĩa + lưu metadata vào bảng media_items. Trả về url dùng ngay được (VD: trong <img src>). */
-export async function saveUploadedFile(file: File): Promise<SavedMedia> {
+export async function saveUploadedFile(file: File, { database = db, onWrite }: MediaUploadOptions = {}): Promise<SavedMedia> {
   // Lớp chặn cuối ở máy chủ — form admin đã kiểm tra cùng quy tắc ngay lúc chọn file
   // (upload-rules.ts) nên bình thường admin không đi tới đây với file sai.
   const problem = checkUpload(file, ["image", "video", "document"]);
@@ -40,7 +74,8 @@ export async function saveUploadedFile(file: File): Promise<SavedMedia> {
   const url = `/uploads/${filename}`;
   const type = kind;
 
-  await db.insert(schema.mediaItems).values({ filename, url, type });
+  onWrite?.(url);
+  await database.insert(schema.mediaItems).values({ filename, url, type });
 
   return { url, type, filename };
 }
@@ -73,13 +108,14 @@ export async function resolveVideoUrl(
   formData: FormData,
   fileFieldName: string,
   pickedFieldName: string,
-  linkFieldName?: string
+  linkFieldName?: string,
+  uploadOptions?: MediaUploadOptions,
 ): Promise<string | null> {
   const file = formData.get(fileFieldName);
   if (file instanceof File && file.size > 0) {
     const problem = checkUpload(file, ["video"]);
     if (problem) throw new Error(problem);
-    return (await saveUploadedFile(file)).url;
+    return (await saveUploadedFile(file, uploadOptions)).url;
   }
   const picked = String(formData.get(pickedFieldName) || "").trim();
   if (picked && videoSource(picked)?.kind === "file") return picked;
@@ -97,11 +133,12 @@ export async function resolveImageUrl(
   formData: FormData,
   fileFieldName: string,
   pickedFieldName: string,
-  fallbackUrl: string | null = null
+  fallbackUrl: string | null = null,
+  uploadOptions?: MediaUploadOptions,
 ): Promise<string | null> {
   const file = formData.get(fileFieldName);
   if (file instanceof File && file.size > 0) {
-    const saved = await saveUploadedFile(file);
+    const saved = await saveUploadedFile(file, uploadOptions);
     return saved.url;
   }
   // Ảnh "chọn từ thư viện" là ô ẩn trong form — Server Action gọi thẳng được nên phải kiểm tra:

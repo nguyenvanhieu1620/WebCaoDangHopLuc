@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { count, eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { CheckedFileInput } from "@/components/admin/CheckedFileInput";
@@ -29,7 +30,11 @@ export async function GalleryItemFormPage({ id }: { id?: string }) {
       description="Đời sống trải nghiệm — khối 'Đời sống sinh viên – Trải nghiệm Hợp Lực' ở Trang chủ (5 mục đầu) và trang /thu-vien"
       backHref="/admin/thu-vien-trang-chu"
     >
-      <form action={upsertGalleryItemAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertGalleryItemAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra danh sách trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div>
           <label htmlFor="f-thu-vien-trang-chu-caption" className="mb-1.5 block text-xs font-semibold text-ink-soft">Chú thích</label>
@@ -57,8 +62,11 @@ export async function GalleryItemFormPage({ id }: { id?: string }) {
         </details>
         <div>
           <label htmlFor="f-thu-vien-trang-chu-image" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-            Ảnh {editing ? "(để trống = giữ ảnh cũ)" : ""}
+            Ảnh bìa (bắt buộc)
           </label>
+          <p className="mb-2 text-xs text-ink-faint">
+            Mục có video vẫn cần ảnh bìa. {editing && "Nếu không chọn ảnh mới, hệ thống sẽ giữ ảnh bìa hiện tại."}
+          </p>
           <ImagePicker
             id="f-thu-vien-trang-chu-image"
             spec="gallery"
@@ -71,8 +79,8 @@ export async function GalleryItemFormPage({ id }: { id?: string }) {
         <fieldset className="rounded-xl border border-line p-4">
           <legend className="px-1 text-xs font-semibold text-ink-soft">Video (tuỳ chọn)</legend>
           <p className="mb-3 text-[11.5px] leading-relaxed text-ink-faint">
-            Có video thì ảnh ở trên là ảnh bìa — khách bấm vào xem video ngay trên trang. Chọn 1 trong 3 cách; để trống cả 3
-            = không có video (gỡ video cũ). Video dài nên đưa lên YouTube; video tải lên nên ngắn, dưới 50MB.
+            Có thể dùng link YouTube, chọn video từ thư viện hoặc tải tệp mới lên. Hệ thống ưu tiên tệp mới, rồi đến video
+            thư viện và link YouTube. Để trống cả ba ô nếu muốn gỡ video. Tệp tải lên tối đa 50 MB.
           </p>
           <div className="space-y-3">
             <div>
@@ -133,7 +141,7 @@ export async function GalleryItemFormPage({ id }: { id?: string }) {
           />
         </div>
         <FormActions cancelHref="/admin/thu-vien-trang-chu" submitLabel={editing ? "Lưu thay đổi" : "Thêm ảnh"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

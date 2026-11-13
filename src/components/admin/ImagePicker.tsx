@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { IMAGE_SPECS, assessImage, type ImageSpecKey } from "@/lib/image-specs";
 import { MAX_UPLOAD_BYTES, checkUpload, formatBytes } from "@/lib/upload-rules";
+import { RESTORE_ADMIN_FORM_DRAFT } from "@/lib/admin-form";
 
 type MediaOption = { id: string; url: string; filename: string };
 
@@ -23,6 +24,7 @@ type ImagePickerProps = {
   hideCurrentPreview?: boolean;
   /** `id` của ô chọn file — để `<label htmlFor>` bên ngoài gắn đúng vào ô (không truyền thì tự sinh). */
   id?: string;
+  restoreDraftSelection?: boolean;
 };
 
 const isJpegUrl = (url: string) => /\.jpe?g($|\?)/i.test(url);
@@ -38,7 +40,7 @@ const isJpegUrl = (url: string) => /\.jpe?g($|\?)/i.test(url);
  * - Đo kích thước thật của ảnh đang xem trước (file mới, ảnh chọn từ thư viện, hoặc ảnh
  *   đang dùng) → cảnh báo vàng nếu nhỏ hơn khuyến nghị/sai hướng. Chỉ cảnh báo, vẫn cho lưu.
  */
-export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl, spec, hideCurrentPreview, id }: ImagePickerProps) {
+export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl, spec, hideCurrentPreview, id, restoreDraftSelection }: ImagePickerProps) {
   const autoId = useId();
   const inputId = id ?? autoId;
   const info = IMAGE_SPECS[spec];
@@ -74,6 +76,26 @@ export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl
   useEffect(() => () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!restoreDraftSelection) return;
+    const input = fileInputRef.current;
+    const form = input?.form;
+    if (!form || !input) return;
+    const restore = (event: Event) => {
+      const url = (event as CustomEvent<Record<string, string>>).detail?.[pickedFieldName];
+      if (typeof url !== "string") return;
+      input.value = "";
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+      setNewFile(null);
+      setPickedUrl(images.some((image) => image.url === url) ? url : null);
+      setError(null);
+      setShowLibrary(false);
+    };
+    form.addEventListener(RESTORE_ADMIN_FORM_DRAFT, restore);
+    return () => form.removeEventListener(RESTORE_ADMIN_FORM_DRAFT, restore);
+  }, [images, pickedFieldName, restoreDraftSelection]);
 
   function replaceObjectUrl(next: string | null) {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -200,7 +222,7 @@ export function ImagePicker({ fileFieldName, pickedFieldName, images, currentUrl
 
       <div className="mt-2 rounded-lg bg-paper-alt/70 px-3 py-2 text-[11.5px] leading-relaxed text-ink-soft">
         <b className="text-ink">Khuyến nghị:</b> {spec === "logo" ? "logo nằm ngang" : `ảnh ${info.shape === "portrait" ? "dọc" : "ngang"} ${info.ratio}`},{" "}
-        {minText}, đẹp nhất {info.ideal} · {info.transparent ? "PNG nền trong suốt" : "JPG/PNG/WEBP"}, tối đa {formatBytes(MAX_UPLOAD_BYTES.image)}.
+        {minText}, {spec === "pageBanner" ? "kích thước tham khảo" : "đẹp nhất"} {info.ideal} · {info.transparent ? "PNG nền trong suốt" : "JPG/PNG/WEBP"}, tối đa {formatBytes(MAX_UPLOAD_BYTES.image)}.
         <br />
         {info.where} {info.tip}
       </div>

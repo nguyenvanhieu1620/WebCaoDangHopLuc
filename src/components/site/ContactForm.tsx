@@ -1,26 +1,42 @@
 "use client";
 
 import { pageText } from "@/lib/page-copy";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { isValidVnPhone, normalizeVnPhone } from "@/lib/validate";
 import { TurnstileWidget } from "./TurnstileWidget";
 import type { Locale } from "@/lib/locale";
 
 const inputClass =
   "w-full rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand-500";
 const labelClass = "mb-1.5 block text-xs font-semibold text-ink-soft";
+const scrollMargin = "scroll-mt-[88px] scroll-mb-24 lg:scroll-mt-32 lg:scroll-mb-4";
 
 /** Form gửi câu hỏi công khai ở /lien-he — POST tới /api/contact (endpoint gọi từ bên ngoài). */
 export function ContactForm({ initialMessage = "", locale = "vi" }: { initialMessage?: string; locale?: Locale }) {
   const copy = pageText(locale);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [phoneInvalid, setPhoneInvalid] = useState(false);
+  const phoneInput = useRef<HTMLInputElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
+  const confirmation = useRef<HTMLDivElement>(null);
+  const focusNameAfterRestart = useRef(false);
+
+  useEffect(() => {
+    const showConfirmation = status === "success";
+    if (!showConfirmation && !focusNameAfterRestart.current) return;
+
+    const target = showConfirmation ? confirmation.current : nameInput.current;
+    focusNameAfterRestart.current = false;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: showConfirmation ? "start" : "nearest", behavior: "instant" });
+  }, [status]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     // Chụp lại tham chiếu form ngay lập tức — sau `await`, SyntheticEvent.currentTarget có thể đã bị React dọn.
     const form = e.currentTarget;
-    setStatus("submitting");
     setErrorMessage("");
 
     const formData = new FormData(form);
@@ -32,6 +48,18 @@ export function ContactForm({ initialMessage = "", locale = "vi" }: { initialMes
       website: String(formData.get("website") || "").trim(),
       turnstileToken: String(formData.get("cf-turnstile-response") || "").trim(),
     };
+
+    const phone = normalizeVnPhone(payload.phone);
+    if (phone && !isValidVnPhone(phone)) {
+      setStatus("idle");
+      setPhoneInvalid(true);
+      phoneInput.current?.focus({ preventScroll: true });
+      phoneInput.current?.scrollIntoView({ block: "center", behavior: "instant" });
+      return;
+    }
+
+    setPhoneInvalid(false);
+    setStatus("submitting");
 
     try {
       const res = await fetch("/api/contact", {
@@ -55,15 +83,18 @@ export function ContactForm({ initialMessage = "", locale = "vi" }: { initialMes
 
   if (status === "success") {
     return (
-      <div role="status" className="rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center">
+      <div ref={confirmation} role="status" tabIndex={-1} className={cn(scrollMargin, "rounded-2xl border border-brand-100 bg-brand-50 p-8 text-center")}>
         <div className="font-display text-lg font-semibold text-brand-900">{copy("Đã gửi câu hỏi!")}</div>
         <p className="mt-2 text-[14px] text-ink-soft">
           {copy("Đội ngũ nhà trường sẽ phản hồi bạn trong thời gian sớm nhất.")}
         </p>
         <button
           type="button"
-          onClick={() => setStatus("idle")}
-          className="mt-5 text-sm font-semibold text-brand-700 hover:text-accent-600"
+          onClick={() => {
+            focusNameAfterRestart.current = true;
+            setStatus("idle");
+          }}
+          className="mt-3 inline-flex min-h-11 items-center px-3 text-sm font-semibold text-brand-700 hover:text-accent-600"
         >
           {copy("Gửi câu hỏi khác")}
         </button>
@@ -79,12 +110,29 @@ export function ContactForm({ initialMessage = "", locale = "vi" }: { initialMes
       </div>
       <div>
         <label htmlFor="contact-name" className={labelClass}>{copy("Họ và tên *")}</label>
-        <input id="contact-name" name="name" autoComplete="name" maxLength={200} required className={inputClass} placeholder={locale === "en" ? "Your full name" : "Nguyễn Văn A"} />
+        <input ref={nameInput} id="contact-name" name="name" autoComplete="name" maxLength={200} required className={cn(inputClass, scrollMargin)} placeholder={locale === "en" ? "Your full name" : "Nguyễn Văn A"} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="contact-phone" className={labelClass}>{copy("Số điện thoại (tuỳ chọn)")}</label>
-          <input id="contact-phone" name="phone" type="tel" autoComplete="tel" maxLength={30} className={inputClass} placeholder="09xxxxxxxx" />
+          <input
+            ref={phoneInput}
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            maxLength={30}
+            aria-invalid={phoneInvalid || undefined}
+            aria-describedby={phoneInvalid ? "contact-phone-error" : undefined}
+            onChange={() => setPhoneInvalid(false)}
+            className={cn(inputClass, "aria-[invalid=true]:border-accent-600")}
+            placeholder="09xxxxxxxx"
+          />
+          {phoneInvalid && (
+            <p id="contact-phone-error" role="alert" className="mt-1.5 text-xs font-medium text-accent-700">
+              {copy("Nhập 10 chữ số bắt đầu bằng 0, hoặc +84 theo sau là 9 chữ số.")}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="contact-email" className={labelClass}>{copy("Email (tuỳ chọn)")}</label>

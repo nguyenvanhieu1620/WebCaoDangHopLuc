@@ -11,9 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: copy("Câu hỏi thường gặp") };
 }
 
-export default async function FaqPage() {
-  const copy = pageText(await getLocale());
-  const faqs = await getFaqs();
+export default async function FaqPage({ searchParams }: { searchParams: Promise<{ "cau-hoi"?: string | string[] }> }) {
+  const [locale, faqs, params] = await Promise.all([getLocale(), getFaqs(), searchParams]);
+  const copy = pageText(locale);
+  const questionId = params["cau-hoi"];
+  const openFaqId = typeof questionId === "string" && faqs.some((faq) => faq.id === questionId) ? questionId : undefined;
 
   return (
     <>
@@ -23,13 +25,13 @@ export default async function FaqPage() {
         title={copy("Câu hỏi thường gặp")}
         description={copy("Giải đáp nhanh các thắc mắc phổ biến về tuyển sinh, học phí và đào tạo.")}
       />
-      <DecorativeSection contentClassName="mx-auto max-w-[820px]">
+      <DecorativeSection reveal={!openFaqId} contentClassName="mx-auto max-w-[820px]">
         {faqs.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center text-sm text-ink-faint">
-            {copy("Chưa có câu hỏi nào — quản lý qua admin/faq.")}
+            {copy("Câu hỏi thường gặp đang được cập nhật.")}
           </div>
         ) : (
-          <FaqList faqs={faqs} />
+          <FaqList faqs={faqs} openFaqId={openFaqId} />
         )}
       </DecorativeSection>
     </>

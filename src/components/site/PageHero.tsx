@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { getSiteSettings } from "@/lib/data/site-settings";
 import { getPageBanner } from "@/lib/data/page-banners";
-import type { PageBannerKey } from "@/lib/constants";
+import { usesDefaultPageBanner, type PageBannerKey } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { SIZES_DESKTOP_ONLY, SIZES_MOBILE_ONLY } from "@/lib/image-specs";
 import { getLocale } from "@/lib/locale";
@@ -44,7 +44,7 @@ export async function PageHero({ title, crumbs, eyebrow, description, imageUrl, 
   const sectionBanner = !imageUrl && bannerKey ? await getPageBanner(bannerKey) : null;
   // Trang pháp lý/hỗ trợ dùng nền thương hiệu nếu chưa có banner riêng, tránh
   // lặp ảnh giường bệnh không liên quan. Banner CMS/ảnh riêng luôn ưu tiên.
-  const neutral = !useDefaultImage || (bannerKey && ["cong-khai", "lms", "faq", "tim-kiem"].includes(bannerKey));
+  const neutral = !useDefaultImage || !usesDefaultPageBanner(bannerKey);
   const fallback = imageUrl || sectionBanner || neutral ? null : (await getSiteSettings()).pageBannerUrl;
   const bg = imageUrl || sectionBanner || fallback || null;
   const delay = (ms: number) => ({ animationDelay: `${ms}ms` });

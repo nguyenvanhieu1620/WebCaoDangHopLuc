@@ -31,7 +31,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
       imageUrl={page?.coverImageUrl}
       description={`Hotline ${settings.hotline} · ${settings.email}`}
     />
-    <DecorativeSection contentClassName="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[1.3fr_1fr]">
+    <DecorativeSection reveal={false} contentClassName="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>
           {page?.content ? <MarkdownContent content={page.content} /> : (
             <p className="text-base leading-relaxed text-ink-soft">{copy("Gửi câu hỏi qua form bên dưới hoặc liên hệ trực tiếp để được nhà trường hỗ trợ.")}</p>

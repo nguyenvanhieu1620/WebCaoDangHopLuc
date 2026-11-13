@@ -26,7 +26,7 @@ export default async function AdminFaqPage({
     <div>
       <AdminTopbar
         title="Câu hỏi thường gặp"
-        description="Danh sách FAQ hiển thị ở /faq — vị trí càng nhỏ hiện càng trước"
+        description="Quản lý câu hỏi xuất hiện trên web. Vị trí càng nhỏ càng được xếp trước."
         actions={<AdminNewButton href="/admin/faq/them-moi" />}
       />
       <div className="p-5 sm:p-8">
@@ -48,6 +48,11 @@ export default async function AdminFaqPage({
                     <Link href={`/admin/faq/${f.id}`} className="block truncate text-sm font-medium text-ink hover:text-brand-700">
                       <span className="font-mono text-[11px] text-ink-faint">#{f.sortOrder}</span> {f.question}
                     </Link>
+                    {f.isVisible === 1 ? (
+                      <span className="mt-1 inline-block rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">Đang hiển thị</span>
+                    ) : (
+                      <span className="mt-1 inline-block rounded-full bg-paper-alt px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">Tạm ẩn</span>
+                    )}
                     <div className="mt-0.5 truncate text-[12px] text-ink-faint">{f.answer}</div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

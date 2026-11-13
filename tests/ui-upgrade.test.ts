@@ -24,6 +24,18 @@ test("ngày sai không làm hỏng danh sách; khoảng ngày đảo trả danh 
   assert.equal(filterAdmissions(rows, { status: "all", from: "2026-10-03", to: "2026-10-02" }).length, 0);
 });
 
+test("tìm hồ sơ theo số điện thoại và CCCD có định dạng khác nhau", () => {
+  const formatted = [rows[0], { ...rows[1], phone: "+84 90-123-4568", idNumber: "000 000 000 002" }];
+  for (const q of ["090 123-4567", "+84 (90) 123 4567", "000-000-000-001"]) {
+    assert.deepEqual(filterAdmissions(formatted, { q, status: "new", program: "Dược" }).map((s) => s.id), ["a"]);
+  }
+  for (const q of ["0901234568", "+84901234568", "000000000002", "000.000.000.002"]) {
+    assert.deepEqual(filterAdmissions(formatted, { q, status: "all" }).map((s) => s.id), ["b"]);
+  }
+  assert.equal(filterAdmissions(formatted, { q: "+84 90 123 4567", status: "reviewed" }).length, 0);
+  assert.equal(filterAdmissions(formatted, { q: "090 123 4569", status: "all" }).length, 0);
+});
+
 test("nội dung công khai bỏ hướng dẫn nội bộ nhưng giữ link/ảnh và bản nguồn", () => {
   const raw = "## Lịch sử\n[Trường điền: năm thành lập]\n\nXem [quy chế](/quy-che) và ![ảnh](/anh.jpg).";
   const result = publicPageContent(raw, "gioi-thieu", "vi");

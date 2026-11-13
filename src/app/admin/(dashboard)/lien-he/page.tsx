@@ -11,14 +11,25 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { paginate } from "@/lib/pagination";
 import { isValidEmail, normalizeVnPhone } from "@/lib/validate";
 import { filterContactMessages, parseContactFilters } from "./filter";
+import { contactStatusLabel, isContactStatus, type ContactStatus } from "./status";
 
 export const metadata: Metadata = { title: "Tin nhắn liên hệ" };
 
 const STATUS_FILTERS = [
   { key: "all", label: "Tất cả" },
   { key: "new", label: "Mới" },
-  { key: "read", label: "Đã xem" },
+  { key: "read", label: "Chờ phản hồi" },
+  { key: "replied", label: "Đã phản hồi" },
 ] as const;
+
+const STATUS_BADGE_CLASSES: Record<ContactStatus, string> = {
+  new: "bg-accent-100 text-accent-700",
+  read: "bg-paper-alt text-ink-soft",
+  replied: "bg-brand-100 text-brand-700",
+};
+
+const statusButtonClass =
+  "min-h-11 rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-soft hover:border-brand-500 hover:text-brand-700 sm:min-h-0";
 
 const contactLinkClass =
   "inline-flex min-h-11 items-center rounded-lg bg-brand-50 px-3 text-xs font-semibold text-brand-700 hover:bg-brand-100 sm:min-h-0 sm:py-2";
@@ -123,6 +134,10 @@ export default async function AdminContactMessagesPage({
                 const canCall = /^\+?[0-9]+$/.test(phone);
                 const email = m.email?.trim() ?? "";
                 const canReply = isValidEmail(email) && !/[<>,;:"\\]/.test(email);
+                const status = isContactStatus(m.status) ? m.status : undefined;
+                const readButton = status === "new"
+                  ? { next: "read", label: "Đánh dấu đã xem" } as const
+                  : { next: "new", label: "Đánh dấu chưa xem" } as const;
 
                 return (
                   <li key={m.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6">
@@ -131,12 +146,10 @@ export default async function AdminContactMessagesPage({
                         <h2 className="min-w-0 text-sm font-semibold text-ink">{m.name}</h2>
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            m.status === "new"
-                              ? "bg-accent-100 text-accent-700"
-                              : "bg-paper-alt text-ink-faint"
+                            status ? STATUS_BADGE_CLASSES[status] : "bg-paper-alt text-ink-soft"
                           }`}
                         >
-                          {m.status === "new" ? "Mới" : "Đã xem"}
+                          {contactStatusLabel(m.status)}
                         </span>
                       </div>
                       <div className="mt-0.5 text-[11.5px] text-ink-faint">
@@ -159,20 +172,19 @@ export default async function AdminContactMessagesPage({
                         </div>
                       )}
                     </div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <form
-                        action={async () => {
-                          "use server";
-                          await markContactMessageAction(m.id, m.status === "new" ? "read" : "new");
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="min-h-11 rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-soft hover:border-brand-500 hover:text-brand-700 sm:min-h-0"
-                        >
-                          {m.status === "new" ? "Đánh dấu đã xem" : "Đánh dấu chưa xem"}
-                        </button>
-                      </form>
+                    <div className="flex flex-wrap items-center gap-2 sm:max-w-72 sm:justify-end">
+                      {status && status !== "replied" && (
+                        <form action={markContactMessageAction.bind(null, m.id, readButton.next, status)}>
+                          <button type="submit" className={statusButtonClass}>{readButton.label}</button>
+                        </form>
+                      )}
+                      {status && (
+                        <form action={markContactMessageAction.bind(null, m.id, status === "replied" ? "read" : "replied", status)}>
+                          <button type="submit" className={statusButtonClass}>
+                            {status === "replied" ? "Chuyển về chờ phản hồi" : "Đánh dấu đã phản hồi"}
+                          </button>
+                        </form>
+                      )}
                       <form
                         action={async () => {
                           "use server";

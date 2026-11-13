@@ -10,12 +10,12 @@ import { requirePermission } from "@/lib/admin-auth";
 import { cn, hasPlaceholder } from "@/lib/utils";
 import { paginate } from "@/lib/pagination";
 import { deleteAdmissionItemAction } from "./actions";
-import { SECTIONS, sectionType } from "./form";
+import { SECTIONS, sectionType } from "./sections";
 
 export const metadata: Metadata = { title: "Thông tin tuyển sinh" };
 
-const needsFill = (i: { title: string; detail: string | null; meta: string | null }) =>
-  hasPlaceholder(i.title) || hasPlaceholder(i.detail) || hasPlaceholder(i.meta);
+const needsFill = (i: { type: string; title: string; detail: string | null; meta: string | null }) =>
+  hasPlaceholder(i.title) || hasPlaceholder(i.detail) || (i.type === "timeline" && hasPlaceholder(i.meta));
 
 /** 3 nhóm (Mốc thời gian / Phương thức / Hồ sơ) thành 3 tab `?type=`; mỗi tab 1 danh sách có phân trang. */
 export default async function AdminAdmissionInfoPage({

@@ -473,7 +473,7 @@ export const contactMessages = pgTable("contact_messages", {
   phone: text("phone"),
   email: text("email"),
   message: text("message").notNull(),
-  /** "new" (mới) | "read" (đã xem) */
+  /** "new" (mới) | "read" (đã xem, chờ phản hồi) | "replied" (đã phản hồi) */
   status: text("status").notNull().default("new"),
   createdAt: text("created_at")
     .notNull()
@@ -494,6 +494,7 @@ export const faqs = pgTable("faqs", {
   questionEn: text("question_en"),
   answer: text("answer").notNull(),
   answerEn: text("answer_en"),
+  isVisible: integer("is_visible").notNull().default(1),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at")
     .notNull()

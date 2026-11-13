@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { count, eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
@@ -24,7 +25,11 @@ export async function TestimonialFormPage({ id }: { id?: string }) {
       description="Trích dẫn cảm nhận hiển thị ở khối 'Câu chuyện thành công' Trang chủ"
       backHref="/admin/danh-gia"
     >
-      <form action={upsertTestimonialAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertTestimonialAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra danh sách đánh giá trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div>
           <label htmlFor="f-danh-gia-quote" className="mb-1.5 block text-xs font-semibold text-ink-soft">Trích dẫn</label>
@@ -89,8 +94,11 @@ export async function TestimonialFormPage({ id }: { id?: string }) {
         </details>
         <div>
           <label htmlFor="f-danh-gia-avatar" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-            Ảnh đại diện {editing ? "(để trống = giữ ảnh cũ)" : ""}
+            Ảnh đại diện (tuỳ chọn)
           </label>
+          {editing?.avatarUrl && (
+            <p className="mb-2 text-xs text-ink-faint">Ảnh hiện tại sẽ được giữ nếu bạn để trống ô này.</p>
+          )}
           <ImagePicker
             id="f-danh-gia-avatar"
             spec="avatar"
@@ -111,7 +119,7 @@ export async function TestimonialFormPage({ id }: { id?: string }) {
           />
         </div>
         <FormActions cancelHref="/admin/danh-gia" submitLabel={editing ? "Lưu thay đổi" : "Thêm đánh giá"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

@@ -6,6 +6,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
 import { searchSite, SEARCH_MIN_LENGTH, type SearchResultType, type TextPart } from "@/lib/data/search";
 import { getLocale } from "@/lib/locale";
+import { paginate } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,6 +30,10 @@ const TEXT = {
     emptyHint: "Thử từ khoá ngắn hơn, hoặc xem nhanh các mục được quan tâm nhiều:",
     popular: "Gợi ý phổ biến",
     tuition: "Học phí",
+    pagination: "Phân trang kết quả",
+    previous: "Trước",
+    next: "Sau",
+    page: (current: number, total: number) => `Trang ${current} / ${total}`,
   },
   en: {
     eyebrow: "Search",
@@ -42,8 +47,15 @@ const TEXT = {
     emptyHint: "Try a shorter keyword, or jump to a popular section:",
     popular: "Popular",
     tuition: "Tuition",
+    pagination: "Search results pagination",
+    previous: "Previous",
+    next: "Next",
+    page: (current: number, total: number) => `Page ${current} / ${total}`,
   },
 };
+
+const SEARCH_PAGE_SIZE = 12;
+const paginationLinkClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-white px-3 text-[13px] font-semibold text-ink-soft hover:border-brand-500 hover:text-brand-700";
 
 const TYPE_LABEL: Record<"vi" | "en", Record<SearchResultType, string>> = {
   vi: { program: "Ngành đào tạo", post: "Tin tức", event: "Sự kiện", faculty: "Giảng viên", page: "Trang thông tin", faq: "Hỏi đáp" },
@@ -85,9 +97,9 @@ function Highlighted({ parts }: { parts: TextPart[] }) {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string | string[]; loai?: string | string[] }>;
+  searchParams: Promise<{ q?: string | string[]; loai?: string | string[]; page?: string | string[] }>;
 }) {
-  const { q = "", loai } = await searchParams;
+  const { q = "", loai, page } = await searchParams;
   const locale = await getLocale();
   const t = TEXT[locale];
   const query = (Array.isArray(q) ? q[0] ?? "" : q).trim().slice(0, 100);
@@ -98,9 +110,15 @@ export default async function SearchPage({
     return acc;
   }, {});
   const activeType = typeof loai === "string" && Object.hasOwn(counts, loai) ? (loai as SearchResultType) : null;
-  const visible = activeType ? results.filter((r) => r.type === activeType) : results;
-  const filterHref = (type: SearchResultType | null) =>
-    `/tim-kiem?q=${encodeURIComponent(query)}${type ? `&loai=${type}` : ""}`;
+  const filtered = activeType ? results.filter((r) => r.type === activeType) : results;
+  const pagination = paginate(filtered, page, SEARCH_PAGE_SIZE);
+
+  function resultsHref(type: SearchResultType | null, nextPage = 1) {
+    const params = new URLSearchParams({ q: query });
+    if (type) params.set("loai", type);
+    if (nextPage > 1) params.set("page", String(nextPage));
+    return `/tim-kiem?${params.toString()}#ket-qua-tim-kiem`;
+  }
 
   return (
     <>
@@ -130,20 +148,21 @@ export default async function SearchPage({
         </div>
       </Form>
     </PageHero>
-    <DecorativeSection contentClassName="mx-auto max-w-3xl">
+    <DecorativeSection reveal={query.length < SEARCH_MIN_LENGTH} contentClassName="mx-auto max-w-3xl">
 
       {query.length > 0 && query.length < SEARCH_MIN_LENGTH && (
         <p className="text-sm text-ink-soft">{t.tooShort}</p>
       )}
 
       {query.length >= SEARCH_MIN_LENGTH && (
-        <div>
-          <p className="text-sm text-ink-soft" aria-live="polite">{t.results(results.length, query)}</p>
+        <div id="ket-qua-tim-kiem" tabIndex={-1} className="scroll-mt-[88px] lg:scroll-mt-32">
+          <p className="text-sm text-ink-soft" aria-live="polite">{t.results(pagination.total, query)}</p>
 
           {results.length > 0 && (
             <nav aria-label={locale === "en" ? "Filter results" : "Lọc kết quả"} className="mt-4 flex flex-wrap gap-2">
               <Link
-                href={filterHref(null)}
+                href={resultsHref(null)}
+                aria-current={!activeType ? "page" : undefined}
                 className={cn(
                   "rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
                   !activeType ? "bg-brand-900 text-white" : "border border-line bg-white text-ink-soft hover:border-brand-500"
@@ -154,7 +173,8 @@ export default async function SearchPage({
               {(Object.keys(counts) as SearchResultType[]).map((type) => (
                 <Link
                   key={type}
-                  href={filterHref(type)}
+                  href={resultsHref(type)}
+                  aria-current={activeType === type ? "page" : undefined}
                   className={cn(
                     "rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
                     activeType === type ? "bg-brand-900 text-white" : "border border-line bg-white text-ink-soft hover:border-brand-500"
@@ -179,8 +199,8 @@ export default async function SearchPage({
               </div>
             </div>
           ) : (
-            <ol className="mt-6 space-y-3.5">
-              {visible.map((r, i) => (
+            <ol start={pagination.from} className="mt-6 space-y-3.5">
+              {pagination.items.map((r, i) => (
                 <li key={`${r.type}-${r.href}-${i}`}>
                   <Reveal delay={Math.min(i, 8) * 50}>
                     <Link
@@ -203,12 +223,30 @@ export default async function SearchPage({
                           <span className="font-semibold text-brand-800">{t.tuition}</span> · {r.tuition}
                         </p>
                       )}
-                      <span className="mt-2 block font-mono text-[11px] text-ink-faint">{r.href}</span>
+                      <span className="mt-2 block font-mono text-[11px] text-ink-faint">{r.type === "faq" ? "/faq" : r.href}</span>
                     </Link>
                   </Reveal>
                 </li>
               ))}
             </ol>
+          )}
+
+          {pagination.totalPages > 1 && (
+            <nav aria-label={t.pagination} className="mt-8 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              {pagination.page > 1 && (
+                <Link href={resultsHref(activeType, pagination.page - 1)} className={cn(paginationLinkClass, "col-start-1 row-start-1 justify-self-start")}>
+                  ← {t.previous}
+                </Link>
+              )}
+              <span className="col-start-2 row-start-1 text-center text-xs font-semibold text-ink-faint">
+                {t.page(pagination.page, pagination.totalPages)}
+              </span>
+              {pagination.page < pagination.totalPages && (
+                <Link href={resultsHref(activeType, pagination.page + 1)} className={cn(paginationLinkClass, "col-start-3 row-start-1 justify-self-end")}>
+                  {t.next} →
+                </Link>
+              )}
+            </nav>
           )}
         </div>
       )}

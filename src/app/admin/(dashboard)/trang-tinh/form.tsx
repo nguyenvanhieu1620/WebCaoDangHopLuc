@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
@@ -9,6 +10,7 @@ import { listMediaImages } from "@/lib/admin-media";
 import { hasPlaceholder, staticPageHref } from "@/lib/utils";
 import { requirePermission } from "@/lib/admin-auth";
 import { upsertPageAction } from "./actions";
+import { PageIdentityFields } from "./page-identity-fields";
 
 /** Trang Thêm (không có `id`) / Sửa trang tĩnh — dùng chung cho `them-moi/` và `[id]/`. */
 export async function StaticPageFormPage({ id }: { id?: string }) {
@@ -23,7 +25,7 @@ export async function StaticPageFormPage({ id }: { id?: string }) {
   return (
     <AdminFormLayout
       title={editing ? `Sửa: ${editing.title}` : "Thêm trang tĩnh"}
-      description="Công khai, Giới thiệu, Liên hệ… — lưu xong hiện ngay trên web công khai theo đúng slug"
+      description="Quản lý nội dung các trang Công khai, Giới thiệu, Liên hệ và Chính sách bảo mật"
       backHref="/admin/trang-tinh"
       wide
     >
@@ -35,39 +37,13 @@ export async function StaticPageFormPage({ id }: { id?: string }) {
           </a>
         </p>
       )}
-      <form action={upsertPageAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertPageAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối và danh sách trang trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="f-trang-tinh-title" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tiêu đề</label>
-            <input
-              id="f-trang-tinh-title"
-              name="title"
-              required
-              defaultValue={editing?.title}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-              placeholder="VD: Giới thiệu"
-            />
-          </div>
-          {editing ? (
-            <div>
-              <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Slug</span>
-              <div className="rounded-lg border border-line bg-paper-alt px-3 py-2.5 font-mono text-sm text-ink-faint">/{editing.slug}</div>
-            </div>
-          ) : (
-            <div>
-              <label htmlFor="f-trang-tinh-slug" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                Slug (để trống = tự tạo từ tiêu đề)
-              </label>
-              <input
-                id="f-trang-tinh-slug"
-                name="slug"
-                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="VD: gioi-thieu"
-              />
-            </div>
-          )}
-        </div>
+        <PageIdentityFields initialTitle={editing?.title} existingSlug={editing?.slug} />
         <div>
           <label htmlFor="f-trang-tinh-coverImage" className="mb-1.5 block text-xs font-semibold text-ink-soft">
             Ảnh banner (tuỳ chọn){editing ? " — để trống = giữ ảnh cũ" : ""}
@@ -118,7 +94,7 @@ export async function StaticPageFormPage({ id }: { id?: string }) {
           </div>
         </details>
         <FormActions cancelHref="/admin/trang-tinh" submitLabel={editing ? "Lưu thay đổi" : "Thêm trang"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

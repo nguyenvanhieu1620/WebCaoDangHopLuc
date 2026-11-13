@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { count, eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { requirePermission } from "@/lib/admin-auth";
@@ -19,7 +20,11 @@ export async function FaqFormPage({ id }: { id?: string }) {
       description="Hiển thị ở /faq và cuối trang Tuyển sinh — vị trí càng nhỏ hiện càng trước"
       backHref="/admin/faq"
     >
-      <form action={upsertFaqAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertFaqAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối và danh sách câu hỏi trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div>
           <label htmlFor="f-faq-question" className="mb-1.5 block text-xs font-semibold text-ink-soft">Câu hỏi</label>
@@ -69,18 +74,34 @@ export async function FaqFormPage({ id }: { id?: string }) {
             />
           </div>
         </details>
-        <div>
-          <label htmlFor="f-faq-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
-          <input
-            id="f-faq-sortOrder"
-            name="sortOrder"
-            type="number"
-            defaultValue={editing?.sortOrder ?? total}
-            className="w-full max-w-[200px] rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-          />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="f-faq-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
+            <input
+              id="f-faq-sortOrder"
+              name="sortOrder"
+              type="number"
+              defaultValue={editing?.sortOrder ?? total}
+              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="f-faq-isVisible" className="mb-1.5 block text-xs font-semibold text-ink-soft">Hiển thị trên web</label>
+            <select
+              id="f-faq-isVisible"
+              name="isVisible"
+              defaultValue={String(editing?.isVisible ?? 1)}
+              aria-describedby="f-faq-visibility-help"
+              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+            >
+              <option value="1">Đang hiển thị</option>
+              <option value="0">Tạm ẩn</option>
+            </select>
+            <p id="f-faq-visibility-help" className="mt-1.5 text-xs leading-relaxed text-ink-soft">Tạm ẩn khỏi FAQ, Tuyển sinh và tìm kiếm. Bạn có thể bật lại tại đây.</p>
+          </div>
         </div>
         <FormActions cancelHref="/admin/faq" submitLabel={editing ? "Lưu thay đổi" : "Thêm câu hỏi"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

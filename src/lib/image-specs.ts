@@ -38,8 +38,8 @@ export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
   },
   pageBanner: {
     shape: "landscape", ratio: "3:1", minWidth: 1920, minHeight: 600, ideal: "2400×800",
-    where: "Dải banner đầu trang con, rộng hết màn hình, cao 360–460px.",
-    tip: "Máy tính: phủ kín dải banner (cắt bớt trên/dưới), bên trái phủ màu tối để đặt chữ → chủ thể ở giữa hoặc hơi lệch phải. Điện thoại: ảnh hiện trọn vẹn phía trên tiêu đề.",
+    where: "Banner đầu trang con rộng hết màn hình. Chiều cao thay đổi theo trang, độ rộng cửa sổ và số dòng nội dung.",
+    tip: "Trên máy tính, ảnh phủ kín khung và có thể bị cắt ở hai bên hoặc trên/dưới. Giữ chủ thể ở giữa hoặc hơi lệch phải, chừa khoảng trống quanh mép và tránh đặt chữ quan trọng trong ảnh. Trên điện thoại, ảnh chính hiển thị trọn phía trên tiêu đề.",
   },
   cover: {
     shape: "landscape", ratio: "16:9 (ảnh dùng chung)", minWidth: 1200, minHeight: 675, ideal: "1920×1080",

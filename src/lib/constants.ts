@@ -153,6 +153,11 @@ export const PAGE_BANNER_SLOTS = [
 
 export type PageBannerKey = (typeof PAGE_BANNER_SLOTS)[number]["key"];
 
+/** Trang pháp lý/hỗ trợ dùng nền thương hiệu nếu chưa đặt ảnh riêng. */
+export function usesDefaultPageBanner(bannerKey?: PageBannerKey): boolean {
+  return !bannerKey || !["cong-khai", "lms", "faq", "tim-kiem"].includes(bannerKey);
+}
+
 /** Gradient màu thẻ ngành — tự xoay vòng theo vị trí, không cần khai báo thủ công. */
 export const PROGRAM_GRADIENT_CYCLE = [
   "from-brand-800 to-brand-500", // xanh dương

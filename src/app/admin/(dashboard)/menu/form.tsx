@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
 import { asc } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { db, schema } from "@/lib/db";
 import { requirePermission } from "@/lib/admin-auth";
 import { upsertNavItemAction } from "./actions";
+import { MenuHrefField } from "./href-field";
+import { MENU_HAS_CHILDREN_ERROR } from "./validation";
 
 /**
  * Trang Thêm (không có `id`) / Sửa mục menu — dùng chung cho `them-moi/` và `[id]/`.
@@ -17,6 +20,9 @@ export async function NavItemFormPage({ id, parent }: { id?: string; parent?: st
   if (id && !editing) notFound();
   const topLevel = allItems.filter((i) => !i.parentId);
   const defaultParent = editing ? editing.parentId ?? "" : topLevel.some((t) => t.id === parent) ? parent! : "";
+  const hasChildren = !!editing && allItems.some((item) => item.parentId === editing.id);
+  const parentOptions = topLevel.filter((item) => item.id !== editing?.id);
+  const legacyParent = defaultParent && !parentOptions.some((item) => item.id === defaultParent);
   const siblings = allItems.filter((i) => (i.parentId ?? "") === defaultParent).length;
 
   return (
@@ -25,7 +31,11 @@ export async function NavItemFormPage({ id, parent }: { id?: string; parent?: st
       description="Danh mục to/con hiển thị ở menu điều hướng trang công khai"
       backHref="/admin/menu"
     >
-      <form action={upsertNavItemAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertNavItemAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối và danh sách menu trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
@@ -39,17 +49,7 @@ export async function NavItemFormPage({ id, parent }: { id?: string; parent?: st
               placeholder="VD: Ngành đào tạo"
             />
           </div>
-          <div>
-            <label htmlFor="f-menu-href" className="mb-1.5 block text-xs font-semibold text-ink-soft">Đường dẫn</label>
-            <input
-              id="f-menu-href"
-              name="href"
-              required
-              defaultValue={editing?.href}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-              placeholder="VD: /nganh-dao-tao"
-            />
-          </div>
+          <MenuHrefField defaultValue={editing?.href} />
         </div>
         <div>
           <label htmlFor="nav-description" className="mb-1.5 block text-xs font-semibold text-ink-soft">
@@ -96,17 +96,21 @@ export async function NavItemFormPage({ id, parent }: { id?: string; parent?: st
               id="f-menu-parentId"
               name="parentId"
               defaultValue={defaultParent}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+              disabled={hasChildren && !defaultParent}
+              aria-describedby={hasChildren ? "menu-parent-help" : undefined}
+              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 disabled:bg-paper-alt disabled:text-ink-soft"
             >
               <option value="">— Không (là danh mục to) —</option>
-              {topLevel
-                .filter((t) => t.id !== editing?.id)
-                .map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
+              {legacyParent && (
+                <option value={defaultParent}>{allItems.find((item) => item.id === defaultParent)?.label ?? "Danh mục cha hiện tại"}</option>
+              )}
+              {parentOptions.map((item) => (
+                <option key={item.id} value={item.id} disabled={hasChildren && item.id !== defaultParent}>
+                  {item.label}
+                </option>
+              ))}
             </select>
+            {hasChildren && <p id="menu-parent-help" className="mt-1.5 text-xs leading-relaxed text-ink-soft">{MENU_HAS_CHILDREN_ERROR}</p>}
           </div>
           <div>
             <label htmlFor="f-menu-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
@@ -124,7 +128,7 @@ export async function NavItemFormPage({ id, parent }: { id?: string; parent?: st
           Hiện ở menu chính (chỉ áp dụng cho danh mục to — bỏ chọn = nằm trong nút ☰)
         </label>
         <FormActions cancelHref="/admin/menu" submitLabel={editing ? "Lưu thay đổi" : "Thêm mục menu"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

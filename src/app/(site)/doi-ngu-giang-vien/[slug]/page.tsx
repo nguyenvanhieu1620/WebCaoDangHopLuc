@@ -28,7 +28,7 @@ export async function generateMetadata({
   };
 }
 
-/** 1 dòng thông tin trong khối "Trình độ & chuyên môn". */
+/** 1 dòng thông tin trong khối "Trình độ và chuyên môn". */
 function Fact({ label, children, icon }: { label: string; children: ReactNode; icon: ReactNode }) {
   return (
     <div className="flex gap-4 rounded-2xl border border-line bg-white p-5 shadow-sm2">
@@ -192,7 +192,7 @@ export default async function FacultyDetailPage({
           <section aria-labelledby="trinh-do">
             <h2 id="trinh-do" className="mb-5 flex items-center gap-3 font-display text-[22px] font-semibold text-brand-900">
               <span className="h-6 w-1 rounded-full bg-accent-600" />
-              {copy("Trình độ &amp; chuyên môn")}
+              {copy("Trình độ và chuyên môn")}
             </h2>
             <dl className="grid gap-4 sm:grid-cols-2">
               <Fact label={copy("Chức vụ")} icon={ICON.role}>

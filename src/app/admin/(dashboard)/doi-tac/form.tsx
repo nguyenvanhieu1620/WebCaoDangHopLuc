@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { count, eq } from "drizzle-orm";
 import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout";
+import { AdminSaveForm } from "@/components/admin/AdminSaveForm";
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
@@ -24,7 +25,11 @@ export async function PartnerFormPage({ id }: { id?: string }) {
       description="Dải logo/tên đối tác chạy ngang ở Trang chủ — vị trí càng nhỏ hiện càng trước"
       backHref="/admin/doi-tac"
     >
-      <form action={upsertPartnerAction} className="space-y-5">
+      <AdminSaveForm
+        key={id ?? "new"}
+        action={upsertPartnerAction}
+        unknownResultMessage="Chưa xác nhận được kết quả lưu. Kiểm tra kết nối và danh sách đối tác trước khi thử lại."
+      >
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div>
           <label htmlFor="f-doi-tac-name" className="mb-1.5 block text-xs font-semibold text-ink-soft">Tên đối tác</label>
@@ -68,11 +73,13 @@ export async function PartnerFormPage({ id }: { id?: string }) {
           <input
             id="partner-website"
             name="websiteUrl"
-            type="url"
+            inputMode="url"
+            aria-describedby="partner-website-help"
             defaultValue={editing?.websiteUrl ?? ""}
-            placeholder="https://..."
+            placeholder="www.example.com"
             className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
           />
+          <p id="partner-website-help" className="mt-1.5 text-xs text-ink-soft">Có thể nhập tên miền, hệ thống sẽ tự thêm https://.</p>
         </div>
         <div>
           <label htmlFor="f-doi-tac-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
@@ -85,7 +92,7 @@ export async function PartnerFormPage({ id }: { id?: string }) {
           />
         </div>
         <FormActions cancelHref="/admin/doi-tac" submitLabel={editing ? "Lưu thay đổi" : "Thêm đối tác"} />
-      </form>
+      </AdminSaveForm>
     </AdminFormLayout>
   );
 }

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, count, eq } from "drizzle-orm";
@@ -5,16 +6,20 @@ import { AdminFormLayout, FormActions } from "@/components/admin/AdminFormLayout
 import { AutoTranslateButton } from "@/components/admin/AutoTranslateButton";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
+import { UnsavedFormGuard } from "@/components/admin/UnsavedFormGuard";
 import { db, schema } from "@/lib/db";
 import { listMediaImages } from "@/lib/admin-media";
 import { requirePermission } from "@/lib/admin-auth";
 import { upsertFacultyAction } from "./actions";
+import { facultyListSearch, type FacultyListParams } from "./list-query";
+import { FacultySaveForm } from "./save-form";
+import { facultyDraftPrefix } from "./draft";
 
 const input = "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500";
 
 /** Trang Thêm (không có `id`) / Sửa giảng viên — dùng chung cho `them-moi/` và `[id]/`. */
-export async function FacultyFormPage({ id }: { id?: string }) {
-  await requirePermission("faculty");
+export async function FacultyFormPage({ id, listParams = {} }: { id?: string; listParams?: FacultyListParams }) {
+  const user = await requirePermission("faculty");
   const [editing, departments, attributes, mediaImages, [{ total }]] = await Promise.all([
     id ? db.query.faculty.findFirst({ where: eq(schema.faculty.id, id) }) : null,
     db.query.departments.findMany({ orderBy: [asc(schema.departments.sortOrder), asc(schema.departments.seq)] }),
@@ -26,12 +31,15 @@ export async function FacultyFormPage({ id }: { id?: string }) {
   const academicRanks = attributes.filter((a) => a.type === "academic_rank");
   const degrees = attributes.filter((a) => a.type === "degree");
   const positions = attributes.filter((a) => a.type === "position");
+  const backHref = `/admin/giang-vien${facultyListSearch(listParams)}`;
+  const draftKey = `${facultyDraftPrefix(user.id)}${editing ? `profile:${editing.id}` : "new"}`;
+  const draftVersion = editing ? createHash("sha256").update(JSON.stringify(editing)).digest("hex") : "new";
 
   return (
     <AdminFormLayout
       title={editing ? `Sửa: ${editing.name}` : "Thêm giảng viên"}
       description="Thẻ giảng viên hiển thị ở Trang chủ và /doi-ngu-giang-vien"
-      backHref="/admin/giang-vien"
+      backHref={backHref}
       wide
     >
       {editing?.slug && (
@@ -42,7 +50,11 @@ export async function FacultyFormPage({ id }: { id?: string }) {
           </a>
         </p>
       )}
-      <form action={upsertFacultyAction} className="space-y-5">
+      <FacultySaveForm key={`${draftKey}:${draftVersion}`} action={upsertFacultyAction.bind(null, listParams)} draftKey={draftKey} draftVersion={draftVersion}>
+        <UnsavedFormGuard
+          subject="Hồ sơ giảng viên"
+          leaveMessage="Bạn có thể khôi phục phần đã lưu tạm khi mở lại hồ sơ trong tab này. Ảnh tải từ máy cần chọn lại."
+        />
         {editing && <input type="hidden" name="id" value={editing.id} />}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-5">
@@ -132,6 +144,7 @@ export async function FacultyFormPage({ id }: { id?: string }) {
               pickedFieldName="photoExisting"
               images={mediaImages}
               currentUrl={editing?.photoUrl}
+              restoreDraftSelection
             />
           </div>
         </div>
@@ -184,8 +197,8 @@ export async function FacultyFormPage({ id }: { id?: string }) {
           <label htmlFor="f-giang-vien-sortOrder" className="mb-1.5 block text-xs font-semibold text-ink-soft">Vị trí (số nhỏ hiện trước)</label>
           <input id="f-giang-vien-sortOrder" name="sortOrder" type="number" defaultValue={editing?.sortOrder ?? total} className={`${input} max-w-[200px]`} />
         </div>
-        <FormActions cancelHref="/admin/giang-vien" submitLabel={editing ? "Lưu thay đổi" : "Thêm giảng viên"} />
-      </form>
+        <FormActions cancelHref={backHref} submitLabel={editing ? "Lưu thay đổi" : "Thêm giảng viên"} />
+      </FacultySaveForm>
     </AdminFormLayout>
   );
 }

@@ -5,7 +5,7 @@ import { ImagePicker } from "@/components/admin/ImagePicker";
 import { db, schema } from "@/lib/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { requirePermission } from "@/lib/admin-auth";
-import { PAGE_BANNER_SLOTS } from "@/lib/constants";
+import { PAGE_BANNER_SLOTS, usesDefaultPageBanner } from "@/lib/constants";
 import { cn, staticPageHref } from "@/lib/utils";
 import { savePageBannerAction } from "./actions";
 
@@ -21,16 +21,18 @@ type CardProps = {
   note?: string;
   /** Ảnh riêng của thẻ này (null = chưa đặt). */
   own: string | null;
-  /** Ảnh đang thực sự hiện trên web khi chưa có ảnh riêng (ảnh mặc định chung). */
-  fallback: string | null;
+  fallback?: { url: string; source: "default" | "disclosure" };
   saved: boolean;
   mediaImages: MediaOption[];
 };
 
 /** 1 thẻ = 1 form riêng: xem trước banner đang dùng + đổi/gỡ ảnh của đúng trang đó. */
 function BannerCard({ kind, target, title, path, note, own, fallback, saved, mediaImages }: CardProps) {
-  const shown = own ?? fallback;
-  const status = own ? "Ảnh riêng" : kind === "default" ? "Chưa đặt — nền xanh" : fallback ? "Đang dùng ảnh mặc định" : "Nền xanh mặc định";
+  const shown = own || fallback?.url;
+  const fallbackLabel = fallback?.source === "disclosure"
+    ? "Ảnh mục Công khai"
+    : fallback ? "Ảnh mặc định" : "Nền xanh";
+  const status = own ? (kind === "default" ? "Ảnh mặc định" : "Ảnh riêng") : fallbackLabel;
   return (
     <div
       id={`banner-${kind}-${target || "main"}`}
@@ -40,7 +42,7 @@ function BannerCard({ kind, target, title, path, note, own, fallback, saved, med
       )}
     >
       <div className="relative h-[140px] bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600">
-        {shown && <Image src={shown} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className={cn("object-cover", !own && "opacity-60 grayscale-[35%]")} />}
+        {shown && <Image src={shown} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-r from-brand-900/70 to-transparent" />
         <div className="absolute bottom-3 left-4 right-4 text-white">
           <div className="truncate text-[15px] font-bold">{title}</div>
@@ -52,7 +54,7 @@ function BannerCard({ kind, target, title, path, note, own, fallback, saved, med
             own ? "bg-accent-600 text-white" : "bg-white/85 text-ink-soft"
           )}
         >
-          {saved ? "✓ Đã lưu" : status}
+          {saved ? `✓ Đã lưu · ${status}` : status}
         </span>
       </div>
       <form action={savePageBannerAction} className="space-y-3 p-4">
@@ -64,7 +66,7 @@ function BannerCard({ kind, target, title, path, note, own, fallback, saved, med
           {own ? (
             <label className="flex items-center gap-2 text-[12px] text-ink-soft">
               <input type="checkbox" name="remove" className="h-4 w-4 rounded border-line" />
-              {kind === "default" ? "Gỡ ảnh mặc định" : "Gỡ ảnh riêng (dùng ảnh mặc định)"}
+              {kind === "default" ? "Gỡ ảnh mặc định" : `Gỡ ảnh riêng (dùng ${fallbackLabel.toLowerCase()})`}
             </label>
           ) : (
             <span />
@@ -96,12 +98,15 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
   const { saved } = await searchParams;
   const [settings, bannerRows, pages, mediaImages] = await Promise.all([
     db.query.siteSettings.findFirst({ where: eq(schema.siteSettings.id, "main") }),
-    db.query.pageBanners.findMany(),
-    db.query.pages.findMany({ orderBy: asc(schema.pages.slug) }),
+    db.query.pageBanners.findMany({ orderBy: asc(schema.pageBanners.key) }),
+    db.query.pages.findMany({ orderBy: [asc(schema.pages.slug), asc(schema.pages.seq)] }),
     db.query.mediaItems.findMany({ where: eq(schema.mediaItems.type, "image"), orderBy: [desc(schema.mediaItems.createdAt), desc(schema.mediaItems.seq)] }),
   ]);
   const defaultUrl = settings?.pageBannerUrl ?? null;
-  const ownBySlot = new Map(bannerRows.map((r) => [r.key, r.imageUrl]));
+  const ownBySlot = new Map(bannerRows.filter((row) => row.imageUrl).map((row) => [row.key, row.imageUrl]));
+  const defaultBanner = defaultUrl ? { url: defaultUrl, source: "default" as const } : undefined;
+  const disclosureUrl = ownBySlot.get("cong-khai");
+  const disclosureBanner = disclosureUrl ? { url: disclosureUrl, source: "disclosure" as const } : undefined;
   const publicPages = pages
     .map((p) => ({ ...p, href: staticPageHref(p.slug) }))
     .filter((p): p is typeof p & { href: string } => !!p.href);
@@ -112,12 +117,12 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
     <div>
       <AdminTopbar
         title="Banner trang con"
-        description={`Ảnh nền banner đầu từng trang — ${customCount} trang đang có ảnh riêng, các trang còn lại dùng ảnh mặc định`}
+        description={`Quản lý ảnh nền banner đầu trang con. ${customCount} trang đang có ảnh riêng.`}
       />
       <div className="space-y-10 p-5 sm:p-8">
         <div className="rounded-2xl border border-brand-100 bg-brand-50 px-5 py-4 text-[13px] leading-relaxed text-brand-800">
-          <b>Thứ tự ưu tiên:</b> ảnh riêng của bài viết / sự kiện / ngành (nếu có) → ảnh riêng của trang ở đây → ảnh mặc định → nền
-          xanh. Kích thước khuyến nghị và cảnh báo ảnh nhỏ hiện ngay dưới ô chọn ảnh của từng thẻ.
+          Ảnh riêng được ưu tiên. Khi chưa có ảnh riêng, nhãn trên thẻ cho biết trang đang dùng ảnh mặc định, ảnh mục Công khai hay nền xanh.
+          Kích thước tham khảo nằm ngay dưới ô chọn ảnh.
         </div>
 
         <section>
@@ -126,10 +131,9 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
             <BannerCard
               kind="default"
               target=""
-              title="Mọi trang chưa đặt ảnh riêng"
-              note="Dùng cho mọi trang con chưa có ảnh riêng bên dưới. Để trống thì những trang đó dùng nền xanh gradient."
+              title="Ảnh mặc định cho trang con"
+              note="Dùng cho các trang áp dụng ảnh mặc định khi chưa có ảnh riêng."
               own={defaultUrl}
-              fallback={null}
               saved={saved === "default:"}
               mediaImages={media}
             />
@@ -148,7 +152,7 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
                 path={s.path}
                 note={"note" in s ? s.note : undefined}
                 own={ownBySlot.get(s.key) ?? null}
-                fallback={defaultUrl}
+                fallback={usesDefaultPageBanner(s.key) ? defaultBanner : undefined}
                 saved={saved === `slot:${s.key}`}
                 mediaImages={media}
               />
@@ -169,7 +173,8 @@ export default async function AdminPageBannersPage({ searchParams }: { searchPar
                   title={p.title}
                   path={p.href}
                   own={p.coverImageUrl}
-                  fallback={p.slug.startsWith("cong-khai-") ? ownBySlot.get("cong-khai") ?? defaultUrl : defaultUrl}
+                  fallback={p.slug.startsWith("cong-khai-") ? disclosureBanner
+                    : p.slug === "chinh-sach-bao-mat" ? undefined : defaultBanner}
                   saved={saved === `page:${p.id}`}
                   mediaImages={media}
                 />

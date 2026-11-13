@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/admin-auth";
 import { toCsv, csvResponse, digitsCell } from "@/lib/csv";
 import { formatDbDateTime, vnDateKey } from "@/lib/utils";
 import { filterContactMessages, parseContactFilters } from "../filter";
+import { contactStatusLabel } from "../status";
 
 /** Tải tin nhắn liên hệ dạng CSV theo cùng bộ lọc với trang danh sách. */
 export async function GET(request: Request) {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
       digitsCell(m.phone),
       m.email,
       m.message,
-      m.status === "new" ? "Mới" : "Đã xem",
+      contactStatusLabel(m.status),
       formatDbDateTime(m.createdAt),
     ])
   );

@@ -8,8 +8,10 @@ import { db, schema } from "@/lib/db";
 import { asc } from "drizzle-orm";
 import { paginate } from "@/lib/pagination";
 import { deleteQuickContactAction } from "./actions";
-import { TYPE_LABELS } from "./form";
+import { isQuickContactType, TYPE_LABELS } from "./types";
 import { requirePermission } from "@/lib/admin-auth";
+import { getSiteSettings } from "@/lib/data/site-settings";
+import { quickContactHotlineHref, quickContactHotlineLabel } from "@/lib/quick-contact-hotline";
 
 export const metadata: Metadata = { title: "Liên hệ nhanh" };
 
@@ -20,7 +22,15 @@ export default async function AdminQuickContactsPage({
 }) {
   await requirePermission("admissions-contact");
   const sp = await searchParams;
-  const all = await db.query.quickContacts.findMany({ orderBy: [asc(schema.quickContacts.sortOrder), asc(schema.quickContacts.seq)] });
+  const [rows, settings] = await Promise.all([
+    db.query.quickContacts.findMany({ orderBy: [asc(schema.quickContacts.sortOrder), asc(schema.quickContacts.seq)] }),
+    getSiteSettings(),
+  ]);
+  const all = rows.map((row) => row.type === "hotline" ? {
+    ...row,
+    label: quickContactHotlineLabel(settings.hotline),
+    href: quickContactHotlineHref(settings.hotline) ?? "Chưa có số Hotline hợp lệ",
+  } : row);
   const pg = paginate(all, sp.page);
 
   return (
@@ -49,7 +59,7 @@ export default async function AdminQuickContactsPage({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-paper-alt px-2 py-0.5 text-[10.5px] font-semibold text-ink-soft">
-                        {TYPE_LABELS[c.type] ?? c.type}
+                        {isQuickContactType(c.type) ? TYPE_LABELS[c.type] : c.type}
                       </span>
                       <Link href={`/admin/lien-he-nhanh/${c.id}`} className="truncate text-sm font-medium text-ink hover:text-brand-700">
                         {c.label}

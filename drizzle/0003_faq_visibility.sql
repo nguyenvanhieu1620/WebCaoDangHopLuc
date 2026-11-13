@@ -1,0 +1,1 @@
+ALTER TABLE "faqs" ADD COLUMN "is_visible" integer DEFAULT 1 NOT NULL;

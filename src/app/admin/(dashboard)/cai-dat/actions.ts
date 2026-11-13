@@ -7,51 +7,58 @@ import { eq } from "drizzle-orm";
 import { autoFillTranslations } from "@/lib/translate";
 import { requirePermission } from "@/lib/admin-auth";
 import { hasPermission } from "@/lib/admin-permissions";
-import { isValidEmail } from "@/lib/validate";
+import { isValidEmail, normalizeVnPhone } from "@/lib/validate";
 import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
+import { safeHref } from "@/lib/safe-href";
+import type { AdminSaveResult } from "@/lib/admin-form";
 
-export async function updateSiteSettingsAction(formData: FormData) {
+export async function updateSiteSettingsAction(formData: FormData): Promise<AdminSaveResult> {
   const user = await requirePermission("site-settings");
+  const canEditEmail = hasPermission(user, "admissions-contact");
   const hotline = String(formData.get("hotline") || "").trim();
   const email = String(formData.get("email") || "").trim();
   const address = String(formData.get("address") || "").trim();
   const announcement = String(formData.get("announcement") || "").trim();
   const announcementEn = String(formData.get("announcementEn") || "").trim();
-  // Link ngoài: để trống → "#" (web tự ẩn nút); có gõ → chuẩn hoá (bỏ "#" thừa ở đầu, thêm
-  // https://…). Gõ chữ không phải link → KHÔNG lưu ô đó (giữ link cũ), báo lại cho admin.
-  const invalidLinks: string[] = [];
+  const fields: NonNullable<AdminSaveResult["fields"]> = {};
+  if (!announcement) fields.announcement = "Nhập nội dung banner thông báo.";
+  if (!/^\+?\d+$/.test(normalizeVnPhone(hotline))) fields.hotline = "Nhập số hotline hợp lệ.";
+  if (!address) fields.address = "Nhập địa chỉ.";
+
+  // Link trống được lưu dưới dạng "#" để ẩn nút tương ứng.
   const link = (field: string, label: string, normalize = normalizeExternalUrl) => {
     const raw = String(formData.get(field) || "").trim();
     if (!raw || raw === "#") return "#";
-    const url = normalize(raw);
-    if (!url) invalidLinks.push(label);
-    return url ?? undefined; // undefined = Drizzle bỏ qua cột này khi update
+    const url = safeHref(normalize(raw) ?? "");
+    if (!url) fields[field] = `Nhập đường dẫn ${label} hợp lệ hoặc để trống.`;
+    return url ?? "#";
   };
   const facebookUrl = link("facebookUrl", "Facebook");
   const zaloUrl = link("zaloUrl", "Zalo", normalizeZaloUrl);
   const youtubeUrl = link("youtubeUrl", "YouTube");
   const lmsUrl = link("lmsUrl", "LMS");
 
-  if (!hotline || !email || !address || !announcement) return;
-
-  // Email này cũng nhận thông báo hồ sơ tuyển sinh/liên hệ (có CCCD, SĐT) — chỉ người được xem
-  // dữ liệu đó (quyền "Tuyển sinh & Liên hệ") mới được đổi. Sai định dạng → giữ email cũ.
-  const current = await db.query.siteSettings.findFirst({ where: eq(schema.siteSettings.id, "main") });
-  let emailProblem: "locked" | "invalid" | null = null;
-  if (!current || email !== current.email) {
-    if (!hasPermission(user, "admissions-contact")) emailProblem = "locked";
-    else if (!isValidEmail(email)) emailProblem = "invalid";
+  // Email nhận thông báo có dữ liệu hồ sơ. Chỉ tài khoản có quyền tuyển sinh mới được ghi cột này.
+  if (canEditEmail && !isValidEmail(email)) fields.email = "Nhập địa chỉ email hợp lệ.";
+  if (!canEditEmail && formData.has("email")) {
+    const current = await db.query.siteSettings.findFirst({
+      columns: { email: true }, where: eq(schema.siteSettings.id, "main"),
+    });
+    if (current?.email !== email) fields.email = "Cần quyền Tuyển sinh & Liên hệ để đổi email nhận hồ sơ.";
+  }
+  if (Object.keys(fields).length > 0) {
+    return { message: "Chưa lưu cài đặt. Kiểm tra lại thông tin bên dưới.", fields };
   }
 
   const [announcementEnFinal] = await autoFillTranslations([
     { vi: announcement, en: announcementEn },
   ]);
 
-  await db
+  const [saved] = await db
     .update(schema.siteSettings)
     .set({
       hotline,
-      email: emailProblem ? undefined : email, // undefined = không cập nhật cột này
+      email: canEditEmail ? email : undefined,
       address,
       announcement,
       announcementEn: announcementEnFinal || null,
@@ -62,14 +69,13 @@ export async function updateSiteSettingsAction(formData: FormData) {
       // pageBannerUrl KHÔNG sửa ở đây — quản lý ở admin/banner-trang-con.
       updatedAt: new Date().toISOString(),
     })
-    .where(eq(schema.siteSettings.id, "main"));
+    .where(eq(schema.siteSettings.id, "main"))
+    .returning({ id: schema.siteSettings.id });
+  if (!saved) return { message: "Không tìm thấy dữ liệu cài đặt. Hãy tải lại trang để kiểm tra." };
 
   revalidatePath("/", "layout");
   revalidatePath("/lms");
   revalidatePath("/admin/cai-dat");
 
-  const params = new URLSearchParams({ saved: "1" });
-  if (invalidLinks.length) params.set("invalid", invalidLinks.join(", "));
-  if (emailProblem) params.set("email", emailProblem);
-  redirect(`/admin/cai-dat?${params.toString()}`);
+  redirect("/admin/cai-dat?saved=1");
 }

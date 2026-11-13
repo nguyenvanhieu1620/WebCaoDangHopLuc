@@ -19,7 +19,6 @@ export type SearchResult = {
 
 export const SEARCH_MIN_LENGTH = 2;
 const SEARCH_MAX_LENGTH = 100;
-const MAX_RESULTS = 40;
 // Đặt trang ngành khớp chính xác lên trên các kết quả khớp từ khóa thông thường.
 const TUITION_PROGRAM_BOOST = 1_000;
 
@@ -123,7 +122,7 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
     db.query.events.findMany({ orderBy: asc(schema.events.seq) }),
     db.query.faculty.findMany({ orderBy: asc(schema.faculty.seq) }),
     db.query.pages.findMany({ orderBy: asc(schema.pages.seq) }),
-    db.query.faqs.findMany({ orderBy: asc(schema.faqs.seq) }),
+    db.query.faqs.findMany({ where: eq(schema.faqs.isVisible, 1), orderBy: asc(schema.faqs.seq) }),
   ]);
   const L = (vi: string | null, en: string | null) => (vi ? pickLocale(vi, en, locale) : "");
   const tuitionLabel = locale === "en" ? "Tuition" : "Học phí";
@@ -172,7 +171,7 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
     }),
     ...faqs.map((f) => ({
       type: "faq" as const,
-      href: "/faq",
+      href: `/faq?cau-hoi=${encodeURIComponent(f.id)}#cau-hoi`,
       title: L(f.question, f.questionEn),
       body: stripMarkdown(L(f.answer, f.answerEn)),
     })),
@@ -203,5 +202,5 @@ export async function searchSite(rawQuery: string): Promise<SearchResult[]> {
     });
   }
 
-  return results.sort((a, b) => b.score - a.score).slice(0, MAX_RESULTS);
+  return results.sort((a, b) => b.score - a.score);
 }

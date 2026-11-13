@@ -1,9 +1,10 @@
 import type { ContactMessage } from "@/lib/db/schema";
 import { normalizeSearch } from "@/lib/utils";
 import { normalizeVnPhone } from "@/lib/validate";
+import { isContactStatus, type ContactStatus } from "./status";
 
 type QueryValue = string | string[] | null | undefined;
-type ContactFilters = { q: string; status: "all" | "new" | "read" };
+type ContactFilters = { q: string; status: "all" | ContactStatus };
 
 export function parseContactFilters(params: { q?: QueryValue; status?: QueryValue }): ContactFilters {
   const q = Array.isArray(params.q) ? params.q[0] : params.q;
@@ -11,7 +12,7 @@ export function parseContactFilters(params: { q?: QueryValue; status?: QueryValu
 
   return {
     q: q?.trim() ?? "",
-    status: status === "new" || status === "read" ? status : "all",
+    status: isContactStatus(status) ? status : "all",
   };
 }
 

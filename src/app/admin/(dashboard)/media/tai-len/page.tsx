@@ -33,7 +33,7 @@ export default async function UploadMediaPage() {
             className="mt-2 max-w-full text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-brand-700 file:shadow-sm2"
           />
         </div>
-        <FormActions cancelHref="/admin/media" submitLabel="Tải lên" />
+        <FormActions cancelHref="/admin/media" submitLabel="Tải lên" pendingLabel="Đang tải lên…" />
       </form>
     </AdminFormLayout>
   );

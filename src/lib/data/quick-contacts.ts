@@ -4,6 +4,7 @@ import type { QuickContact } from "@/lib/db/schema";
 import { getLocale, pickLocale } from "@/lib/locale";
 import { normalizeExternalUrl, normalizeZaloUrl } from "@/lib/utils";
 import { safeHref } from "@/lib/safe-href";
+import { quickContactHotlineHref, quickContactHotlineLabel } from "@/lib/quick-contact-hotline";
 import { getSiteSettings } from "./site-settings";
 
 /** Danh sách nút liên hệ nhanh nổi góc màn hình — quản lý qua admin/lien-he-nhanh. */
@@ -18,13 +19,13 @@ export async function getQuickContacts(): Promise<QuickContact[]> {
     // Loại khác giữ nguyên (tel:, mailto:, đường dẫn nội bộ "/lien-he"…).
     .map((r) => ({
       ...r,
-      href: safeHref(
+      href: (r.type === "hotline" ? quickContactHotlineHref(settings.hotline) : safeHref(
         r.type === "zalo"
           ? normalizeZaloUrl(r.href) ?? ""
           : r.type === "facebook"
             ? normalizeExternalUrl(r.href) ?? ""
-            : r.type === "hotline" ? `tel:${settings.hotline.replace(/[^+\d]/g, "")}` : r.href.trim()) ?? "",
-      label: r.type === "hotline" ? `${locale === "en" ? "Call" : "Gọi hotline"} ${settings.hotline}` : pickLocale(r.label, r.labelEn, locale),
+            : r.href.trim())) ?? "",
+      label: r.type === "hotline" ? quickContactHotlineLabel(settings.hotline, locale) : pickLocale(r.label, r.labelEn, locale),
     }))
     .filter((r) => r.href && r.href !== "#");
 }
